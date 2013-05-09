@@ -1,34 +1,40 @@
-import os
-import sys
+#!/usr/bin/python
+# -*- encoding: utf-8 -*-
+# Copyright (c) 2013 OpenStack, LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
+import os
 import setuptools
 
-#from glanceclient.openstack.common import setup
-
-
-#requires = setup.parse_requirements()
-#dependency_links = setup.parse_dependency_links()
-#tests_require = setup.parse_requirements(['tools/test-requires'])
-project = 'python-glanceclient'
-
-if sys.version_info < (2, 6):
-    requires.append('simplejson')
+name = 'python-barbicanclient'
 
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setuptools.setup(
-    name=project,
-    version=setup.get_version(project),
-    description="Client library for OpenStack Image API",
-    long_description=read('README.rst'),
-    url='https://github.com/openstack/python-glanceclient',
-    license='Apache',
-    author='OpenStack Glance Contributors',
-    author_email='glance@example.com',
+    name=name,
+    version="0.1",
+    description='Client Library for OpenStack Barbican Key Management API',
+    long_description=read('README.md'),
+    url='https://github.com/cloudkeep/barbican',
+    license='Apache License (2.0)',
+    author='OpenStack, LLC.',
+    author_email='openstack-admins@lists.launchpad.net',
     packages=setuptools.find_packages(exclude=['tests', 'tests.*']),
-    include_package_data=True,
+    install_requires=['eventlet', 'requests', 'python-keystoneclient'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
@@ -37,12 +43,7 @@ setuptools.setup(
         'Intended Audience :: Information Technology',
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python',
-    ],
-    cmdclass=setup.get_cmdclass(),
-    install_requires=requires,
-    dependency_links=dependency_links,
-    tests_require=tests_require,
-    setup_requires=['setuptools-git>=0.4'],
-    entry_points={'console_scripts': ['glance = glanceclient.shell:main']},
+        'Programming Language :: Python :: 2.7',
+        'Environment :: No Input/Output (Daemon)',
+    ]
 )
