@@ -6,14 +6,14 @@ eventlet.monkey_patch(socket=True, select=True)
 import json
 import requests
 
+from barbicanclient.secrets import Secret
 from barbicanclient.common.auth import authenticate
-from barbicanclient.common.utils import proc_template
 from barbicanclient.common.exceptions import ClientException
 from urlparse import urljoin
 
 
 class Connection(object):
-    def __init__(self, auth_endpoint, user, key, **kwargs):
+    def __init__(self, auth_endpoint, user, key, tenant, **kwargs):
         """
         :param auth_endpoint: The auth URL to authenticate against
         :param user: The user to authenticate as
@@ -22,12 +22,14 @@ class Connection(object):
         self._auth_endpoint = auth_endpoint
         self._user = user
         self._key = key
+        self._tenant = tenant
         self._endpoint = kwargs.get('endpoint') or 'https://barbican.api.rackspacecloud.com/v1/'
         self._cacert = kwargs.get('cacert')
 
+        self.connect()
+
         # Hardcoded uri's right now
         self.secrets_href = 'secrets/'
-
 
     @property
     def _conn(self):
@@ -63,11 +65,8 @@ class Connection(object):
             self.auth_token = token
         else:
             (self._endpoint,
-             self.auth_token) = authenticate(self._auth_endpoint,
-                                             self._user, self._key,
-                                             endpoint=self._endpoint,
-                                             cacert=self._cacert)
-        #self._load_homedoc_hrefs()
+             self.auth_token) = authenticate(self._auth_endpoint, self._user, self._key, self._tenant,
+                                             endpoint=self._endpoint, cacert=self._cacert)
 
     @property
     def auth_token(self):
@@ -85,51 +84,17 @@ class Connection(object):
         """
         Returns the list of secrets for the auth'd tenant
         """
-        href = proc_template(self.secrets_href)
+        #href = proc_template(self.secrets_href)
+        href = "%s/%s" % (self._tenant, self.secrets_href)
         hdrs, body = self._perform_http(href=href, method='GET')
 
-        #return Queue(self, href=href, name=queue_name, metadata=body)
+        secrets_dict = body['secrets']
+        secrets = []
+        for s in secrets_dict:
+            secrets.append(Secret(self._conn, s))
 
+        return secrets
 
-
-
-
-    #
-    # def _load_homedoc_hrefs(self):
-    #     """
-    #     Loads the home document hrefs for each endpoint
-    #     Note: at the present time homedocs have not been
-    #     implemented so these hrefs are simply hard-coded. When
-    #     they are implemented we should update this function to
-    #     actually parse the home document.
-    #     """
-    #
-    #     # Queues endpoint{" + name + "}", quote(str(value)))
-    #     self.queues_href = self._endpoint + "/queues"
-    #
-    #     # Specific queue endpoint
-    #     self.queue_href = self.queues_href + "/{queue_name}"
-    #
-    #     # Messages endpoint
-    #     self.messages_href = self.queue_href + "/messages"
-    #
-    #     # Specific message endpoint
-    #     self.message_href = self.messages_href + "/{message_id}"
-    #
-    #     # Claims endpoint
-    #     self._claims_href = self.queues_href + "/claims"
-    #
-    #     # Specific claim endpoint
-    #     self._claim_href = self.queues_href + "/claims/{claim_id}"
-    #
-    #     # Actions endpoint
-    #     self.actions_href = self._endpoint + "/actions"
-    #
-    #     # Specific action endpoint
-    #     self.action_href = self.actions_href + "/{action_id}"
-    #
-    #     # Statistics endpoint
-    #     self.stats_href = self.queue_href + "/stats"
     #
     # def create_queue(self, queue_name):
     #     """
@@ -192,7 +157,6 @@ class Connection(object):
         Perform an HTTP operation, checking for appropriate
         errors, etc. and returns the response
 
-        :param conn: The HTTPConnection or HTTPSConnection to use
         :param method: The http method to use (GET, PUT, etc)
         :param body: The optional body to submit
         :param headers: Any additional headers to submit
