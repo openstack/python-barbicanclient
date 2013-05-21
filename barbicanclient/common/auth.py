@@ -5,7 +5,7 @@ from keystoneclient.v2_0 import client as ksclient
 from keystoneclient import exceptions
 
 
-def authenticate(auth_url, user, key, **kwargs):
+def authenticate(auth_url, user, key, tenant, **kwargs):
     """Authenticates against the endpoint to use. The correct
     endpoint to use is looked up in the service catalog. The
     caller can override this lookup by passing the endpoint
@@ -32,25 +32,22 @@ def authenticate(auth_url, user, key, **kwargs):
     """
     insecure = kwargs.get('insecure', False)
     endpoint = kwargs.get('endpoint')
-    tenant_name = kwargs.get('tenant_name')
-    tenant_id = kwargs.get('tenant_id')
     cacert = kwargs.get('cacert')
 
     try:
         _ksclient = ksclient.Client(username=user,
                                     password=key,
-                                    tenant_name=tenant_name,
-                                    tenant_id=tenant_id,
+                                    tenant_name=tenant,
                                     cacert=cacert,
                                     auth_url=auth_url,
                                     insecure=insecure)
 
-    except exceptions.Unauthorized as ex:
+    except exceptions.Unauthorized:
         raise ClientException('Unauthorized. Check username, password'
                               ' and tenant name/id')
 
-    except exceptions.AuthorizationFailure as err:
-        raise ClientException('Authorization Failure. %s' % err)
+    except exceptions.AuthorizationFailure:
+        raise ClientException('Authorization Failure. %s')
 
     if not endpoint:
         # The user did not pass in an endpoint, so we need to
@@ -70,4 +67,4 @@ def authenticate(auth_url, user, key, **kwargs):
         except exceptions.EndpointNotFound as ex:
             raise ClientException('Endpoint not found in service catalog')
 
-    return (endpoint, _ksclient.auth_token)
+    return endpoint, _ksclient.auth_token

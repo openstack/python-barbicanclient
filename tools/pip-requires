@@ -2,3 +2,4 @@ httplib2>=0.7.7
 argparse>=1.2.1
 python-keystoneclient>=0.2.3
 eventlet>=0.12.1
+iso8601>=0.1.4
