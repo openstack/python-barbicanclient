@@ -1,5 +1,5 @@
 class ClientException(Exception):
-    """Exception for wrapping up Marconi client errors"""
+    """Exception for wrapping up Barbican client errors"""
     def __init__(self, href='', http_status=0,
                  method='', http_response_content=''):
 

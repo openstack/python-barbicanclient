@@ -7,7 +7,11 @@ ENDPOINT = 'https://barbican.api.rackspacecloud.com/v1/'
 
 
 def list_secrets(username, password, tenant, endpoint):
-    connection = client.Connection(IDENTITY, username, password, tenant, endpoint=endpoint)
+    connection = client.Connection(IDENTITY,
+                                   username,
+                                   password,
+                                   tenant,
+                                   endpoint=endpoint)
     secrets = connection.list_secrets()
 
     print 'Current Secrets (%d):' % (len(secrets))
@@ -16,14 +20,31 @@ def list_secrets(username, password, tenant, endpoint):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Testing code for barbican secrets api resource.')
-    parser.add_argument('--username', help='The keystone username used for for authentication')
-    parser.add_argument('--password', help='The keystone password used for for authentication')
-    parser.add_argument('--tenant', help='The keystone tenant used for for authentication')
-    parser.add_argument('--keystone', default=IDENTITY,
-                        help='The keystone endpoint used for for authentication')
-    parser.add_argument('--endpoint', default=ENDPOINT,
-                        help='The barbican endpoint to test against')
+    parser = argparse.ArgumentParser(
+        description='Testing code for barbican secrets api resource.'
+    )
+    parser.add_argument(
+        '--username',
+        help='The keystone username used for for authentication'
+    )
+    parser.add_argument(
+        '--password',
+        help='The keystone password used for for authentication'
+    )
+    parser.add_argument(
+        '--tenant',
+        help='The keystone tenant used for for authentication'
+    )
+    parser.add_argument(
+        '--keystone',
+        default=IDENTITY,
+        help='The keystone endpoint used for for authentication'
+    )
+    parser.add_argument(
+        '--endpoint',
+        default=ENDPOINT,
+        help='The barbican endpoint to test against'
+    )
 
     args = parser.parse_args()
     return args

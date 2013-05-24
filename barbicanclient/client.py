@@ -23,7 +23,8 @@ class Connection(object):
         self._user = user
         self._key = key
         self._tenant = tenant
-        self._endpoint = kwargs.get('endpoint') or 'https://barbican.api.rackspacecloud.com/v1/'
+        self._endpoint = (kwargs.get('endpoint')
+                          or 'https://barbican.api.rackspacecloud.com/v1/')
         self._cacert = kwargs.get('cacert')
 
         self.connect()
@@ -64,9 +65,14 @@ class Connection(object):
         if token:
             self.auth_token = token
         else:
-            (self._endpoint,
-             self.auth_token) = authenticate(self._auth_endpoint, self._user, self._key, self._tenant,
-                                             endpoint=self._endpoint, cacert=self._cacert)
+            self._endpoint, self.auth_token = authenticate(
+                self._auth_endpoint,
+                self._user,
+                self._key,
+                self._tenant,
+                endpoint=self._endpoint,
+                cacert=self._cacert
+            )
 
     @property
     def auth_token(self):
@@ -174,7 +180,8 @@ class Connection(object):
 
         # Check if the status code is 2xx class
         if not response.ok:
-            raise ClientException(href=href, method=method, http_status=response.status_code,
+            raise ClientException(href=href, method=method,
+                                  http_status=response.status_code,
                                   http_response_content=response.content)
 
         resp_body = json.loads(response.content) if response.content else ''

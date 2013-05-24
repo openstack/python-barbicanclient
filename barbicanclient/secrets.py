@@ -8,7 +8,8 @@ class Secret(object):
     """
     def __init__(self, connection, dict):
         """
-        Builds a secret object from a json representation. Includes the connection object for subtasks.
+        Builds a secret object from a json representation. Includes the
+        connection object for subtasks.
         """
         self._connection = connection
         self._href = dict['secret_ref']
