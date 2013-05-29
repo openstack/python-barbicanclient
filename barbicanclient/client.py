@@ -9,6 +9,7 @@ from barbicanclient.secrets import Secret
 from barbicanclient.orders import Order
 from barbicanclient.common.auth import authenticate
 from barbicanclient.common.exceptions import ClientException
+from openstack.common.timeutils import parse_isotime
 from urlparse import urljoin
 
 
@@ -100,6 +101,42 @@ class Connection(object):
 
         return secrets
 
+    def create_secret(self,
+                      name,
+                      mime_type,
+                      algorithm,
+                      bit_length,
+                      cypher_type,
+                      plain_text,
+                      expiration):
+        href = "%s/%s" % (self._tenant, self.SECRETS_PATH)
+        secret_dict = {}
+        secret_dict['name'] = name
+        secret_dict['mime_type'] = mime_type
+        secret_dict['algorithm'] = algorithm
+        secret_dict['bit_length'] = int(bit_length)
+        secret_dict['cypher_type'] = cypher_type
+        secret_dict['plain_text'] = plain_text
+        if expiration is not None:
+            secret_dict['expiration'] = parse_isotime(expiration)
+        hdrs, body = self._perform_http(href=href,
+                                        method='POST',
+                                        request_body=json.dumps(secret_dict))
+        return body['secret_ref']
+
+    def delete_secret(self, secret_id):
+        href = "%s/%s/%s" % (self._tenant, self.SECRETS_PATH, secret_id)
+        hdrs, body = self._perform_http(href=href, method='DELETE')
+        # TODO: should this return something
+
+    def get_secret(self, secret_id, mime_type):
+        href = "%s/%s/%s" % (self._tenant, self.SECRETS_PATH, secret_id)
+        hdrs = {"Accept": mime_type}
+        hdrs, body = self._perform_http(href=href, method='GET', headers=hdrs,
+                                        parse_json=False)
+
+        return body
+
     def list_orders(self):
         """
         Returns the list of orders
@@ -137,7 +174,8 @@ class Connection(object):
         hdrs, body = self._perform_http(href=href, method='DELETE')
         # TODO: should this return something
 
-    def _perform_http(self, method, href, request_body='', headers={}):
+    def _perform_http(self, method, href, request_body='', headers={},
+                      parse_json=True):
         """
         Perform an HTTP operation, checking for appropriate
         errors, etc. and returns the response
@@ -145,6 +183,7 @@ class Connection(object):
         :param method: The http method to use (GET, PUT, etc)
         :param body: The optional body to submit
         :param headers: Any additional headers to submit
+        :param parse_json: Whether the response body should be parsed as json
         :return: (headers, body)
         """
         if not isinstance(request_body, str):
@@ -152,10 +191,8 @@ class Connection(object):
 
         url = urljoin(self._endpoint, href)
 
-        response = requests.request(method=method, url=url, data=request_body)
-
-        #response = self._session.request(method=method, url=url,
-        #                                 data=request_body, headers=headers)
+        response = requests.request(method=method, url=url, data=request_body,
+                                    headers=headers)
 
         # Check if the status code is 2xx class
         if not response.ok:
@@ -163,6 +200,11 @@ class Connection(object):
                                   http_status=response.status_code,
                                   http_response_content=response.content)
 
-        resp_body = json.loads(response.content) if response.content else ''
+        if response.content and parse_json is True:
+            resp_body = json.loads(response.content)
+        elif response.content and parse_json is False:
+            resp_body = response.content
+        else:
+            resp_body = ''
 
         return response.headers, resp_body

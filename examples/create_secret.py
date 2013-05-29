@@ -17,7 +17,7 @@ def connect(username, password, tenant, endpoint):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Testing code for deleting barbican order.'
+        description='Testing code for creating barbican secret.'
     )
     parser.add_argument(
         '--username',
@@ -42,8 +42,33 @@ def parse_args():
         help='The barbican endpoint to test against'
     )
     parser.add_argument(
-        '--order-id',
-        help='ID of secret'
+        '--name',
+        help='Name of secret'
+    )
+    parser.add_argument(
+        '--mime-type',
+        help='MIME type of secret to create'
+    )
+    parser.add_argument(
+        '--algorithm',
+        help='Algorithm of secret to create'
+    )
+    parser.add_argument(
+        '--bit-length',
+        help='Bit length of secret to create'
+    )
+    parser.add_argument(
+        '--cypher-type',
+        help='Cypher type of secret to create'
+    )
+    parser.add_argument(
+        '--plain-text',
+        help='Plain text of the secret'
+    )
+    parser.add_argument(
+        '--expiration',
+        default=None,
+        help='Plain text of the secret'
     )
 
     args = parser.parse_args()
@@ -53,4 +78,11 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     conn = connect(args.username, args.password, args.tenant, args.endpoint)
-    conn.delete_order(args.order_id)
+    secret_ref = conn.create_secret(args.name,
+                                    args.mime_type,
+                                    args.algorithm,
+                                    args.bit_length,
+                                    args.cypher_type,
+                                    args.plain_text,
+                                    args.expiration)
+    print secret_ref

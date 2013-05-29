@@ -17,7 +17,7 @@ def connect(username, password, tenant, endpoint):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Testing code for deleting barbican order.'
+        description='Testing code for deleting barbican secret.'
     )
     parser.add_argument(
         '--username',
@@ -42,7 +42,7 @@ def parse_args():
         help='The barbican endpoint to test against'
     )
     parser.add_argument(
-        '--order-id',
+        '--secret-id',
         help='ID of secret'
     )
 
@@ -53,4 +53,4 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     conn = connect(args.username, args.password, args.tenant, args.endpoint)
-    conn.delete_order(args.order_id)
+    conn.delete_secret(args.secret_id)
