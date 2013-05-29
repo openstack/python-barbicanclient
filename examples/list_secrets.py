@@ -17,7 +17,6 @@ def list_secrets(username, password, tenant, endpoint):
     print 'Current Secrets (%d):' % (len(secrets))
     for secret in secrets:
         print secret
-        print '- %s' % secret
 
 
 def parse_args():

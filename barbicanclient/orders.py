@@ -30,5 +30,5 @@ class Order(object):
     def delete(self):
         self.connection.delete_order(self)
 
-    def __repr__(self):
+    def __str__(self):
         return "<Order %s>" % self.id

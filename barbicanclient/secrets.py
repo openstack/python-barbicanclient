@@ -38,5 +38,5 @@ class Secret(object):
     def id(self):
         return self._id
 
-    def __repr__(self):
+    def __str__(self):
         return "<Secret %s>" % self.id

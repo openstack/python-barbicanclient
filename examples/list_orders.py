@@ -14,9 +14,9 @@ def list_orders(username, password, tenant, endpoint):
                                    endpoint=endpoint)
     orders = connection.list_orders()
 
-    print 'Current Secrets (%d):' % (len(orders))
+    print 'Current Orders (%d):' % (len(orders))
     for order in orders:
-        print '- %s' % order
+        print order
 
 
 def parse_args():
