@@ -8,5 +8,8 @@ class ClientException(Exception):
         self.http_status = http_status
         self.http_response_content = http_response_content
 
-        msg = "%s %s returned %d" % (self.method, self.href, self.http_status)
+        msg = "%s %s returned %d with msg: %s" % (self.method,
+                                                  self.href,
+                                                  self.http_status,
+                                                  self.http_response_content)
         Exception.__init__(self, msg)
