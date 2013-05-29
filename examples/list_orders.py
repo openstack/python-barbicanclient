@@ -6,17 +6,17 @@ IDENTITY = 'https://identity.api.rackspacecloud.com/v2.0'
 ENDPOINT = 'https://barbican.api.rackspacecloud.com/v1/'
 
 
-def list_secrets(username, password, tenant, endpoint):
+def list_orders(username, password, tenant, endpoint):
     connection = client.Connection(IDENTITY,
                                    username,
                                    password,
                                    tenant,
                                    endpoint=endpoint)
-    secrets = connection.list_secrets()
+    orders = connection.list_orders()
 
-    print 'Current Secrets (%d):' % (len(secrets))
-    for secret in secrets:
-        print '- %s' % secret
+    print 'Current Secrets (%d):' % (len(orders))
+    for order in orders:
+        print '- %s' % order
 
 
 def parse_args():
@@ -52,4 +52,4 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    list_secrets(args.username, args.password, args.tenant, args.endpoint)
+    list_orders(args.username, args.password, args.tenant, args.endpoint)

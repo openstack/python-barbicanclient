@@ -1,18 +1,21 @@
-
-from eventlet.green.urllib import quote
 import eventlet
 eventlet.monkey_patch(socket=True, select=True)
 
 import json
 import requests
 
+
 from barbicanclient.secrets import Secret
+from barbicanclient.orders import Order
 from barbicanclient.common.auth import authenticate
 from barbicanclient.common.exceptions import ClientException
 from urlparse import urljoin
 
 
 class Connection(object):
+    SECRETS_PATH = 'secrets'
+    ORDERS_PATH = 'orders'
+
     def __init__(self, auth_endpoint, user, key, tenant, **kwargs):
         """
         :param auth_endpoint: The auth URL to authenticate against
@@ -28,9 +31,6 @@ class Connection(object):
         self._cacert = kwargs.get('cacert')
 
         self.connect()
-
-        # Hardcoded uri's right now
-        self.secrets_href = 'secrets/'
 
     @property
     def _conn(self):
@@ -90,8 +90,7 @@ class Connection(object):
         """
         Returns the list of secrets for the auth'd tenant
         """
-        #href = proc_template(self.secrets_href)
-        href = "%s/%s" % (self._tenant, self.secrets_href)
+        href = "%s/%s?limit=100" % (self._tenant, self.SECRETS_PATH)
         hdrs, body = self._perform_http(href=href, method='GET')
 
         secrets_dict = body['secrets']
@@ -101,62 +100,42 @@ class Connection(object):
 
         return secrets
 
-    #
-    # def create_queue(self, queue_name):
-    #     """
-    #     Creates a queue with the specified name
-    #
-    #     :param queue_name: The name of the queue
-    #     :param ttl: The default time-to-live for messages in this queue
-    #     """
-    #     href = proc_template(self.queue_href, queue_name=queue_name)
-    #     body = {}
-    #
-    #     self._perform_http(href=href, method='PUT', request_body=body)
-    #
-    #     return Queue(self, href=href, name=queue_name, metadata=body)
-    #
-    # def get_queue(self, queue_name):
-    #     """
-    #     Gets a queue by name
-    #
-    #     :param queue_name: The name of the queue
-    #     """
-    #     href = proc_template(self.queue_href, queue_name=queue_name)
-    #
-    #     try:
-    #         hdrs, body = self._perform_http(href=href, method='GET')
-    #     except ClientException as ex:
-    #         raise NoSuchQueueError(queue_name) if ex.http_status == 404 else ex
-    #
-    #     return Queue(self, href=href, name=queue_name, metadata=body)
-    #
-    # def get_queues(self):
-    #     href = self.queues_href
-    #
-    #     hdrs, res = self._perform_http(href=href, method='GET')
-    #     queues = res["queues"]
-    #
-    #     for queue in queues:
-    #         yield Queue(conn=self._conn, name=queue['name'],
-    #                     href=queue['href'], metadata=queue['metadata'])
-    #
-    # def delete_queue(self, queue_name):
-    #     """
-    #     Deletes a queue
-    #
-    #     :param queue_name: The name of the queue
-    #     """
-    #     href = proc_template(self.queue_href, queue_name=queue_name)
-    #     self._perform_http(href=href, method='DELETE')
-    #
-    # def get_queue_metadata(self, queue_name):
-    #     href = proc_template(self._queue_href, queue_name=queue_name)
-    #
-    #     try:
-    #         return self._perform_http(conn, href, 'GET')
-    #     except ClientException as ex:
-    #         raise NoSuchQueueError(queue_name) if ex.http_status == 404 else ex
+    def list_orders(self):
+        """
+        Returns the list of orders
+        """
+        href = "%s/%s?limit=100" % (self._tenant, self.ORDERS_PATH)
+        hdrs, body = self._perform_http(href=href, method='GET')
+
+        orders_dict = body['orders']
+        orders = []
+        for o in orders_dict:
+            orders.append(Order(self._conn, o))
+
+        return orders
+
+    def create_order(self,
+                     name,
+                     mime_type,
+                     algorithm,
+                     bit_length,
+                     cypher_type):
+        href = "%s/%s" % (self._tenant, self.ORDERS_PATH)
+        order_dict = {'secret': {}}
+        order_dict['secret']['name'] = name
+        order_dict['secret']['mime_type'] = mime_type
+        order_dict['secret']['algorithm'] = algorithm
+        order_dict['secret']['bit_length'] = bit_length
+        order_dict['secret']['cypher_type'] = cypher_type
+        hdrs, body = self._perform_http(href=href,
+                                        method='POST',
+                                        request_body=json.dumps(order_dict))
+        return body['order_ref']
+
+    def delete_order(self, order_id):
+        href = "%s/%s/%s" % (self._tenant, self.ORDERS_PATH, order_id)
+        hdrs, body = self._perform_http(href=href, method='DELETE')
+        # TODO: should this return something
 
     def _perform_http(self, method, href, request_body='', headers={}):
         """
