@@ -129,7 +129,13 @@ class Connection(object):
         hdrs, body = self._perform_http(href=href, method='DELETE')
         # TODO: should this return something
 
-    def get_secret(self, secret_id, mime_type):
+    def get_secret(self, secret_id):
+        href = "%s/%s/%s" % (self._tenant, self.SECRETS_PATH, secret_id)
+        hdrs, body = self._perform_http(href=href, method='GET')
+
+        return Secret(self._conn, body)
+
+    def get_raw_secret(self, secret_id, mime_type):
         href = "%s/%s/%s" % (self._tenant, self.SECRETS_PATH, secret_id)
         hdrs = {"Accept": mime_type}
         hdrs, body = self._perform_http(href=href, method='GET', headers=hdrs,
@@ -173,6 +179,12 @@ class Connection(object):
         href = "%s/%s/%s" % (self._tenant, self.ORDERS_PATH, order_id)
         hdrs, body = self._perform_http(href=href, method='DELETE')
         # TODO: should this return something
+
+    def get_order(self, order_id):
+        href = "%s/%s/%s" % (self._tenant, self.ORDERS_PATH, order_id)
+        hdrs, body = self._perform_http(href=href, method='GET')
+
+        return Order(self._conn, body)
 
     def _perform_http(self, method, href, request_body='', headers={},
                       parse_json=True):

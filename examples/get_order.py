@@ -17,7 +17,7 @@ def connect(username, password, tenant, endpoint):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Testing code for getting a barbican secret.'
+        description='Testing code for getting a barbican order.'
     )
     parser.add_argument(
         '--username',
@@ -42,13 +42,8 @@ def parse_args():
         help='The barbican endpoint to test against'
     )
     parser.add_argument(
-        '--secret-id',
-        help='ID of secret'
-    )
-    parser.add_argument(
-        '--mime-type',
-        default=None,
-        help='MIME of secret'
+        '--order-id',
+        help='ID of order'
     )
 
     args = parser.parse_args()
@@ -58,8 +53,5 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     conn = connect(args.username, args.password, args.tenant, args.endpoint)
-    if args.mime_type is not None:
-        s = conn.get_raw_secret(args.secret_id, args.mime_type)
-    else:
-        s = conn.get_secret(args.secret_id)
-    print s
+    order = conn.get_order(args.order_id)
+    print order
