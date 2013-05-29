@@ -36,3 +36,6 @@ nosetests.xml
 
 # Idea
 .idea
+
+# generic venvs
+.venv
