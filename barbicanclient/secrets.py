@@ -39,19 +39,4 @@ class Secret(object):
         return self._id
 
     def __repr__(self):
-        """
-        returns a string representation of the object
-        TODO: properly handle optional fields
-        """
-        s = "<Secret %s>" % self.id
-        s += "\n  Name: %s" % self.name
-        s += "\n  Status: %s" % self.status
-        s += "\n  Secret Ref: %s" % self.secret_ref
-        s += "\n  Created: %s" % self.created
-        s += "\n  Updated: %s" % self.updated
-        if self.expiration is not None:
-            s += "\n  Expiration: %s" % self.expiration
-        s += "\n  Algorithm: %s" % self.algorithm
-        s += "\n  Cypher Type: %s" % self.cypher_type
-        s += "\n  Bit Length: %s" % self.bit_length
-        return s
+        return "<Secret %s>" % self.id

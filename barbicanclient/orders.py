@@ -31,11 +31,4 @@ class Order(object):
         self.connection.delete_order(self)
 
     def __repr__(self):
-        s = "<Order %s>" % self.id
-        s += "\n  Status: %s" % self.status
-        s += "\n  Secret: %s" % self.secret
-        s += "\n  Secret ref: %s" % self.secret_ref
-        s += "\n  Order ref: %s" % self.order_ref
-        s += "\n  Created: %s" % self.created
-        s += "\n  Updated: %s" % self.updated
-        return s
+        return "<Order %s>" % self.id
