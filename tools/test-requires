@@ -1,8 +1,20 @@
+distribute>=0.6.24
+
+# Install bounded pep8/pyflakes first, then let flake8 install
+pep8==1.4.5
+pyflakes==0.7.2
+flake8==2.0
+hacking>=0.5.3,<0.6
+
+
+coverage
+discover
+mox
+mock>=1.0.1
+sphinx>=1.1.2
+
 nose>=1.2.1
 nosexcover>=1.0.7
 openstack.nose_plugin>=0.11
-pep8==1.1
-sphinx>=1.1.2
 unittest2>=0.5.1
-testtools
-mock>=1.0.1
+tox
