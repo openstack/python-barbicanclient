@@ -133,7 +133,6 @@ class Connection(object):
 
     def get_secret_by_id(self, secret_id):
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
-        print href
         return self.get_secret(href)
 
     def get_secret(self, href):
