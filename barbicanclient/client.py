@@ -91,7 +91,7 @@ class Connection(object):
         """
         Returns the list of secrets for the auth'd tenant
         """
-        href = "%s/%s?limit=100" % (self._tenant, self.SECRETS_PATH)
+        href = "{0}/{1}?limit=100".format(self._tenant, self.SECRETS_PATH)
         hdrs, body = self._perform_http(href=href, method='GET')
 
         secrets_dict = body['secrets']
@@ -109,7 +109,7 @@ class Connection(object):
                       cypher_type,
                       plain_text,
                       expiration):
-        href = "%s/%s" % (self._tenant, self.SECRETS_PATH)
+        href = "{0}/{1}".format(self._tenant, self.SECRETS_PATH)
         secret_dict = {}
         secret_dict['name'] = name
         secret_dict['mime_type'] = mime_type
@@ -125,18 +125,18 @@ class Connection(object):
         return body['secret_ref']
 
     def delete_secret(self, secret_id):
-        href = "%s/%s/%s" % (self._tenant, self.SECRETS_PATH, secret_id)
+        href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
         hdrs, body = self._perform_http(href=href, method='DELETE')
         # TODO: should this return something
 
     def get_secret(self, secret_id):
-        href = "%s/%s/%s" % (self._tenant, self.SECRETS_PATH, secret_id)
+        href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
         hdrs, body = self._perform_http(href=href, method='GET')
 
         return Secret(self._conn, body)
 
     def get_raw_secret(self, secret_id, mime_type):
-        href = "%s/%s/%s" % (self._tenant, self.SECRETS_PATH, secret_id)
+        href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
         hdrs = {"Accept": mime_type}
         hdrs, body = self._perform_http(href=href, method='GET', headers=hdrs,
                                         parse_json=False)
@@ -147,7 +147,7 @@ class Connection(object):
         """
         Returns the list of orders
         """
-        href = "%s/%s?limit=100" % (self._tenant, self.ORDERS_PATH)
+        href = "{0}/{1}?limit=100".format(self._tenant, self.ORDERS_PATH)
         hdrs, body = self._perform_http(href=href, method='GET')
 
         orders_dict = body['orders']
@@ -163,7 +163,7 @@ class Connection(object):
                      algorithm,
                      bit_length,
                      cypher_type):
-        href = "%s/%s" % (self._tenant, self.ORDERS_PATH)
+        href = "{0}/{1}".format(self._tenant, self.ORDERS_PATH)
         order_dict = {'secret': {}}
         order_dict['secret']['name'] = name
         order_dict['secret']['mime_type'] = mime_type
@@ -176,12 +176,12 @@ class Connection(object):
         return body['order_ref']
 
     def delete_order(self, order_id):
-        href = "%s/%s/%s" % (self._tenant, self.ORDERS_PATH, order_id)
+        href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
         hdrs, body = self._perform_http(href=href, method='DELETE')
         # TODO: should this return something
 
     def get_order(self, order_id):
-        href = "%s/%s/%s" % (self._tenant, self.ORDERS_PATH, order_id)
+        href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
         hdrs, body = self._perform_http(href=href, method='GET')
 
         return Order(self._conn, body)
