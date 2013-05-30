@@ -6,29 +6,29 @@ class Secret(object):
     """
     A secret is any data the user has stored in the key management system.
     """
-    def __init__(self, connection, dict):
+    def __init__(self, connection, secret_dict):
         """
         Builds a secret object from a json representation. Includes the
         connection object for subtasks.
         """
         self._connection = connection
-        self.secret_ref = dict['secret_ref']
-        self.created = parse_isotime(dict['created'])
-        self.status = dict['status']
+        self.secret_ref = secret_dict['secret_ref']
+        self.created = parse_isotime(secret_dict['created'])
+        self.status = secret_dict['status']
 
-        self.algorithm = dict.get('algorithm')
-        self.bit_length = dict.get('bit_length')
-        self.mime_type = dict.get('mime_type')
-        self.name = dict.get('name')
-        self.cypher_type = dict.get('cypher_type')
+        self.algorithm = secret_dict.get('algorithm')
+        self.bit_length = secret_dict.get('bit_length')
+        self.mime_type = secret_dict.get('mime_type')
+        self.name = secret_dict.get('name')
+        self.cypher_type = secret_dict.get('cypher_type')
 
-        if dict.get('expiration') is not None:
-            self.expiration = parse_isotime(dict['expiration'])
+        if secret_dict.get('expiration') is not None:
+            self.expiration = parse_isotime(secret_dict['expiration'])
         else:
             self.expiration = None
 
-        if dict.get('updated') is not None:
-            self.updated = parse_isotime(dict['updated'])
+        if secret_dict.get('updated') is not None:
+            self.updated = parse_isotime(secret_dict['updated'])
         else:
             self.updated = None
 

@@ -124,23 +124,30 @@ class Connection(object):
                                         request_body=json.dumps(secret_dict))
         return body['secret_ref']
 
-    def delete_secret(self, secret_id):
+    def delete_secret_by_id(self, secret_id):
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
+        return self.delete_secret(href)
+
+    def delete_secret(self, href):
         hdrs, body = self._perform_http(href=href, method='DELETE')
-        # TODO: should this return something
 
-    def get_secret(self, secret_id):
+    def get_secret_by_id(self, secret_id):
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
-        hdrs, body = self._perform_http(href=href, method='GET')
+        print href
+        return self.get_secret(href)
 
+    def get_secret(self, href):
+        hdrs, body = self._perform_http(href=href, method='GET')
         return Secret(self._conn, body)
 
-    def get_raw_secret(self, secret_id, mime_type):
+    def get_raw_secret_by_id(self, secret_id, mime_type):
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
+        return self.get_raw_secret(href, mime_type)
+
+    def get_raw_secret(self, href, mime_type):
         hdrs = {"Accept": mime_type}
         hdrs, body = self._perform_http(href=href, method='GET', headers=hdrs,
                                         parse_json=False)
-
         return body
 
     def list_orders(self):
@@ -175,15 +182,19 @@ class Connection(object):
                                         request_body=json.dumps(order_dict))
         return body['order_ref']
 
-    def delete_order(self, order_id):
+    def delete_order_by_id(self, order_id):
         href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
+        return self.delete_order(href)
+
+    def delete_order(self, href):
         hdrs, body = self._perform_http(href=href, method='DELETE')
-        # TODO: should this return something
 
-    def get_order(self, order_id):
+    def get_order_by_id(self, order_id):
         href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
-        hdrs, body = self._perform_http(href=href, method='GET')
+        return self.get_order(href)
 
+    def get_order(self, href):
+        hdrs, body = self._perform_http(href=href, method='GET')
         return Order(self._conn, body)
 
     def _perform_http(self, method, href, request_body='', headers={},

@@ -43,7 +43,13 @@ def parse_args():
     )
     parser.add_argument(
         '--order-id',
+        default=None,
         help='ID of order'
+    )
+    parser.add_argument(
+        '--order-href',
+        default=None,
+        help='href of order'
     )
 
     args = parser.parse_args()
@@ -53,5 +59,8 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     conn = connect(args.username, args.password, args.tenant, args.endpoint)
-    order = conn.get_order(args.order_id)
+    if args.order_id is not None:
+        order = conn.get_order_by_id(args.order_id)
+    else:
+        order = conn.get_order(args.order_href)
     print order

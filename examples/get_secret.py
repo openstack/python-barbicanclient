@@ -43,7 +43,13 @@ def parse_args():
     )
     parser.add_argument(
         '--secret-id',
+        default=None,
         help='ID of secret'
+    )
+    parser.add_argument(
+        '--secret-href',
+        default=None,
+        help='href of secret'
     )
     parser.add_argument(
         '--mime-type',
@@ -59,7 +65,13 @@ if __name__ == '__main__':
     args = parse_args()
     conn = connect(args.username, args.password, args.tenant, args.endpoint)
     if args.mime_type is not None:
-        s = conn.get_raw_secret(args.secret_id, args.mime_type)
+        if args.secret_id is not None:
+            s = conn.get_raw_secret_by_id(args.secret_id, args.mime_type)
+        else:
+            s = conn.get_raw_secret(args.secret_href, args.mime_type)
     else:
-        s = conn.get_secret(args.secret_id)
+        if args.secret_id is not None:
+            s = conn.get_secret_by_id(args.secret_id)
+        else:
+            s = conn.get_secret(args.secret_href)
     print s

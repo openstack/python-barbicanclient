@@ -14,7 +14,7 @@ def list_secrets(username, password, tenant, endpoint):
                                    endpoint=endpoint)
     secrets = connection.list_secrets()
 
-    print 'Current Secrets (%d):' % (len(secrets))
+    print 'Current Secrets ({0}):'.format(len(secrets))
     for secret in secrets:
         print secret
 

@@ -4,19 +4,19 @@ from openstack.common.timeutils import parse_isotime
 
 class Order(object):
 
-    def __init__(self, connection, dict):
+    def __init__(self, connection, order_dict):
         """
         Builds an order object from a json representation. Includes the
         connection object for subtasks.
         """
         self.connection = connection
-        self.status = dict.get('status')
-        self.secret = dict.get('secret')  # TODO: figure out what to do here
-        self.secret_ref = dict.get('secret_ref')
-        self.order_ref = dict.get('order_ref')
-        self.created = parse_isotime(dict.get('created'))
-        if dict.get('updated') is not None:
-            self.updated = parse_isotime(dict['updated'])
+        self.status = order_dict.get('status')
+        self.secret = order_dict.get('secret')  # TODO: store as object?
+        self.secret_ref = order_dict.get('secret_ref')
+        self.order_ref = order_dict.get('order_ref')
+        self.created = parse_isotime(order_dict.get('created'))
+        if order_dict.get('updated') is not None:
+            self.updated = parse_isotime(order_dict['updated'])
         else:
             self.updated = None
 

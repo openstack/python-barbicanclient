@@ -43,7 +43,13 @@ def parse_args():
     )
     parser.add_argument(
         '--secret-id',
+        default=None,
         help='ID of secret'
+    )
+    parser.add_argument(
+        '--secret-href',
+        default=None,
+        help='href of secret'
     )
 
     args = parser.parse_args()
@@ -53,4 +59,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     conn = connect(args.username, args.password, args.tenant, args.endpoint)
-    conn.delete_secret(args.secret_id)
+    if args.secret_id is not None:
+        conn.delete_secret_by_id(args.secret_id)
+    else:
+        conn.delete_secret(args.secret_href)
