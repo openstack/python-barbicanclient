@@ -17,6 +17,8 @@ class Order(object):
         self.created = parse_isotime(dict.get('created'))
         if dict.get('updated') is not None:
             self.updated = parse_isotime(dict['updated'])
+        else:
+            self.updated = None
 
         self._id = urlparse(self.order_ref).path.split('/').pop()
 
