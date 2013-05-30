@@ -26,15 +26,24 @@ def read(fname):
 
 setuptools.setup(
     name=name,
-    version="0.1",
+    version="0.1dev",
     description='Client Library for OpenStack Barbican Key Management API',
     long_description=read('README.md'),
+    keywords="openstack encryption key-management secret",
     url='https://github.com/cloudkeep/barbican',
     license='Apache License (2.0)',
     author='OpenStack, LLC.',
     author_email='openstack-admins@lists.launchpad.net',
-    packages=setuptools.find_packages(exclude=['tests', 'tests.*']),
-    install_requires=['eventlet', 'requests', 'python-keystoneclient'],
+    packages=setuptools.find_packages(exclude=['tests', 'tests.*', 'examples', 'examples.*']),
+    install_requires=[
+        'eventlet>=0.12.1',
+        'httplib2>=0.7.7',
+        'argparse>=1.2.1',
+        'python-keystoneclient>=0.2.3',
+        'iso8601>=0.1.4'
+    ],
+    test_suite='nose.collector',
+    tests_require=['nose'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
