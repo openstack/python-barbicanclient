@@ -6,32 +6,37 @@ class Secret(object):
     """
     A secret is any data the user has stored in the key management system.
     """
-    def __init__(self, connection, dict):
+    def __init__(self, connection, secret_dict):
         """
-        Builds a secret object from a json representation. Includes the connection object for subtasks.
+        Builds a secret object from a json representation. Includes the
+        connection object for subtasks.
         """
         self._connection = connection
-        self._href = dict['secret_ref']
-        self._created = parse_isotime(dict['created'])
-        self._status = dict['status']
+        self.secret_ref = secret_dict['secret_ref']
+        self.created = parse_isotime(secret_dict['created'])
+        self.status = secret_dict['status']
 
-        self._algorithm = dict.get('algorithm')
-        self._bit_length = dict.get('bit_length')
-        self._mime_type = dict.get('mime_type')
-        self._name = dict.get('name')
-        self._cypher_type = dict.get('cypher_type')
+        self.algorithm = secret_dict.get('algorithm')
+        self.bit_length = secret_dict.get('bit_length')
+        self.mime_type = secret_dict.get('mime_type')
+        self.name = secret_dict.get('name')
+        self.cypher_type = secret_dict.get('cypher_type')
 
-        if dict.get('expiration') is not None:
-            self._expiration = parse_isotime(dict['expiration'])
+        if secret_dict.get('expiration') is not None:
+            self.expiration = parse_isotime(secret_dict['expiration'])
+        else:
+            self.expiration = None
 
-        if dict.get('updated') is not None:
-            self._updated = parse_isotime(dict['updated'])
+        if secret_dict.get('updated') is not None:
+            self.updated = parse_isotime(secret_dict['updated'])
+        else:
+            self.updated = None
 
-        self._id = urlparse(self._href).path.split('/').pop()
+        self._id = urlparse(self.secret_ref).path.split('/').pop()
 
     @property
     def id(self):
         return self._id
 
-    def __repr__(self):
+    def __str__(self):
         return "<Secret %s>" % self.id
