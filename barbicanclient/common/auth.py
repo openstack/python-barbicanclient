@@ -14,7 +14,7 @@ def authenticate(auth_url, user, key, tenant, **kwargs):
     :param auth_url: The keystone auth endpoint to use
     :param user: The username to use for auth
     :param key: The apikey to use for authentiation
-    :param endpoint: The Marconi endpoint to use. IOW, don't
+    :param endpoint: The Barbican endpoint to use. IOW, don't
         look up an endpoint in the service catalog, just use
         this one instead.
     :param tenant_name: The optional tenant-name to use
@@ -26,7 +26,7 @@ def authenticate(auth_url, user, key, tenant, **kwargs):
         the service catalog
     :param region_name The region to pass for authentication
 
-    :returns: Tuple containing Marconi endpoint and token
+    :returns: Tuple containing Barbican endpoint and token
 
     :raises: ClientException
     """
