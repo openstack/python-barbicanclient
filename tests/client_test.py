@@ -39,9 +39,14 @@ class WhenTestingConnection(unittest.TestCase):
 
         self.authenticate = MagicMock()
         self.authenticate.return_value = (self.endpoint, self.auth_token)
+        self.request = MagicMock()
+        self.request.return_value.content = {"secret_ref": "http://localhost:9"
+                                             + "311/v1/None/secrets/ea1bb4e5-"
+                                             + "e769-4d2c-8e58-cbbb17f1a3de"}
+        self.request.return_value.ok = True
         self.connection = Connection(self.auth_endpoint, self.user, self.key,
-                                     self.tenant, self.authenticate,
-                                     token=self.auth_token)
+                                     self.tenant, token=self.auth_token,
+                                     authenticate=self.authenticate,)
 
     def test_should_connect_with_token(self):
         self.assertFalse(self.authenticate.called)
@@ -51,7 +56,7 @@ class WhenTestingConnection(unittest.TestCase):
                                      self.user,
                                      self.key,
                                      self.tenant,
-                                     self.authenticate,
+                                     authenticate=self.authenticate,
                                      endpoint=self.endpoint
                                      )
         self.authenticate\

@@ -25,7 +25,7 @@ class Connection(object):
     ORDERS_PATH = 'orders'
 
     def __init__(self, auth_endpoint, user, key, tenant,
-                 authenticate=None, token=None, **kwargs):
+                 token=None, authenticate=None, request=None, **kwargs):
         """
         :param auth_endpoint: The auth URL to authenticate against
         :param user: The user to authenticate as
@@ -36,6 +36,7 @@ class Connection(object):
 
         self._auth_endpoint = auth_endpoint
         self.authenticate = authenticate or auth.authenticate
+        self.request = request or requests.request
         self._user = user
         self._key = key
         self._tenant = tenant
@@ -112,7 +113,7 @@ class Connection(object):
         href = "{0}/{1}?limit=100".format(self._tenant, self.SECRETS_PATH)
         LOG.debug("href: {}".format(href))
         hdrs, body = self._perform_http(href=href, method='GET')
-        LOG.debug("Response - headers: {0}\nbody: {1}".format(hdrs, body))
+        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
         secrets_dict = body['secrets']
         secrets = []
@@ -129,9 +130,9 @@ class Connection(object):
                       bit_length=None,
                       cypher_type=None,
                       expiration=None):
-        LOG.debug(_("Creating secret of mime_type {}".format(mime_type)))
+        LOG.debug(_("Creating secret of mime_type {}").format(mime_type))
         href = "{0}/{1}".format(self._tenant, self.SECRETS_PATH)
-        LOG.debug("href: {}".format(href))
+        LOG.debug(_("href: {}").format(href))
         secret_dict = {}
         secret_dict['mime_type'] = mime_type
         secret_dict['plain_text'] = plain_text
@@ -142,39 +143,39 @@ class Connection(object):
             secret_dict['bit_length'] = int(bit_length)
         if expiration is not None:
             secret_dict['expiration'] = parse_isotime(expiration)
-        for k in secret_dict.keys():
-            if secret_dict[k] is None:
-                secret_dict.pop(k)
-        LOG.debug("Request body: ".format(secret_dict))
+        #(secret_dict.pop(k) for k in secret_dict.keys() if secret_dict[k] is None)
+        self._remove_empty_keys(secret_dict)
+        #LOG.critical("DICT: {}".format(secret_dict))
+        LOG.debug(_("Request body: {}").format(secret_dict))
         hdrs, body = self._perform_http(href=href,
                                         method='POST',
                                         request_body=json.dumps(secret_dict))
-        LOG.debug("Response - headers: {0}\nbody: {1}".format(hdrs, body))
+        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
         return body['secret_ref']
         #return Secret(self, body)
 
     def delete_secret_by_id(self, secret_id):
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
-        LOG.info(_("Deleting secret - Secret ID: {}".format(secret_id)))
+        LOG.info(_("Deleting secret - Secret ID: {}").format(secret_id))
         return self.delete_secret(href)
 
     def delete_secret(self, href):
         hdrs, body = self._perform_http(href=href, method='DELETE')
-        LOG.debug("Response - headers: {0}\nbody: {1}".format(hdrs, body))
+        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
     def get_secret_by_id(self, secret_id):
-        LOG.debug(_("Getting secret - Secret ID: {}".format(secret_id)))
+        LOG.debug(_("Getting secret - Secret ID: {}").format(secret_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
         return self.get_secret(href)
 
     def get_secret(self, href):
         hdrs, body = self._perform_http(href=href, method='GET')
-        LOG.debug("Response - headers: {0}\nbody: {1}".format(hdrs, body))
+        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
         return Secret(self._conn, body)
 
     def get_raw_secret_by_id(self, secret_id, mime_type):
-        LOG.debug(_("Getting raw secret - Secret ID: {0}".format(secret_id)))
+        LOG.debug(_("Getting raw secret - Secret ID: {0}").format(secret_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
         return self.get_raw_secret(href, mime_type)
 
@@ -182,7 +183,7 @@ class Connection(object):
         hdrs = {"Accept": mime_type}
         hdrs, body = self._perform_http(href=href, method='GET', headers=hdrs,
                                         parse_json=False)
-        LOG.debug("Response - headers: {0}\nbody: {1}".format(hdrs, body))
+        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
         return body
 
     def list_orders(self):
@@ -193,7 +194,7 @@ class Connection(object):
         href = "{0}/{1}?limit=100".format(self._tenant, self.ORDERS_PATH)
         LOG.debug("href: {}".format(href))
         hdrs, body = self._perform_http(href=href, method='GET')
-        LOG.debug("Response - headers: {0}\nbody: {1}".format(hdrs, body))
+        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
         orders_dict = body['orders']
         orders = []
@@ -208,7 +209,7 @@ class Connection(object):
                      algorithm=None,
                      bit_length=None,
                      cypher_type=None):
-        LOG.debug(_("Creating order of mime_type {}".format(mime_type)))
+        LOG.debug(_("Creating order of mime_type {}").format(mime_type))
         href = "{0}/{1}".format(self._tenant, self.ORDERS_PATH)
         LOG.debug("href: {}".format(href))
         order_dict = {'secret': {}}
@@ -217,33 +218,36 @@ class Connection(object):
         order_dict['secret']['algorithm'] = algorithm
         order_dict['secret']['bit_length'] = bit_length
         order_dict['secret']['cypher_type'] = cypher_type
-        for k in order_dict['secret'].keys():
-            if order_dict['secret'][k] is None:
-                order_dict['secret'].pop(k)
-        LOG.debug("Request body: {}".format(order_dict['secret']))
+        self._remove_empty_keys(order_dict['secret'])
+        LOG.debug(_("Request body: {}").format(order_dict['secret']))
         hdrs, body = self._perform_http(href=href,
                                         method='POST',
                                         request_body=json.dumps(order_dict))
         return body['order_ref']
 
     def delete_order_by_id(self, order_id):
-        LOG.info(_("Deleting order - Order ID: {}".format(order_id)))
+        LOG.info(_("Deleting order - Order ID: {}").format(order_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
         return self.delete_order(href)
 
     def delete_order(self, href):
         hdrs, body = self._perform_http(href=href, method='DELETE')
-        LOG.debug("Response - headers: {0}\nbody: {1}".format(hdrs, body))
+        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
     def get_order_by_id(self, order_id):
-        LOG.debug(_("Getting order - Order ID: {}".format(order_id)))
+        LOG.debug(_("Getting order - Order ID: {}").format(order_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
         return self.get_order(href)
 
     def get_order(self, href):
         hdrs, body = self._perform_http(href=href, method='GET')
-        LOG.debug("Response - headers: {0}\nbody: {1}".format(hdrs, body))
+        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
         return Order(self._conn, body)
+
+    def _remove_empty_keys(self, dictionary):
+        for k in dictionary.keys():
+            if dictionary[k] is None:
+                dictionary.pop(k)
 
     def _perform_http(self, method, href, request_body='', headers={},
                       parse_json=True):
@@ -262,12 +266,13 @@ class Connection(object):
 
         url = urljoin(self._endpoint, href)
 
-        response = requests.request(method=method, url=url, data=request_body,
-                                    headers=headers)
+        response = self.request(method=method, url=url, data=request_body,
+                                headers=headers)
 
+        LOG.critical("Response: {}".format(response.content))
         # Check if the status code is 2xx class
         if not response.ok:
-            LOG.error('Response status code was bad')
+            LOG.error('Bad response: {}'.format(response.status_code))
             raise ClientException(href=href, method=method,
                                   http_status=response.status_code,
                                   http_response_content=response.content)
