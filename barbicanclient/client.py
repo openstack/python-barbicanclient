@@ -8,7 +8,7 @@ from barbicanclient.common import config
 from barbicanclient.secrets import Secret
 from barbicanclient.orders import Order
 from barbicanclient.common import auth
-from barbicanclient.openstack.common import log
+from barbicanclient.openstack.common import log, timeutils
 from barbicanclient.common.exceptions import ClientException
 from barbicanclient.openstack.common.gettextutils import _
 from openstack.common.timeutils import parse_isotime
@@ -43,6 +43,7 @@ class Connection(object):
         self._endpoint = (kwargs.get('endpoint')
                           or 'https://barbican.api.rackspacecloud.com/v1/')
         self._cacert = kwargs.get('cacert')
+        self.log = LOG
 
         self.connect(token=token)
 
@@ -143,17 +144,18 @@ class Connection(object):
             secret_dict['bit_length'] = int(bit_length)
         if expiration is not None:
             secret_dict['expiration'] = parse_isotime(expiration)
-        #(secret_dict.pop(k) for k in secret_dict.keys() if secret_dict[k] is None)
+        secret_dict['created'] = str(timeutils.utcnow())
+        secret_dict['status'] = 'created'
         self._remove_empty_keys(secret_dict)
-        #LOG.critical("DICT: {}".format(secret_dict))
         LOG.debug(_("Request body: {}").format(secret_dict))
         hdrs, body = self._perform_http(href=href,
                                         method='POST',
                                         request_body=json.dumps(secret_dict))
-        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
-        return body['secret_ref']
-        #return Secret(self, body)
+        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
+        #LOG.critical("MYSECRETTTTT: {}".format(self.get_secret(body['secret_ref']).created))
+
+        return self.get_secret(body['secret_ref'])
 
     def delete_secret_by_id(self, secret_id):
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
@@ -205,9 +207,9 @@ class Connection(object):
 
     def create_order(self,
                      mime_type,
-                     name=None,
                      algorithm=None,
                      bit_length=None,
+                     name=None,
                      cypher_type=None):
         LOG.debug(_("Creating order of mime_type {}").format(mime_type))
         href = "{0}/{1}".format(self._tenant, self.ORDERS_PATH)
@@ -223,7 +225,10 @@ class Connection(object):
         hdrs, body = self._perform_http(href=href,
                                         method='POST',
                                         request_body=json.dumps(order_dict))
-        return body['order_ref']
+
+        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
+
+        return self.get_order(body['order_ref'])
 
     def delete_order_by_id(self, order_id):
         LOG.info(_("Deleting order - Order ID: {}").format(order_id))
@@ -269,7 +274,6 @@ class Connection(object):
         response = self.request(method=method, url=url, data=request_body,
                                 headers=headers)
 
-        LOG.critical("Response: {}".format(response.content))
         # Check if the status code is 2xx class
         if not response.ok:
             LOG.error('Bad response: {}'.format(response.status_code))
