@@ -43,7 +43,6 @@ class Connection(object):
         self._endpoint = (kwargs.get('endpoint')
                           or 'https://barbican.api.rackspacecloud.com/v1/')
         self._cacert = kwargs.get('cacert')
-        self.log = LOG
 
         self.connect(token=token)
 
@@ -153,7 +152,6 @@ class Connection(object):
                                         request_body=json.dumps(secret_dict))
 
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
-        #LOG.critical("MYSECRETTTTT: {}".format(self.get_secret(body['secret_ref']).created))
 
         return self.get_secret(body['secret_ref'])
 
