@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
 import json
+import unittest
 
 from mock import MagicMock
 
-from barbicanclient.client import Connection, Order, Secret
 from barbicanclient.common.exceptions import ClientException
+import barbicanclient.client as client
 
 
 def suite():
@@ -38,6 +38,7 @@ class WhenTestingConnection(unittest.TestCase):
         self.tenant = 'tenant'
         self.endpoint = 'http://localhost:9311/v1/'
         self.auth_token = 'token'
+        self.href = 'http://localhost:9311/v1/12345/orders'
 
         self.authenticate = MagicMock()
         self.authenticate.return_value = (self.endpoint, self.auth_token)
@@ -57,22 +58,22 @@ class WhenTestingConnection(unittest.TestCase):
             'req-6c19d09e-1167-445c-b435-d6b0818b59b9'
         }
         self.request.return_value.ok = True
-        self.connection = Connection(self.auth_endpoint, self.user, self.key,
-                                     self.tenant, token=self.auth_token,
-                                     authenticate=self.authenticate,
-                                     request=self.request)
+        self.connection = client.Connection(self.auth_endpoint, self.user,
+                                            self.key, self.tenant,
+                                            token=self.auth_token,
+                                            authenticate=self.authenticate,
+                                            request=self.request)
 
     def test_should_connect_with_token(self):
         self.assertFalse(self.authenticate.called)
 
     def test_should_connect_without_token(self):
-        self.connection = Connection(self.auth_endpoint,
-                                     self.user,
-                                     self.key,
-                                     self.tenant,
-                                     authenticate=self.authenticate,
-                                     endpoint=self.endpoint
-                                     )
+        self.connection = client.Connection(self.auth_endpoint,
+                                            self.user,
+                                            self.key,
+                                            self.tenant,
+                                            authenticate=self.authenticate,
+                                            endpoint=self.endpoint)
         self.authenticate\
             .assert_called_once_with(self.auth_endpoint,
                                      self.user,
@@ -103,7 +104,7 @@ class WhenTestingConnection(unittest.TestCase):
                 'mime_type': 'text/plain'
                 }
 
-        secret = Secret(self.connection, body)
+        secret = client.Secret(self.connection, body)
         self.request.return_value.content = json.dumps(body)
         created = self.connection.create_secret('text/plain',
                                                 'Test secret',
@@ -132,7 +133,7 @@ class WhenTestingConnection(unittest.TestCase):
                              "2f53-4c0a-a0f3-33796671efc3"
                 }
 
-        order = Order(self.connection, body)
+        order = client.Order(self.connection, body)
         self.request.return_value.content = json.dumps(body)
         created = self.connection.create_order('text/plain',
                                                name='test_secret',
@@ -141,12 +142,13 @@ class WhenTestingConnection(unittest.TestCase):
                                                cypher_type='CDC')
         self.assertEqual(order, created)
 
-    def test_should_list_secrets(self):
+    def test_list_no_secrets(self):
         body0 = {'secrets': []}
         secrets = []
         self.request.return_value.content = json.dumps(body0)
         self.assertEquals(secrets, self.connection.list_secrets())
 
+    def test_list_single_secret(self):
         body1 = {'secrets': [{'status': 'ACTIVE',
                              'content_types': {'default': 'text/plain'},
                              'updated': '2013-06-03T21:16:58.349230',
@@ -160,34 +162,44 @@ class WhenTestingConnection(unittest.TestCase):
                              'expiration': None,
                              'bit_length': None,
                              'mime_type': 'text/plain'}]}
-        secrets.append(Secret(self.connection, body1['secrets'][0]))
+        secrets = [client.Secret(self.connection, body1['secrets'][0])]
         self.request.return_value.content = json.dumps(body1)
         self.assertEquals(secrets, self.connection.list_secrets())
 
-        body2 = {'secrets': [{'status': 'ACTIVE',
-                             'content_types': {'default': 'text/plain'},
-                             'updated': '2013-07-03T21:17:58.349230',
-                             'cypher_type': None,
-                             'name': 'test_2',
-                             'algorithm': 'aes',
-                             'created': '2013-06-03T21:16:58.349222',
-                             'secret_ref': 'http://localhost:9311/v1/'
-                                           'None/secrets/bbd2036f-730'
-                                           '7-4090-bbef-bbb6025eabcd',
-                             'expiration': None,
-                             'bit_length': None,
-                             'mime_type': 'text/plain'}]}
-        secrets.append(Secret(self.connection, body2['secrets'][0]))
+    def test_list_multiple_secrets(self):
+        body1 = {'secrets': [{'status': 'ACTIVE',
+                 'content_types': {'default': 'text/plain'},
+                 'updated': '2013-06-03T21:16:58.349230',
+                 'cypher_type': None,
+                 'name': 'test_1',
+                 'algorithm': None,
+                 'created': '2013-06-03T21:16:58.349222',
+                 'secret_ref': 'http://localhost:9311/v1/'
+                               'None/secrets/bbd2036f-730'
+                               '7-4090-bbef-bbb6025e5e7b',
+                 'expiration': None,
+                 'bit_length': None,
+                 'mime_type': 'text/plain'}]}
+
+        body2 = body1
+        body2['secrets'][0]['name'] = 'test_2'
+        body2['secrets'][0]['secret_ref'] = 'http://localhost:9311/v1/No'\
+                                            + 'ne/secrets/bbd2036f-7307-'\
+                                            + '4090-bbef-bbb6025eabcd'
+
+        secrets = [client.Secret(self.connection, b['secrets'][0])
+                   for b in (body1, body2)]
         body2['secrets'].insert(0, body1['secrets'][0])
         self.request.return_value.content = json.dumps(body2)
         self.assertEquals(secrets, self.connection.list_secrets())
 
-    def test_should_list_orders(self):
+    def test_list_no_orders(self):
         body0 = {'orders': []}
         orders = []
         self.request.return_value.content = json.dumps(body0)
         self.assertEquals(orders, self.connection.list_orders())
 
+    def test_list_single_order(self):
         body1 = {'orders': [{'status': 'PENDING',
                              'updated': '2013-06-05T15:15:30.904760',
                              'created': '2013-06-05T15:15:30.904752',
@@ -202,50 +214,65 @@ class WhenTestingConnection(unittest.TestCase):
                                         'expiration': None,
                                         'bit_length': None,
                                         'mime_type': 'text/plain'}}]}
-        orders.append(Order(self.connection, body1['orders'][0]))
+        orders = [client.Order(self.connection, body1['orders'][0])]
         self.request.return_value.content = json.dumps(body1)
         self.assertEquals(orders, self.connection.list_orders())
 
-        body2 = {'orders': [{'status': 'ACTIVE',
-                             'updated': '2013-07-05T15:15:30.904938',
-                             'created': '2013-07-05T15:15:30.904752',
+    def test_list_multiple_orders(self):
+        body1 = {'orders': [{'status': 'PENDING',
+                             'updated': '2013-06-05T15:15:30.904760',
+                             'created': '2013-06-05T15:15:30.904752',
                              'order_ref': 'http://localhost:9311/v1/'
                                           'None/orders/9f651441-3ccd'
-                                          '-45b3-bc60-3051656382fj',
+                                          '-45b3-bc60-3051656d5168',
                              'secret_ref': 'http://localhost:9311/'
                                            'v1/None/secrets/????',
                              'secret': {'cypher_type': None,
-                                        'name': 'test_2',
+                                        'name': 'test_1',
                                         'algorithm': None,
                                         'expiration': None,
                                         'bit_length': None,
                                         'mime_type': 'text/plain'}}]}
-        orders.append(Order(self.connection, body2['orders'][0]))
+        body2 = body1
+        body2['orders'][0]['order_ref'] = 'http://localhost:9311/v1/No'\
+                                          + 'ne/orders/9f651441-3ccd-4'\
+                                          + '5b3-bc60-3051656382fj'
+        body2['orders'][0]['secret']['name'] = 'test_2'
+
+        orders = [client.Order(self.connection, b['orders'][0])
+                  for b in (body1, body2)]
         body2['orders'].insert(0, body1['orders'][0])
         self.request.return_value.content = json.dumps(body2)
         self.assertEquals(orders, self.connection.list_orders())
 
-    def test_should_perform_http(self):
-        href = 'http://localhost:9311/v1/12345/orders'
-        self.request.return_value.headers = {'Accept': 'application/json'}
-        self.request.return_value.content = ''
-        headers, body = self.connection._perform_http('GET', href)
+    def test_should_get_response(self):
+        self._setup_request()
+        headers, body = self.connection._perform_http('GET', self.href)
         self.assertEqual(self.request.return_value.headers, headers)
-        self.assertEqual(self.request.return_value.content, body)
+        self.assertEqual(json.loads(self.request.return_value.content), body)
 
-        self.request.return_value.content = '{"test": "response"}'
-
-        headers, body = self.connection._perform_http('GET', href,
+    def test_should_parse_json(self):
+        self._setup_request()
+        headers, body = self.connection._perform_http('GET', self.href,
                                                       parse_json=True)
         self.assertEqual(json.loads(self.request.return_value.content), body)
 
-        headers, body = self.connection._perform_http('GET', href,
+    def test_should_not_parse_json(self):
+        self._setup_request()
+        headers, body = self.connection._perform_http('GET', self.href,
                                                       parse_json=False)
         self.assertEqual(self.request.return_value.content, body)
 
+    def test_should_raise_exception(self):
+        self._setup_request()
         self.request.return_value.ok = False
         with self.assertRaises(ClientException):
-            self.connection._perform_http('GET', href)
+            self.connection._perform_http('GET', self.href)
+
+    def _setup_request(self):
+        self.request.return_value.headers = {'Accept': 'application/json'}
+        self.request.return_value.content = '{"test": "response"}'
+        self.href = 'http://localhost:9311/v1/12345/orders'
 
 
 if __name__ == '__main__':
