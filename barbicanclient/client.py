@@ -15,8 +15,6 @@ from openstack.common.timeutils import parse_isotime
 from urlparse import urljoin
 
 
-config.parse_args()
-log.setup('barbicanclient')
 LOG = log.getLogger(__name__)
 
 
@@ -285,3 +283,7 @@ class Connection(object):
             resp_body = ''
 
         return response.headers, resp_body
+
+if __name__ == '__main__':
+    config.parse_args()
+    log.setup('barbicanclient')

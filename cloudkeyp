@@ -1,0 +1,93 @@
+#!/usr/bin/env python
+
+import argparse
+
+from barbicanclient import client
+
+
+class CloudKeyp:
+    def __init__(self):
+        self.parser = argparse.ArgumentParser(description='Access the Barbican'
+                                              ' key management sevice.')
+        self.subparsers = self.parser.add_subparsers(title='subcommands',
+                                                     description=
+                                                     'Action to perform')
+        self.parser.add_argument('type',
+                                 choices=["order", "secret"],
+                                 help="Type to operate on")
+        self.parser.add_argument('--auth_endpoint', '-A',
+                                 help='The URL to authenticate against')
+        self.parser.add_argument('--user', '-U',
+                                 help='The user to authenticate as')
+        self.parser.add_argument('--password', '-P',
+                                 help='The API key or password to '
+                                 'authenticate with')
+        self.parser.add_argument('--tenant', '-T',
+                                 help='The tenant ID')
+        self.parser.add_argument('--endpoint', '-E',
+                                 help='The URL of the barbican server')
+        self.parser.add_argument('--token', '-K',
+                                 help='The authentication token')
+        self.add_create_args()
+        self.add_delete_args()
+        self.add_get_args()
+        self.add_list_args()
+
+        self.execute()
+
+    def add_create_args(self):
+        create_parser = self.subparsers.add_parser('create', help='Create a '
+                                                   'secret or an order')
+        create_parser.add_argument('--mime_type', '-m', default='text/plain',
+                                   help='The MIME type used to fetch the secre'
+                                   't (default: %(default)s)')
+        create_parser.add_argument('--name', '-n', help='A human-friendly name'
+                                   ' used only for reference')
+        create_parser.add_argument('--algorithm', '-a', help='The algorithm us'
+                                   'ed only for reference')
+        create_parser.add_argument('--bit_length', '-b', help='The bit length '
+                                   'of the secret used only for reference')
+        create_parser.add_argument('--cypher_type', '-c', help='The cypher typ'
+                                   'e used only for reference')
+        create_parser.add_argument('--plain_text', '-p', help='The unencrypted'
+                                   ' secret (only used for creating secrets)')
+        create_parser.add_argument('--expiration', '-e', help='Expiration time'
+                                   ' for the secret in ISO 8601 format')
+        create_parser.set_defaults(func=self.create)
+
+    def add_delete_args(self):
+        delete_parser = self.subparsers.add_parser('delete', help='Delete a se'
+                                                   'cret or an order')
+
+    def add_get_args(self):
+        get_parser = self.subparsers.add_parser('get', help='Retrieve a secret'
+                                                ' or an order')
+
+    def add_list_args(self):
+        list_parser = self.subparsers.add_parser('list',
+                                                 help='List secrets or orders')
+
+    def create(self, args):
+        if self.args.type == 'secret':
+            secret = self.conn.create_secret(self.args.mime_type,
+                                     self.args.plain_text, self.args.name,
+                                     self.args.algorithm, self.args.bit_length,
+                                     self.args.cypher_type, self.args.expiration)
+            print secret.secret_ref
+
+    def execute(self):
+        self.args = self.parser.parse_args()
+        self.conn = client.Connection(self.args.auth_endpoint, self.args.user,
+                                      self.args.password, self.args.tenant,
+                                      self.args.token,
+                                      endpoint=self.args.endpoint)
+        self.args.func(self.args)
+        print self.args
+
+
+def main():
+    CloudKeyp()
+
+
+if __name__ == '__main__':
+    main()
