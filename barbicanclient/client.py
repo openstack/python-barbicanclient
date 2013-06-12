@@ -203,9 +203,9 @@ class Connection(object):
 
     def create_order(self,
                      mime_type,
+                     name=None,
                      algorithm=None,
                      bit_length=None,
-                     name=None,
                      cypher_type=None):
         LOG.debug(_("Creating order of mime_type {0}").format(mime_type))
         href = "{0}/{1}".format(self._tenant, self.ORDERS_PATH)

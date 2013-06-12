@@ -18,8 +18,8 @@ import unittest
 
 from mock import MagicMock
 
+from barbicanclient import client
 from barbicanclient.common.exceptions import ClientException
-import barbicanclient.client as client
 
 
 def suite():
@@ -113,7 +113,7 @@ class WhenTestingConnection(unittest.TestCase):
                                                 bit_length=None,
                                                 cypher_type=None,
                                                 expiration=None)
-        self.assertEqual(secret, created)
+        self.assertTrue(self._are_equivalent(secret, created))
 
     def test_should_create_order(self):
         body = {"status": "ACTIVE",
@@ -140,13 +140,14 @@ class WhenTestingConnection(unittest.TestCase):
                                                bit_length=256,
                                                algorithm='aes',
                                                cypher_type='CDC')
-        self.assertEqual(order, created)
+        self.assertTrue(self._are_equivalent(order, created))
 
     def test_list_no_secrets(self):
         body0 = {'secrets': []}
         secrets = []
         self.request.return_value.content = json.dumps(body0)
-        self.assertEquals(secrets, self.connection.list_secrets())
+        self.assertTrue(self._are_equivalent(secrets,
+                                             self.connection.list_secrets()))
 
     def test_list_single_secret(self):
         body1 = {'secrets': [{'status': 'ACTIVE',
@@ -164,7 +165,8 @@ class WhenTestingConnection(unittest.TestCase):
                              'mime_type': 'text/plain'}]}
         secrets = [client.Secret(self.connection, body1['secrets'][0])]
         self.request.return_value.content = json.dumps(body1)
-        self.assertEquals(secrets, self.connection.list_secrets())
+        self.assertTrue(self._are_equivalent(secrets,
+                                             self.connection.list_secrets()))
 
     def test_list_multiple_secrets(self):
         body1 = {'secrets': [{'status': 'ACTIVE',
@@ -191,13 +193,15 @@ class WhenTestingConnection(unittest.TestCase):
                    for b in (body1, body2)]
         body2['secrets'].insert(0, body1['secrets'][0])
         self.request.return_value.content = json.dumps(body2)
-        self.assertEquals(secrets, self.connection.list_secrets())
+        self.assertTrue(self._are_equivalent(secrets,
+                                             self.connection.list_secrets()))
 
     def test_list_no_orders(self):
         body0 = {'orders': []}
         orders = []
         self.request.return_value.content = json.dumps(body0)
-        self.assertEquals(orders, self.connection.list_orders())
+        self.assertTrue(self._are_equivalent(orders,
+                                             self.connection.list_orders()))
 
     def test_list_single_order(self):
         body1 = {'orders': [{'status': 'PENDING',
@@ -216,7 +220,8 @@ class WhenTestingConnection(unittest.TestCase):
                                         'mime_type': 'text/plain'}}]}
         orders = [client.Order(self.connection, body1['orders'][0])]
         self.request.return_value.content = json.dumps(body1)
-        self.assertEquals(orders, self.connection.list_orders())
+        self.assertTrue(self._are_equivalent(orders,
+                                             self.connection.list_orders()))
 
     def test_list_multiple_orders(self):
         body1 = {'orders': [{'status': 'PENDING',
@@ -243,7 +248,8 @@ class WhenTestingConnection(unittest.TestCase):
                   for b in (body1, body2)]
         body2['orders'].insert(0, body1['orders'][0])
         self.request.return_value.content = json.dumps(body2)
-        self.assertEquals(orders, self.connection.list_orders())
+        self.assertTrue(self._are_equivalent(orders,
+                                             self.connection.list_orders()))
 
     def test_should_get_response(self):
         self._setup_request()
@@ -273,6 +279,12 @@ class WhenTestingConnection(unittest.TestCase):
         self.request.return_value.headers = {'Accept': 'application/json'}
         self.request.return_value.content = '{"test": "response"}'
         self.href = 'http://localhost:9311/v1/12345/orders'
+
+    def _are_equivalent(self, a, b):
+        if isinstance(a, list) and isinstance(b, list):
+            return all([self._are_equivalent(x, y) for x, y in zip(a, b)])
+        else:
+            return (a.__dict__ == b.__dict__)
 
 
 if __name__ == '__main__':
