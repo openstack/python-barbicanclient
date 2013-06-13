@@ -11,10 +11,10 @@ class Secret(object):
         Builds a secret object from a json representation. Includes the
         connection object for subtasks.
         """
-        self._connection = connection
+        self.connection = connection
         self.secret_ref = secret_dict['secret_ref']
-        self.created = parse_isotime(secret_dict['created'])
-        self.status = secret_dict['status']
+        self.created = parse_isotime(secret_dict.get('created'))
+        self.status = secret_dict.get('status')
 
         self.algorithm = secret_dict.get('algorithm')
         self.bit_length = secret_dict.get('bit_length')

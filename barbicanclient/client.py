@@ -111,7 +111,7 @@ class Connection(object):
         """
         LOG.debug(_("Listing secrets"))
         href = "{0}/{1}?limit=100".format(self._tenant, self.SECRETS_PATH)
-        LOG.debug("href: {}".format(href))
+        LOG.debug("href: {0}".format(href))
         hdrs, body = self._perform_http(href=href, method='GET')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
@@ -130,9 +130,9 @@ class Connection(object):
                       bit_length=None,
                       cypher_type=None,
                       expiration=None):
-        LOG.debug(_("Creating secret of mime_type {}").format(mime_type))
+        LOG.debug(_("Creating secret of mime_type {0}").format(mime_type))
         href = "{0}/{1}".format(self._tenant, self.SECRETS_PATH)
-        LOG.debug(_("href: {}").format(href))
+        LOG.debug(_("href: {0}").format(href))
         secret_dict = {}
         secret_dict['mime_type'] = mime_type
         secret_dict['plain_text'] = plain_text
@@ -143,21 +143,19 @@ class Connection(object):
             secret_dict['bit_length'] = int(bit_length)
         if expiration is not None:
             secret_dict['expiration'] = parse_isotime(expiration)
-        #(secret_dict.pop(k) for k in secret_dict.keys() if secret_dict[k] is None)
         self._remove_empty_keys(secret_dict)
-        #LOG.critical("DICT: {}".format(secret_dict))
-        LOG.debug(_("Request body: {}").format(secret_dict))
+        LOG.debug(_("Request body: {0}").format(secret_dict))
         hdrs, body = self._perform_http(href=href,
                                         method='POST',
                                         request_body=json.dumps(secret_dict))
+
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
-        return body['secret_ref']
-        #return Secret(self, body)
+        return self.get_secret(body['secret_ref'])
 
     def delete_secret_by_id(self, secret_id):
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
-        LOG.info(_("Deleting secret - Secret ID: {}").format(secret_id))
+        LOG.info(_("Deleting secret - Secret ID: {0}").format(secret_id))
         return self.delete_secret(href)
 
     def delete_secret(self, href):
@@ -165,7 +163,7 @@ class Connection(object):
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
     def get_secret_by_id(self, secret_id):
-        LOG.debug(_("Getting secret - Secret ID: {}").format(secret_id))
+        LOG.debug(_("Getting secret - Secret ID: {0}").format(secret_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
         return self.get_secret(href)
 
@@ -192,7 +190,7 @@ class Connection(object):
         """
         LOG.debug(_("Listing orders"))
         href = "{0}/{1}?limit=100".format(self._tenant, self.ORDERS_PATH)
-        LOG.debug("href: {}".format(href))
+        LOG.debug("href: {0}".format(href))
         hdrs, body = self._perform_http(href=href, method='GET')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
@@ -209,9 +207,9 @@ class Connection(object):
                      algorithm=None,
                      bit_length=None,
                      cypher_type=None):
-        LOG.debug(_("Creating order of mime_type {}").format(mime_type))
+        LOG.debug(_("Creating order of mime_type {0}").format(mime_type))
         href = "{0}/{1}".format(self._tenant, self.ORDERS_PATH)
-        LOG.debug("href: {}".format(href))
+        LOG.debug("href: {0}".format(href))
         order_dict = {'secret': {}}
         order_dict['secret']['name'] = name
         order_dict['secret']['mime_type'] = mime_type
@@ -219,14 +217,17 @@ class Connection(object):
         order_dict['secret']['bit_length'] = bit_length
         order_dict['secret']['cypher_type'] = cypher_type
         self._remove_empty_keys(order_dict['secret'])
-        LOG.debug(_("Request body: {}").format(order_dict['secret']))
+        LOG.debug(_("Request body: {0}").format(order_dict['secret']))
         hdrs, body = self._perform_http(href=href,
                                         method='POST',
                                         request_body=json.dumps(order_dict))
-        return body['order_ref']
+
+        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
+
+        return self.get_order(body['order_ref'])
 
     def delete_order_by_id(self, order_id):
-        LOG.info(_("Deleting order - Order ID: {}").format(order_id))
+        LOG.info(_("Deleting order - Order ID: {0}").format(order_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
         return self.delete_order(href)
 
@@ -235,7 +236,7 @@ class Connection(object):
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
     def get_order_by_id(self, order_id):
-        LOG.debug(_("Getting order - Order ID: {}").format(order_id))
+        LOG.debug(_("Getting order - Order ID: {0}").format(order_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
         return self.get_order(href)
 
@@ -269,10 +270,9 @@ class Connection(object):
         response = self.request(method=method, url=url, data=request_body,
                                 headers=headers)
 
-        LOG.critical("Response: {}".format(response.content))
         # Check if the status code is 2xx class
         if not response.ok:
-            LOG.error('Bad response: {}'.format(response.status_code))
+            LOG.error('Bad response: {0}'.format(response.status_code))
             raise ClientException(href=href, method=method,
                                   http_status=response.status_code,
                                   http_response_content=response.content)
