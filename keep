@@ -5,7 +5,7 @@ import argparse
 from barbicanclient import client
 
 
-class CloudKeyp:
+class Keep:
     def __init__(self):
         self.parser = argparse.ArgumentParser(description='Access the Barbican'
                                               ' key management sevice.')
@@ -70,9 +70,12 @@ class CloudKeyp:
     def create(self, args):
         if self.args.type == 'secret':
             secret = self.conn.create_secret(self.args.mime_type,
-                                     self.args.plain_text, self.args.name,
-                                     self.args.algorithm, self.args.bit_length,
-                                     self.args.cypher_type, self.args.expiration)
+                                             self.args.plain_text,
+                                             self.args.name,
+                                             self.args.algorithm,
+                                             self.args.bit_length,
+                                             self.args.cypher_type,
+                                             self.args.expiration)
             print secret.secret_ref
 
     def execute(self):
@@ -86,7 +89,7 @@ class CloudKeyp:
 
 
 def main():
-    CloudKeyp()
+    Keep()
 
 
 if __name__ == '__main__':

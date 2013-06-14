@@ -103,22 +103,46 @@ class Connection(object):
         self._token = value
         self._session.headers['X-Auth-Token'] = value
 
-    def list_secrets(self):
+    def list_secrets(self, limit=20, offset=0):
         """
-        Returns the list of secrets for the auth'd tenant
+        Returns a tuple containing three items: a list of secrets pertaining
+        to the given offset and limit, a reference to the previous set of
+        secrets, and a reference to the next set of secrets. Either of the
+        references may be None.
         """
-        LOG.debug(_("Listing secrets"))
-        href = "{0}/{1}?limit=100".format(self._tenant, self.SECRETS_PATH)
+        LOG.debug(_("Listing secrets - offset: {0}, limit: {1}").format(offset,
+                                                                        limit))
+        href = "{0}/{1}?limit={2}&offset={3}".format(self._tenant,
+                                                     self.SECRETS_PATH,
+                                                     limit, offset)
+        return self.list_secrets_by_href(href)
+
+    def list_secrets_by_href(self, href):
+        """
+        Returns a tuple containing three items: a list of secrets pertaining
+        to the offset and limit within href, a reference to the previous set
+        of secrets, and a reference to the next set of secrets. Either of the
+        references may be None.
+        """
+        LOG.debug(_("Listing secrets by href"))
         LOG.debug("href: {0}".format(href))
         hdrs, body = self._perform_http(href=href, method='GET')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
         secrets_dict = body['secrets']
-        secrets = []
-        for s in secrets_dict:
-            secrets.append(Secret(self._conn, s))
+        secrets = [Secret(self._conn, s) for s in secrets_dict]
 
-        return secrets
+        if 'previous' in body:
+            prev_ref = body['previous']
+        else:
+            prev_ref = None
+
+        if 'next' in body:
+            next_ref = body['next']
+        else:
+            next_ref = None
+
+        return secrets, prev_ref, next_ref
 
     def create_secret(self,
                       mime_type,
@@ -182,22 +206,46 @@ class Connection(object):
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
         return body
 
-    def list_orders(self):
+    def list_orders(self, limit=20, offset=0):
         """
-        Returns the list of orders
+        Returns a tuple containing three items: a list of orders pertaining
+        to the given offset and limit, a reference to the previous set of
+        orders, and a reference to the next set of orders. Either of the
+        references may be None.
         """
-        LOG.debug(_("Listing orders"))
-        href = "{0}/{1}?limit=100".format(self._tenant, self.ORDERS_PATH)
+        LOG.debug(_("Listing orders - offset: {0}, limit: {1}").format(offset,
+                                                                       limit))
+        href = "{0}/{1}?limit={2}&offset={3}".format(self._tenant,
+                                                     self.ORDERS_PATH,
+                                                     limit, offset)
+        return self.list_orders_by_href(href)
+
+    def list_orders_by_href(self, href):
+        """
+        Returns a tuple containing three items: a list of orders pertaining
+        to the offset and limit within href, a reference to the previous set
+        of orders, and a reference to the next set of orders. Either of the
+        references may be None.
+        """
+        LOG.debug(_("Listing orders by href"))
         LOG.debug("href: {0}".format(href))
         hdrs, body = self._perform_http(href=href, method='GET')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
         orders_dict = body['orders']
-        orders = []
-        for o in orders_dict:
-            orders.append(Order(self._conn, o))
+        orders = [Order(self._conn, o) for o in orders_dict]
 
-        return orders
+        if 'previous' in body:
+            prev_ref = body['previous']
+        else:
+            prev_ref = None
+
+        if 'next' in body:
+            next_ref = body['next']
+        else:
+            next_ref = None
+
+        return orders, prev_ref, next_ref
 
     def create_order(self,
                      mime_type,
