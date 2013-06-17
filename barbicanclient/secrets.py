@@ -39,4 +39,16 @@ class Secret(object):
         return self._id
 
     def __str__(self):
-        return "<Secret %s>" % self.id
+        return ("Secret - ID: {0}\n"
+                "         reference: {1}\n"
+                "         name: {2}\n"
+                "         created: {3}\n"
+                "         MIME type: {4}\n"
+                "         status: {5}\n"
+                "         bit length: {6}\n"
+                "         algorithm: {7}\n"
+                "         cypher type: {8}\n"
+                .format(self.id, self.secret_ref, self.name, self.created,
+                        self.mime_type, self.status, self.bit_length,
+                        self.algorithm, self.cypher_type)
+                )

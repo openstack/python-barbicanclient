@@ -16,6 +16,7 @@ from urlparse import urljoin
 
 
 LOG = log.getLogger(__name__)
+log.setup('barbicanclient')
 
 
 class Connection(object):
@@ -103,7 +104,7 @@ class Connection(object):
         self._token = value
         self._session.headers['X-Auth-Token'] = value
 
-    def list_secrets(self, limit=20, offset=0):
+    def list_secrets(self, limit=10, offset=0):
         """
         Returns a tuple containing three items: a list of secrets pertaining
         to the given offset and limit, a reference to the previous set of
@@ -206,7 +207,7 @@ class Connection(object):
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
         return body
 
-    def list_orders(self, limit=20, offset=0):
+    def list_orders(self, limit=10, offset=0):
         """
         Returns a tuple containing three items: a list of orders pertaining
         to the given offset and limit, a reference to the previous set of
@@ -334,4 +335,3 @@ class Connection(object):
 
 if __name__ == '__main__':
     config.parse_args()
-    log.setup('barbicanclient')

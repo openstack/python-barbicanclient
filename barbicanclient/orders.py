@@ -36,4 +36,11 @@ class Order(object):
         self.connection.delete_order(self)
 
     def __str__(self):
-        return "<Order %s>" % self.id
+        return ("Order - ID: {0}\n"
+                "        order reference: {1}\n"
+                "        secret reference: {2}\n"
+                "        created: {3}\n"
+                "        status: {4}\n"
+                .format(self.id, self.order_ref, self.secret_ref, self.created,
+                        self.status)
+                )
