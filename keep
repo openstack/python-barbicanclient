@@ -52,34 +52,26 @@ class Keep:
                                    'e used only for reference')
         create_parser.add_argument('--plain_text', '-p', help='the unencrypted'
                                    ' secret (only used for secrets)')
-        create_parser.add_argument('--expiration', '-e', help='expiration time'
-                                   ' for the secret in ISO 8601 format '
+        create_parser.add_argument('--expiration', '-e', help='the expiration '
+                                   'time for the secret in ISO 8601 format '
                                    '(only used for secrets)')
         create_parser.set_defaults(func=self.create)
 
     def add_delete_args(self):
         delete_parser = self.subparsers.add_parser('delete', help='Delete a se'
-                                                   'cret or an order either by'
-                                                   ' id or by href')
-        delete_parser.add_argument('--href', '-r', help='the reference to the '
-                                   'secret or order')
-        delete_parser.add_argument('--id', '-i', help='the id of the secret or'
-                                   'order')
+                                                   'cret or an order by provid'
+                                                   'ing its UUID')
+        delete_parser.add_argument('UUID', help='the universally unique identi'
+                                   'fier of the the secret or order')
         delete_parser.set_defaults(func=self.delete)
 
     def add_get_args(self):
         get_parser = self.subparsers.add_parser('get', help='Retrieve a secret'
-                                                ' or an order either by id or'
-                                                ' by href. The raw secret of '
-                                                'the type specified with --mi'
-                                                'me_type can be retrieved ins'
-                                                'tead for secrets using the -'
-                                                '-raw flag.')
-        get_parser.add_argument('--href', '-r', help='the reference to the '
-                                'secret or order')
-        get_parser.add_argument('--id', '-i', help='the id of the secret or'
-                                ' order')
-        get_parser.add_argument('--raw', '-w', help='if specified, gets the ra'
+                                                ' or an order by providing its'
+                                                ' UUID.')
+        get_parser.add_argument('UUID', help='the universally unique identi'
+                                'fier of the the secret or order')
+        get_parser.add_argument('--raw', '-r', help='if specified, gets the ra'
                                 'w secret of type specified with --mime_type ('
                                 'only used for secrets)', action='store_true')
         get_parser.add_argument('--mime_type', '-m', default='text/plain',
@@ -90,15 +82,16 @@ class Keep:
     def add_list_args(self):
         list_parser = self.subparsers.add_parser('list',
                                                  help='List secrets or orders')
-        list_parser.add_argument('--href', '-r', help='the reference to what i'
-                                 's to be listed; put in quotes to avoid unint'
-                                 'entional backgrounding by way of \'&\'')
         list_parser.add_argument('--limit', '-l', default=10, help='specify t'
-                                 'he number of items to list per page (defaul'
-                                 't: %(default)s; maximum: 100)', type=int)
+                                 'he limit to the number of items to list per'
+                                 ' page (default: %(default)s; maximum: 100)',
+                                 type=int)
         list_parser.add_argument('--offset', '-o', default=0, help='specify t'
                                  'he page offset (default: %(default)s)',
                                  type=int)
+        list_parser.add_argument('--URI', '-u', help='the full reference to '
+                                 'what is to be listed; put in quotes to avoid'
+                                 ' backgrounding when \'&\' is in the URI')
         list_parser.set_defaults(func=self.lst)
 
     def create(self, args):
@@ -110,58 +103,45 @@ class Keep:
                                              args.bit_length,
                                              args.cypher_type,
                                              args.expiration)
-            print secret.secret_ref
+            print secret
         else:
             order = self.conn.create_order(args.mime_type,
                                            args.name,
                                            args.algorithm,
                                            args.bit_length,
                                            args.cypher_type)
-            print order.order_ref
+            print order
 
     def delete(self, args):
         if args.type == 'secret':
-            if args.href:
-                self.conn.delete_secret(args.href)
-            elif args.id:
-                self.conn.delete_secret_by_id(args.id)
+            self.conn.delete_secret_by_id(args.UUID)
         else:
-            if args.href:
-                self.conn.delete_order(args.href)
-            elif args.id:
-                self.conn.delete_order_by_id(args.id)
+            self.conn.delete_order_by_id(args.UUID)
 
     def get(self, args):
         if args.type == 'secret':
-            if args.href and args.raw:
-                print self.conn.get_raw_secret(args.href, args.mime_type)
-            elif args.href:
-                print self.conn.get_secret(args.href)
-            elif args.id and args.raw:
-                print self.conn.get_raw_secret_by_id(args.id, args.mime_type)
-            elif args.id:
-                print self.conn.get_secret_by_id(args.id)
+            if args.raw:
+                print self.conn.get_raw_secret_by_id(args.UUID, args.mime_type)
+            else:
+                print self.conn.get_secret_by_id(args.UUID)
         else:
-            if args.href:
-                print self.conn.get_order(args.href)
-            elif args.id:
-                print self.conn.get_order_by_id(args.id)
+            print self.conn.get_order_by_id(args.UUID)
 
     def lst(self, args):
         if args.type == 'secret':
-            if args.href:
-                l = self.conn.list_secrets_by_href(args.href)
+            if args.URI:
+                l = self.conn.list_secrets_by_href(args.URI)
             else:
                 l = self.conn.list_secrets(args.limit, args.offset)
         else:
-            if args.href:
-                l = self.conn.list_orders_by_href(args.href)
+            if args.URI:
+                l = self.conn.list_orders_by_href(args.URI)
             else:
                 l = self.conn.list_orders(args.limit, args.offset)
         for i in l[0]:
             print i
-        print 'previous reference: ', l[1]
-        print 'next reference: ', l[2]
+        print 'Displayed {0} {1}s - offset: {2}'.format(len(l[0]), args.type,
+                                                        args.offset)
 
     def execute(self):
         args = self.parser.parse_args()

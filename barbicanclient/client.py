@@ -4,7 +4,6 @@ eventlet.monkey_patch(socket=True, select=True)
 import json
 import requests
 
-from barbicanclient.common import config
 from barbicanclient.secrets import Secret
 from barbicanclient.orders import Order
 from barbicanclient.common import auth
@@ -79,7 +78,7 @@ class Connection(object):
         self._session.verify = True
 
         if token:
-            LOG.warn(_("Bypassing authentication - using provided token"))
+            #LOG.warn(_("Bypassing authentication - using provided token"))
             self.auth_token = token
         else:
             LOG.debug(_("Authenticating token"))
@@ -332,6 +331,3 @@ class Connection(object):
             resp_body = ''
 
         return response.headers, resp_body
-
-if __name__ == '__main__':
-    config.parse_args()
