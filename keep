@@ -167,6 +167,7 @@ def env(*vars, **kwargs):
     Returns the first environment variable defined in vars, or
     returns the default defined in kwargs.
 
+    Source: Keystone's shell.py
     """
     for v in vars:
         value = os.environ.get(v, None)
