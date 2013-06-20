@@ -4,7 +4,6 @@ eventlet.monkey_patch(socket=True, select=True)
 import json
 import requests
 
-from barbicanclient.common import config
 from barbicanclient.secrets import Secret
 from barbicanclient.orders import Order
 from barbicanclient.common import auth
@@ -15,9 +14,8 @@ from openstack.common.timeutils import parse_isotime
 from urlparse import urljoin
 
 
-config.parse_args()
-log.setup('barbicanclient')
 LOG = log.getLogger(__name__)
+log.setup('barbicanclient')
 
 
 class Connection(object):
@@ -80,7 +78,6 @@ class Connection(object):
         self._session.verify = True
 
         if token:
-            LOG.warn(_("Bypassing authentication - using provided token"))
             self.auth_token = token
         else:
             LOG.debug(_("Authenticating token"))
@@ -105,22 +102,43 @@ class Connection(object):
         self._token = value
         self._session.headers['X-Auth-Token'] = value
 
-    def list_secrets(self):
+    def list_secrets(self, limit=10, offset=0):
         """
-        Returns the list of secrets for the auth'd tenant
+        Returns a tuple containing three items: a list of secrets pertaining
+        to the given offset and limit, a reference to the previous set of
+        secrets, and a reference to the next set of secrets. Either of the
+        references may be None.
         """
-        LOG.debug(_("Listing secrets"))
-        href = "{0}/{1}?limit=100".format(self._tenant, self.SECRETS_PATH)
+        LOG.debug(_("Listing secrets - offset: {0}, limit: {1}").format(offset,
+                                                                        limit))
+        href = "{0}/{1}?limit={2}&offset={3}".format(self._tenant,
+                                                     self.SECRETS_PATH,
+                                                     limit, offset)
+        return self.list_secrets_by_href(href)
+
+    def list_secrets_by_href(self, href):
+        """
+        Returns a tuple containing three items: a list of secrets pertaining
+        to the offset and limit within href, a reference to the previous set
+        of secrets, and a reference to the next set of secrets. Either of the
+        references may be None.
+        """
+        LOG.debug(_("Listing secrets by href"))
         LOG.debug("href: {0}".format(href))
+        if href is None:
+            return [], None, None
+
         hdrs, body = self._perform_http(href=href, method='GET')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
         secrets_dict = body['secrets']
-        secrets = []
-        for s in secrets_dict:
-            secrets.append(Secret(self._conn, s))
+        secrets = [Secret(self._conn, s) for s in secrets_dict]
 
-        return secrets
+        prev_ref = body.get('previous')
+
+        next_ref = body.get('next')
+
+        return secrets, prev_ref, next_ref
 
     def create_secret(self,
                       mime_type,
@@ -130,6 +148,18 @@ class Connection(object):
                       bit_length=None,
                       cypher_type=None,
                       expiration=None):
+        """
+        Creates and returns a Secret object with all of its metadata filled in.
+
+        arguments:
+            mime_type - The MIME type of the secret
+            plain_text - The unencrypted secret
+            name - A friendly name for the secret
+            algorithm - The algorithm the secret is used with
+            bit_length - The bit length of the secret
+            cypher_type - The cypher type (e.g. block cipher mode of operation)
+            expiration - The expiration time for the secret in ISO 8601 format
+        """
         LOG.debug(_("Creating secret of mime_type {0}").format(mime_type))
         href = "{0}/{1}".format(self._tenant, self.SECRETS_PATH)
         LOG.debug(_("href: {0}").format(href))
@@ -154,52 +184,91 @@ class Connection(object):
         return self.get_secret(body['secret_ref'])
 
     def delete_secret_by_id(self, secret_id):
+        """
+        Deletes a secret using its UUID
+        """
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
         LOG.info(_("Deleting secret - Secret ID: {0}").format(secret_id))
         return self.delete_secret(href)
 
     def delete_secret(self, href):
+        """
+        Deletes a secret using its full reference
+        """
         hdrs, body = self._perform_http(href=href, method='DELETE')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
     def get_secret_by_id(self, secret_id):
+        """
+        Returns a Secret object using the secret's UUID
+        """
         LOG.debug(_("Getting secret - Secret ID: {0}").format(secret_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
         return self.get_secret(href)
 
     def get_secret(self, href):
+        """
+        Returns a Secret object using the secret's full reference
+        """
         hdrs, body = self._perform_http(href=href, method='GET')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
         return Secret(self._conn, body)
 
     def get_raw_secret_by_id(self, secret_id, mime_type):
+        """
+        Returns the raw secret using the secret's UUID and MIME type
+        """
         LOG.debug(_("Getting raw secret - Secret ID: {0}").format(secret_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
         return self.get_raw_secret(href, mime_type)
 
     def get_raw_secret(self, href, mime_type):
+        """
+        Returns the raw secret using the secret's UUID and MIME type
+        """
         hdrs = {"Accept": mime_type}
         hdrs, body = self._perform_http(href=href, method='GET', headers=hdrs,
                                         parse_json=False)
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
         return body
 
-    def list_orders(self):
+    def list_orders(self, limit=10, offset=0):
         """
-        Returns the list of orders
+        Returns a tuple containing three items: a list of orders pertaining
+        to the given offset and limit, a reference to the previous set of
+        orders, and a reference to the next set of orders. Either of the
+        references may be None.
         """
-        LOG.debug(_("Listing orders"))
-        href = "{0}/{1}?limit=100".format(self._tenant, self.ORDERS_PATH)
+        LOG.debug(_("Listing orders - offset: {0}, limit: {1}").format(offset,
+                                                                       limit))
+        href = "{0}/{1}?limit={2}&offset={3}".format(self._tenant,
+                                                     self.ORDERS_PATH,
+                                                     limit, offset)
+        return self.list_orders_by_href(href)
+
+    def list_orders_by_href(self, href):
+        """
+        Returns a tuple containing three items: a list of orders pertaining
+        to the offset and limit within href, a reference to the previous set
+        of orders, and a reference to the next set of orders. Either of the
+        references may be None.
+        """
+        LOG.debug(_("Listing orders by href"))
         LOG.debug("href: {0}".format(href))
+        if href is None:
+            return [], None, None
+
         hdrs, body = self._perform_http(href=href, method='GET')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
         orders_dict = body['orders']
-        orders = []
-        for o in orders_dict:
-            orders.append(Order(self._conn, o))
+        orders = [Order(self._conn, o) for o in orders_dict]
 
-        return orders
+        prev_ref = body.get('previous')
+
+        next_ref = body.get('next')
+
+        return orders, prev_ref, next_ref
 
     def create_order(self,
                      mime_type,
@@ -207,6 +276,16 @@ class Connection(object):
                      algorithm=None,
                      bit_length=None,
                      cypher_type=None):
+        """
+        Creates and returns an Order object with all of its metadata filled in.
+
+        arguments:
+            mime_type - The MIME type of the secret
+            name - A friendly name for the secret
+            algorithm - The algorithm the secret is used with
+            bit_length - The bit length of the secret
+            cypher_type - The cypher type (e.g. block cipher mode of operation)
+        """
         LOG.debug(_("Creating order of mime_type {0}").format(mime_type))
         href = "{0}/{1}".format(self._tenant, self.ORDERS_PATH)
         LOG.debug("href: {0}".format(href))
@@ -227,20 +306,32 @@ class Connection(object):
         return self.get_order(body['order_ref'])
 
     def delete_order_by_id(self, order_id):
+        """
+        Deletes an order using its UUID
+        """
         LOG.info(_("Deleting order - Order ID: {0}").format(order_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
         return self.delete_order(href)
 
     def delete_order(self, href):
+        """
+        Deletes an order using its full reference
+        """
         hdrs, body = self._perform_http(href=href, method='DELETE')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
     def get_order_by_id(self, order_id):
+        """
+        Returns an Order object using the order's UUID
+        """
         LOG.debug(_("Getting order - Order ID: {0}").format(order_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
         return self.get_order(href)
 
     def get_order(self, href):
+        """
+        Returns an Order object using the order's full reference
+        """
         hdrs, body = self._perform_http(href=href, method='GET')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
         return Order(self._conn, body)

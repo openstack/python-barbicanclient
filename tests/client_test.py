@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import json
-import unittest
+import unittest2 as unittest
 
 from mock import MagicMock
 
@@ -146,10 +146,13 @@ class WhenTestingConnection(unittest.TestCase):
         body0 = {'secrets': []}
         secrets = []
         self.request.return_value.content = json.dumps(body0)
-        self.assertTrue(self._are_equivalent(secrets,
-                                             self.connection.list_secrets()))
+        secret_list, prev_ref, next_ref = self.connection.list_secrets(0, 0)
+        self.assertTrue(self._are_equivalent(secrets, secret_list))
+        self.assertIsNone(prev_ref)
+        self.assertIsNone(next_ref)
 
     def test_list_single_secret(self):
+        limit = 1
         body1 = {'secrets': [{'status': 'ACTIVE',
                              'content_types': {'default': 'text/plain'},
                              'updated': '2013-06-03T21:16:58.349230',
@@ -162,13 +165,22 @@ class WhenTestingConnection(unittest.TestCase):
                                            '7-4090-bbef-bbb6025e5e7b',
                              'expiration': None,
                              'bit_length': None,
-                             'mime_type': 'text/plain'}]}
+                             'mime_type': 'text/plain'}],
+                 'next': "{0}/{1}?limit={2}&offset={2}".format(self.connection.
+                                                               _tenant,
+                                                               self.connection.
+                                                               SECRETS_PATH,
+                                                               limit)}
         secrets = [client.Secret(self.connection, body1['secrets'][0])]
         self.request.return_value.content = json.dumps(body1)
-        self.assertTrue(self._are_equivalent(secrets,
-                                             self.connection.list_secrets()))
+        secret_list, prev_ref, next_ref = self.connection.list_secrets(limit,
+                                                                       0)
+        self.assertTrue(self._are_equivalent(secrets, secret_list))
+        self.assertIsNone(prev_ref)
+        self.assertEqual(body1['next'], next_ref)
 
     def test_list_multiple_secrets(self):
+        limit = 2
         body1 = {'secrets': [{'status': 'ACTIVE',
                  'content_types': {'default': 'text/plain'},
                  'updated': '2013-06-03T21:16:58.349230',
@@ -181,29 +193,43 @@ class WhenTestingConnection(unittest.TestCase):
                                '7-4090-bbef-bbb6025e5e7b',
                  'expiration': None,
                  'bit_length': None,
-                 'mime_type': 'text/plain'}]}
+                 'mime_type': 'text/plain'}],
+                 'previous': "{0}/{1}?limit={2}&offset={2}".format(
+                             self.connection._tenant,
+                             self.connection.
+                             SECRETS_PATH,
+                             limit)}
 
         body2 = body1
         body2['secrets'][0]['name'] = 'test_2'
         body2['secrets'][0]['secret_ref'] = 'http://localhost:9311/v1/No'\
                                             + 'ne/secrets/bbd2036f-7307-'\
                                             + '4090-bbef-bbb6025eabcd'
+        body2['previous'] = 'http://localhost:9311/v1/None/secrets/19106'\
+                            + 'b6e-4ef1-48d1-8950-170c1a5838e1'
+        body2['next'] = None
 
         secrets = [client.Secret(self.connection, b['secrets'][0])
                    for b in (body1, body2)]
         body2['secrets'].insert(0, body1['secrets'][0])
         self.request.return_value.content = json.dumps(body2)
-        self.assertTrue(self._are_equivalent(secrets,
-                                             self.connection.list_secrets()))
+        secret_list, prev_ref, next_ref = self.connection.list_secrets(limit,
+                                                                       1)
+        self.assertTrue(self._are_equivalent(secrets, secret_list))
+        self.assertEqual(body2['previous'], prev_ref)
+        self.assertIsNone(next_ref)
 
     def test_list_no_orders(self):
         body0 = {'orders': []}
         orders = []
         self.request.return_value.content = json.dumps(body0)
-        self.assertTrue(self._are_equivalent(orders,
-                                             self.connection.list_orders()))
+        order_list, prev_ref, next_ref = self.connection.list_orders(0, 0)
+        self.assertTrue(self._are_equivalent(orders, order_list))
+        self.assertIsNone(prev_ref)
+        self.assertIsNone(next_ref)
 
     def test_list_single_order(self):
+        limit = 1
         body1 = {'orders': [{'status': 'PENDING',
                              'updated': '2013-06-05T15:15:30.904760',
                              'created': '2013-06-05T15:15:30.904752',
@@ -217,13 +243,21 @@ class WhenTestingConnection(unittest.TestCase):
                                         'algorithm': None,
                                         'expiration': None,
                                         'bit_length': None,
-                                        'mime_type': 'text/plain'}}]}
+                                        'mime_type': 'text/plain'}}],
+                 'next': "{0}/{1}?limit={2}&offset={2}".format(self.connection.
+                                                               _tenant,
+                                                               self.connection.
+                                                               ORDERS_PATH,
+                                                               limit)}
         orders = [client.Order(self.connection, body1['orders'][0])]
         self.request.return_value.content = json.dumps(body1)
-        self.assertTrue(self._are_equivalent(orders,
-                                             self.connection.list_orders()))
+        order_list, prev_ref, next_ref = self.connection.list_orders(limit, 0)
+        self.assertTrue(self._are_equivalent(orders, order_list))
+        self.assertIsNone(prev_ref)
+        self.assertEqual(body1['next'], next_ref)
 
     def test_list_multiple_orders(self):
+        limit = 2
         body1 = {'orders': [{'status': 'PENDING',
                              'updated': '2013-06-05T15:15:30.904760',
                              'created': '2013-06-05T15:15:30.904752',
@@ -237,19 +271,34 @@ class WhenTestingConnection(unittest.TestCase):
                                         'algorithm': None,
                                         'expiration': None,
                                         'bit_length': None,
-                                        'mime_type': 'text/plain'}}]}
+                                        'mime_type': 'text/plain'}}],
+                 'previous': "{0}/{1}?limit={2}&offset={2}".format(
+                             self.connection._tenant,
+                             self.connection.
+                             SECRETS_PATH,
+                             limit)}
         body2 = body1
         body2['orders'][0]['order_ref'] = 'http://localhost:9311/v1/No'\
                                           + 'ne/orders/9f651441-3ccd-4'\
                                           + '5b3-bc60-3051656382fj'
         body2['orders'][0]['secret']['name'] = 'test_2'
 
+        body2['orders'][0]['name'] = 'test_2'
+        body2['orders'][0]['secret_ref'] = 'http://localhost:9311/v1/No'\
+                                           + 'ne/secrets/bbd2036f-7307-'\
+                                           + '4090-bbef-bbb6025eabcd'
+        body2['previous'] = 'http://localhost:9311/v1/None/orders/19106'\
+                            + 'b6e-4ef1-48d1-8950-170c1a5838e1'
+        body2['next'] = None
+
         orders = [client.Order(self.connection, b['orders'][0])
                   for b in (body1, body2)]
         body2['orders'].insert(0, body1['orders'][0])
         self.request.return_value.content = json.dumps(body2)
-        self.assertTrue(self._are_equivalent(orders,
-                                             self.connection.list_orders()))
+        order_list, prev_ref, next_ref = self.connection.list_orders(limit, 1)
+        self.assertTrue(self._are_equivalent(orders, order_list))
+        self.assertEqual(body2['previous'], prev_ref)
+        self.assertIsNone(next_ref)
 
     def test_should_get_response(self):
         self._setup_request()
@@ -272,8 +321,11 @@ class WhenTestingConnection(unittest.TestCase):
     def test_should_raise_exception(self):
         self._setup_request()
         self.request.return_value.ok = False
-        with self.assertRaises(ClientException):
+        self.request.return_value.status_code = 404
+        with self.assertRaises(ClientException) as e:
             self.connection._perform_http('GET', self.href)
+        exception = e.exception
+        self.assertEqual(404, exception.http_status)
 
     def _setup_request(self):
         self.request.return_value.headers = {'Accept': 'application/json'}
