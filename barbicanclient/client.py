@@ -2,6 +2,7 @@ import eventlet
 eventlet.monkey_patch(socket=True, select=True)
 
 import json
+import os
 import requests
 
 from barbicanclient.secrets import Secret
@@ -22,24 +23,36 @@ class Connection(object):
     SECRETS_PATH = 'secrets'
     ORDERS_PATH = 'orders'
 
-    def __init__(self, auth_endpoint, user, key, tenant,
-                 token=None, authenticate=None, request=None, **kwargs):
+    def __init__(self, auth_endpoint=None, user=None, key=None, tenant=None,
+                 token=None, authenticate=None, request=None, fake_env=None,
+                 **kwargs):
         """
+        Authenticate and connect to the endpoint
+
         :param auth_endpoint: The auth URL to authenticate against
+                              default: env('OS_AUTH_URL')
         :param user: The user to authenticate as
+                     default: env('OS_USERNAME')
         :param key: The API key or password to auth with
+                    default: env('OS_PASSWORD')
+        :param tenant: The tenant ID
+                       default: env('OS_TENANT_NAME')
         """
 
         LOG.debug(_("Creating Connection object"))
 
-        self._auth_endpoint = auth_endpoint
+        self.env = fake_env or env
+        self._auth_endpoint = auth_endpoint or self.env('OS_AUTH_URL')
+        self._user = user or self.env('OS_USERNAME')
+        self._key = key or self.env('OS_PASSWORD')
+        self._tenant = tenant or self.env('OS_TENANT_NAME')
+        if not all([self._auth_endpoint, self._user, self._key, self._tenant]):
+            raise ClientException("The authorization endpoint, username, key,"
+                                  " and tenant name should either be passed i"
+                                  "n or defined as environment variables.")
         self.authenticate = authenticate or auth.authenticate
         self.request = request or requests.request
-        self._user = user
-        self._key = key
-        self._tenant = tenant
-        self._endpoint = (kwargs.get('endpoint')
-                          or 'https://barbican.api.rackspacecloud.com/v1/')
+        self._endpoint = kwargs.get('endpoint')
         self._cacert = kwargs.get('cacert')
 
         self.connect(token=token)
@@ -47,8 +60,7 @@ class Connection(object):
     @property
     def _conn(self):
         """
-        Property to enable decorators to work
-        properly
+        Property to enable decorators to work properly
         """
         return self
 
@@ -61,6 +73,10 @@ class Connection(object):
     def endpoint(self):
         """The fully-qualified URI of the endpoint"""
         return self._endpoint
+
+    @endpoint.setter
+    def endpoint(self, value):
+        self._endpoint = value
 
     def connect(self, token=None):
         """
@@ -81,11 +97,12 @@ class Connection(object):
             self.auth_token = token
         else:
             LOG.debug(_("Authenticating token"))
-            self._endpoint, self.auth_token = self.authenticate(
+            self.endpoint, self.auth_token = self.authenticate(
                 self._auth_endpoint,
                 self._user,
                 self._key,
                 self._tenant,
+                service_type='key-store',
                 endpoint=self._endpoint,
                 cacert=self._cacert
             )
@@ -149,7 +166,7 @@ class Connection(object):
                       cypher_type=None,
                       expiration=None):
         """
-        Creates and returns a Secret object with all of its metadata filled in.
+        Creates and returns an Order object with all of its metadata filled in.
 
         arguments:
             mime_type - The MIME type of the secret
@@ -356,11 +373,15 @@ class Connection(object):
         if not isinstance(request_body, str):
             request_body = json.dumps(request_body)
 
-        url = urljoin(self._endpoint, href)
+        if not self.endpoint.endswith('/'):
+            self.endpoint += '/'
+
+        url = urljoin(self.endpoint, href)
+
+        headers['X-Auth-Token'] = self.auth_token
 
         response = self.request(method=method, url=url, data=request_body,
                                 headers=headers)
-
         # Check if the status code is 2xx class
         if not response.ok:
             LOG.error('Bad response: {0}'.format(response.status_code))
@@ -376,3 +397,18 @@ class Connection(object):
             resp_body = ''
 
         return response.headers, resp_body
+
+
+def env(*vars, **kwargs):
+    """Search for the first defined of possibly many env vars
+
+    Returns the first environment variable defined in vars, or
+    returns the default defined in kwargs.
+
+    Source: Keystone's shell.py
+    """
+    for v in vars:
+        value = os.environ.get(v, None)
+        if value:
+            return value
+    return kwargs.get('default', '')
