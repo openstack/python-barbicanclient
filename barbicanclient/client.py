@@ -27,7 +27,8 @@ class Connection(object):
                  token=None, authenticate=None, request=None, fake_env=None,
                  **kwargs):
         """
-        Authenticate and connect to the endpoint
+        Authenticate and connect to the service endpoint, which is usually
+        received through authentication.
 
         :param auth_endpoint: The auth URL to authenticate against
                               default: env('OS_AUTH_URL')
@@ -37,6 +38,9 @@ class Connection(object):
                     default: env('OS_PASSWORD')
         :param tenant: The tenant ID
                        default: env('OS_TENANT_NAME')
+        :keyword param endpoint: The service endpoint to connect to
+
+        If a token is provided, an endpoint should be as well.
         """
 
         LOG.debug(_("Creating Connection object"))
@@ -97,7 +101,7 @@ class Connection(object):
             self.auth_token = token
         else:
             LOG.debug(_("Authenticating token"))
-            self.endpoint, self.auth_token = self.authenticate(
+            endpoint, self.auth_token = self.authenticate(
                 self._auth_endpoint,
                 self._user,
                 self._key,
@@ -106,6 +110,8 @@ class Connection(object):
                 endpoint=self._endpoint,
                 cacert=self._cacert
             )
+            if self.endpoint is None:
+                self.endpoint = endpoint
 
     @property
     def auth_token(self):
@@ -166,7 +172,7 @@ class Connection(object):
                       cypher_type=None,
                       expiration=None):
         """
-        Creates and returns an Order object with all of its metadata filled in.
+        Creates and returns a Secret object with all of its metadata filled in.
 
         arguments:
             mime_type - The MIME type of the secret
