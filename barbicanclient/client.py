@@ -27,8 +27,11 @@ class Connection(object):
                  token=None, authenticate=None, request=None, fake_env=None,
                  **kwargs):
         """
-        Authenticate and connect to the service endpoint, which is usually
+        Authenticate and connect to the service endpoint, which can be
         received through authentication.
+
+        Environment variables will be used by default when their corresponding
+        arguments are not passed in.
 
         :param auth_endpoint: The auth URL to authenticate against
                               default: env('OS_AUTH_URL')
@@ -64,9 +67,7 @@ class Connection(object):
 
     @property
     def _conn(self):
-        """
-        Property to enable decorators to work properly
-        """
+        """Property to enable decorators to work properly"""
         return self
 
     @property
@@ -85,9 +86,10 @@ class Connection(object):
 
     def connect(self, token=None):
         """
-        Establishes a connection. If token is not None the
-        token will be used for this connection and auth will
-        not happen.
+        Establishes a connection. If token is not None or empty, it will be
+        used for this connection, and authentication will not take place.
+
+        :param token: An authentication token
         """
 
         LOG.debug(_("Establishing connection"))
@@ -132,6 +134,9 @@ class Connection(object):
         to the given offset and limit, a reference to the previous set of
         secrets, and a reference to the next set of secrets. Either of the
         references may be None.
+
+        :param limit: The limit to the number of secrets to list
+        :param offset: The offset from the beginning to start listing
         """
         LOG.debug(_("Listing secrets - offset: {0}, limit: {1}").format(offset,
                                                                         limit))
@@ -146,6 +151,8 @@ class Connection(object):
         to the offset and limit within href, a reference to the previous set
         of secrets, and a reference to the next set of secrets. Either of the
         references may be None.
+
+        :param href: The full secrets URI
         """
         LOG.debug(_("Listing secrets by href"))
         LOG.debug("href: {0}".format(href))
@@ -175,14 +182,13 @@ class Connection(object):
         """
         Creates and returns a Secret object with all of its metadata filled in.
 
-        arguments:
-            mime_type - The MIME type of the secret
-            plain_text - The unencrypted secret
-            name - A friendly name for the secret
-            algorithm - The algorithm the secret is used with
-            bit_length - The bit length of the secret
-            cypher_type - The cypher type (e.g. block cipher mode of operation)
-            expiration - The expiration time for the secret in ISO 8601 format
+        :param mime_type: The MIME type of the secret
+        :param plain_text: The unencrypted secret
+        :param name: A friendly name for the secret
+        :param algorithm: The algorithm the secret is used with
+        :param bit_length: The bit length of the secret
+        :param cypher_type: The cypher type (e.g. block cipher mode)
+        :param expiration: The expiration time of the secret in ISO 8601 format
         """
         LOG.debug(_("Creating secret of mime_type {0}").format(mime_type))
         href = "{0}/{1}".format(self._tenant, self.SECRETS_PATH)
@@ -209,7 +215,9 @@ class Connection(object):
 
     def delete_secret_by_id(self, secret_id):
         """
-        Deletes a secret using its UUID
+        Deletes a secret
+
+        :param secret_id: The UUID of the secret
         """
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
         LOG.info(_("Deleting secret - Secret ID: {0}").format(secret_id))
@@ -217,14 +225,18 @@ class Connection(object):
 
     def delete_secret(self, href):
         """
-        Deletes a secret using its full reference
+        Deletes a secret
+
+        :param href: The full URI of the secret
         """
         hdrs, body = self._perform_http(href=href, method='DELETE')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
     def get_secret_by_id(self, secret_id):
         """
-        Returns a Secret object using the secret's UUID
+        Returns a Secret object
+
+        :param secret_id: The UUID of the secret
         """
         LOG.debug(_("Getting secret - Secret ID: {0}").format(secret_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
@@ -232,7 +244,9 @@ class Connection(object):
 
     def get_secret(self, href):
         """
-        Returns a Secret object using the secret's full reference
+        Returns a Secret object
+
+        :param href: The full URI of the secret
         """
         hdrs, body = self._perform_http(href=href, method='GET')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
@@ -240,7 +254,10 @@ class Connection(object):
 
     def get_raw_secret_by_id(self, secret_id, mime_type):
         """
-        Returns the raw secret using the secret's UUID and MIME type
+        Returns the raw secret
+
+        :param secret_id: The UUID of the secret
+        :param mime_type: The MIME type of the secret
         """
         LOG.debug(_("Getting raw secret - Secret ID: {0}").format(secret_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
@@ -248,7 +265,10 @@ class Connection(object):
 
     def get_raw_secret(self, href, mime_type):
         """
-        Returns the raw secret using the secret's UUID and MIME type
+        Returns the raw secret
+
+        :param href: The reference to the secret
+        :param mime_type: The MIME type of the secret
         """
         hdrs = {"Accept": mime_type}
         hdrs, body = self._perform_http(href=href, method='GET', headers=hdrs,
@@ -262,6 +282,9 @@ class Connection(object):
         to the given offset and limit, a reference to the previous set of
         orders, and a reference to the next set of orders. Either of the
         references may be None.
+
+        :param limit: The limit to the number of orders to list
+        :param offset: The offset from the beginning to start listing
         """
         LOG.debug(_("Listing orders - offset: {0}, limit: {1}").format(offset,
                                                                        limit))
@@ -276,6 +299,8 @@ class Connection(object):
         to the offset and limit within href, a reference to the previous set
         of orders, and a reference to the next set of orders. Either of the
         references may be None.
+
+        :param href: The full orders URI
         """
         LOG.debug(_("Listing orders by href"))
         LOG.debug("href: {0}".format(href))
@@ -303,12 +328,11 @@ class Connection(object):
         """
         Creates and returns an Order object with all of its metadata filled in.
 
-        arguments:
-            mime_type - The MIME type of the secret
-            name - A friendly name for the secret
-            algorithm - The algorithm the secret is used with
-            bit_length - The bit length of the secret
-            cypher_type - The cypher type (e.g. block cipher mode of operation)
+        :param mime_type: The MIME type of the secret
+        :param name: A friendly name for the secret
+        :param algorithm: The algorithm the secret is used with
+        :param bit_length: The bit length of the secret
+        :param cypher_type: The cypher type (e.g. block cipher mode)
         """
         LOG.debug(_("Creating order of mime_type {0}").format(mime_type))
         href = "{0}/{1}".format(self._tenant, self.ORDERS_PATH)
@@ -331,7 +355,9 @@ class Connection(object):
 
     def delete_order_by_id(self, order_id):
         """
-        Deletes an order using its UUID
+        Deletes an order
+
+        :param order_id: The UUID of the order
         """
         LOG.info(_("Deleting order - Order ID: {0}").format(order_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
@@ -339,14 +365,18 @@ class Connection(object):
 
     def delete_order(self, href):
         """
-        Deletes an order using its full reference
+        Deletes an order
+
+        :param href: The full URI of the order
         """
         hdrs, body = self._perform_http(href=href, method='DELETE')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
 
     def get_order_by_id(self, order_id):
         """
-        Returns an Order object using the order's UUID
+        Returns an Order object
+
+        :param order_id: The UUID of the order
         """
         LOG.debug(_("Getting order - Order ID: {0}").format(order_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
@@ -354,7 +384,9 @@ class Connection(object):
 
     def get_order(self, href):
         """
-        Returns an Order object using the order's full reference
+        Returns an Order object
+
+        :param href: The full URI of the order
         """
         hdrs, body = self._perform_http(href=href, method='GET')
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
@@ -371,11 +403,12 @@ class Connection(object):
         Perform an HTTP operation, checking for appropriate
         errors, etc. and returns the response
 
+        Returns the headers and body as a tuple.
+
         :param method: The http method to use (GET, PUT, etc)
         :param body: The optional body to submit
         :param headers: Any additional headers to submit
         :param parse_json: Whether the response body should be parsed as json
-        :return: (headers, body)
         """
         if not isinstance(request_body, str):
             request_body = json.dumps(request_body)
