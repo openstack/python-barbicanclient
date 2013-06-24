@@ -24,8 +24,7 @@ class Connection(object):
     ORDERS_PATH = 'orders'
 
     def __init__(self, auth_endpoint=None, user=None, key=None, tenant=None,
-                 token=None, authenticate=None, request=None, fake_env=None,
-                 **kwargs):
+                 token=None, **kwargs):
         """
         Authenticate and connect to the service endpoint, which can be
         received through authentication.
@@ -41,15 +40,15 @@ class Connection(object):
                     default: env('OS_PASSWORD')
         :param tenant: The tenant ID
                        default: env('OS_TENANT_NAME')
-        :keyword param endpoint: The service endpoint to connect to
-                       default: env('SERVICE_ENDPOINT')
+        :keyword param endpoint: The barbican endpoint to connect to
+                       default: env('BARBICAN_ENDPOINT')
 
         If a token is provided, an endpoint should be as well.
         """
 
         LOG.debug(_("Creating Connection object"))
 
-        self.env = fake_env or env
+        self.env = kwargs.get('fake_env') or env
         self._auth_endpoint = auth_endpoint or self.env('OS_AUTH_URL')
         self._user = user or self.env('OS_USERNAME')
         self._key = key or self.env('OS_PASSWORD')
@@ -58,9 +57,10 @@ class Connection(object):
             raise ClientException("The authorization endpoint, username, key,"
                                   " and tenant name should either be passed i"
                                   "n or defined as environment variables.")
-        self.authenticate = authenticate or auth.authenticate
-        self.request = request or requests.request
-        self._endpoint = kwargs.get('endpoint') or self.env('SERVICE_ENDPOINT')
+        self.authenticate = kwargs.get('authenticate') or auth.authenticate
+        self.request = kwargs.get('request') or requests.request
+        self._endpoint = (kwargs.get('endpoint') or
+                          self.env('BARBICAN_ENDPOINT'))
         self._cacert = kwargs.get('cacert')
 
         self.connect(token=token)
