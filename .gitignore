@@ -39,3 +39,6 @@ nosetests.xml
 
 # generic venvs
 .venv
+
+# OSX metadata
+.DS_Store
