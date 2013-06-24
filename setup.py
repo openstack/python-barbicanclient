@@ -55,5 +55,8 @@ setuptools.setup(
         'Programming Language :: Python :: 2.7',
         'Environment :: No Input/Output (Daemon)',
     ],
-    scripts = ['keep']
+    entry_points="""
+    [console_scripts]
+    keep = barbicanclient.keep:main
+    """
 )
