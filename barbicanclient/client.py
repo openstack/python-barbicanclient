@@ -62,8 +62,7 @@ class Connection(object):
         self._endpoint = (kwargs.get('endpoint') or
                           self.env('BARBICAN_ENDPOINT'))
         self._cacert = kwargs.get('cacert')
-
-        self.connect(token=token)
+        self.connect(token=(token or self.env('AUTH_TOKEN')))
 
     @property
     def _conn(self):

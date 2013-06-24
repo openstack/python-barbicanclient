@@ -41,7 +41,7 @@ class Keep:
                             help='the URL of the barbican server (default: %'
                             '(default)s)')
         parser.add_argument('--token', '-K',
-                            default=client.env('SERVICE_TOKEN'), help='the au'
+                            default=client.env('AUTH_TOKEN'), help='the au'
                             'thentication token (default: %(default)s)')
         return parser
 
