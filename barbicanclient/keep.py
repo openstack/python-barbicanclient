@@ -154,15 +154,20 @@ class Keep:
         print '{0}s displayed: {1} - offset: {2}'.format(args.type, len(l[0]),
                                                          args.offset)
 
-    def execute(self):
-        args = self.parser.parse_args()
+    def execute(self, **kwargs):
+        args = self.parser.parse_args(kwargs.get('argv'))
         self.conn = client.Connection(args.auth_endpoint, args.user,
                                       args.password, args.tenant,
                                       args.token,
                                       endpoint=args.endpoint)
+
         args.func(args)
 
 
 def main():
     k = Keep()
     k.execute()
+
+
+if __name__ == '__main__':
+    main()
