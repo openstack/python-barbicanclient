@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import argparse
-import os
 
 from barbicanclient import client
 
@@ -24,23 +23,26 @@ class Keep:
                             choices=["order", "secret"],
                             help="type to operate on")
         parser.add_argument('--auth_endpoint', '-A',
-                            default=env('OS_AUTH_URL'),
+                            default=client.env('OS_AUTH_URL'),
                             help='the URL to authenticate against (default: '
                                  '%(default)s)')
-        parser.add_argument('--user', '-U', default=env('OS_USERNAME'),
+        parser.add_argument('--user', '-U', default=client.env('OS_USERNAME'),
                             help='the user to authenticate as (default: %(de'
                                  'fault)s)')
-        parser.add_argument('--password', '-P', default=env('OS_PASSWORD'),
+        parser.add_argument('--password', '-P',
+                            default=client.env('OS_PASSWORD'),
                             help='the API key or password to authenticate with'
                             ' (default: %(default)s)')
-        parser.add_argument('--tenant', '-T', default=env('OS_TENANT_NAME'),
+        parser.add_argument('--tenant', '-T',
+                            default=client.env('OS_TENANT_NAME'),
                             help='the tenant ID (default: %(default)s)')
-        parser.add_argument('--endpoint', '-E', default=env('SERVICE_ENDPOINT')
-                            , help='the URL of the barbican server (default: %'
+        parser.add_argument('--endpoint', '-E',
+                            default=client.env('BARBICAN_ENDPOINT'),
+                            help='the URL of the barbican server (default: %'
                             '(default)s)')
-        parser.add_argument('--token', '-K', default=env('SERVICE_TOKEN'),
-                            help='the authentication token (default: %(default'
-                            ')s)')
+        parser.add_argument('--token', '-K',
+                            default=client.env('AUTH_TOKEN'), help='the au'
+                            'thentication token (default: %(default)s)')
         return parser
 
     def add_create_args(self):
@@ -149,31 +151,17 @@ class Keep:
                 l = self.conn.list_orders(args.limit, args.offset)
         for i in l[0]:
             print i
-        print 'Displayed {0} {1}s - offset: {2}'.format(len(l[0]), args.type,
-                                                        args.offset)
+        print '{0}s displayed: {1} - offset: {2}'.format(args.type, len(l[0]),
+                                                         args.offset)
 
-    def execute(self):
-        args = self.parser.parse_args()
+    def execute(self, **kwargs):
+        args = self.parser.parse_args(kwargs.get('argv'))
         self.conn = client.Connection(args.auth_endpoint, args.user,
                                       args.password, args.tenant,
                                       args.token,
                                       endpoint=args.endpoint)
+
         args.func(args)
-
-
-def env(*vars, **kwargs):
-    """Search for the first defined of possibly many env vars
-
-    Returns the first environment variable defined in vars, or
-    returns the default defined in kwargs.
-
-    Source: Keystone's shell.py
-    """
-    for v in vars:
-        value = os.environ.get(v, None)
-        if value:
-            return value
-    return kwargs.get('default', '')
 
 
 def main():

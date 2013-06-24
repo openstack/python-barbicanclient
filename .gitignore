@@ -36,6 +36,10 @@ nosetests.xml
 
 # Idea
 .idea
+*.iml
 
 # generic venvs
 .venv
+
+# OSX metadata
+.DS_Store

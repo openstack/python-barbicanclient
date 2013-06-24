@@ -40,6 +40,8 @@ class WhenTestingConnection(unittest.TestCase):
         self.auth_token = 'token'
         self.href = 'http://localhost:9311/v1/12345/orders'
 
+        self.fake_env = MagicMock()
+        self.fake_env.return_value = None
         self.authenticate = MagicMock()
         self.authenticate.return_value = (self.endpoint, self.auth_token)
         self.request = MagicMock()
@@ -62,7 +64,8 @@ class WhenTestingConnection(unittest.TestCase):
                                             self.key, self.tenant,
                                             token=self.auth_token,
                                             authenticate=self.authenticate,
-                                            request=self.request)
+                                            request=self.request,
+                                            endpoint=self.endpoint)
 
     def test_should_connect_with_token(self):
         self.assertFalse(self.authenticate.called)
@@ -79,6 +82,7 @@ class WhenTestingConnection(unittest.TestCase):
                                      self.user,
                                      self.key,
                                      self.tenant,
+                                     service_type='key-store',
                                      endpoint=self.endpoint,
                                      cacert=None
                                      )
@@ -88,6 +92,16 @@ class WhenTestingConnection(unittest.TestCase):
         self.assertEqual(self.key, self.connection._key)
         self.assertEqual(self.tenant, self.connection._tenant)
         self.assertEqual(self.endpoint, self.connection._endpoint)
+
+    def test_should_raise_for_bad_args(self):
+        with self.assertRaises(ClientException):
+            self.connection = client.Connection(None, self.user,
+                                                self.key, self.tenant,
+                                                fake_env=self.fake_env,
+                                                token=self.auth_token,
+                                                authenticate=self.authenticate,
+                                                request=self.request,
+                                                endpoint=self.endpoint)
 
     def test_should_create_secret(self):
         body = {'status': 'ACTIVE',
@@ -318,7 +332,7 @@ class WhenTestingConnection(unittest.TestCase):
                                                       parse_json=False)
         self.assertEqual(self.request.return_value.content, body)
 
-    def test_should_raise_exception(self):
+    def test_should_raise_for_bad_response(self):
         self._setup_request()
         self.request.return_value.ok = False
         self.request.return_value.status_code = 404

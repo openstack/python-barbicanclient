@@ -1,0 +1,6 @@
+export OS_TENANT_NAME=demo
+export OS_USERNAME=demo
+export OS_PASSWORD=password
+export OS_AUTH_URL="http://keystone-int.cloudkeep.io:5000/v2.0/"
+export BARBICAN_ENDPOINT="http://api-01-int.cloudkeep.io:9311/v1/"
+export AUTH_TOKEN=''
