@@ -166,7 +166,3 @@ class Keep:
 def main():
     k = Keep()
     k.execute()
-
-
-if __name__ == '__main__':
-    main()
