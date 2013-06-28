@@ -26,7 +26,7 @@ def read(fname):
 
 setuptools.setup(
     name=name,
-    version="0.1dev",
+    version="0.2dev",
     description='Client Library for OpenStack Barbican Key Management API',
     long_description=read('README.md'),
     keywords="openstack encryption key-management secret",
