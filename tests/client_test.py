@@ -123,10 +123,11 @@ class WhenTestingConnection(unittest.TestCase):
         created = self.connection.create_secret('text/plain',
                                                 'Test secret',
                                                 name='test_secret',
-                                                algorithm=None,
-                                                bit_length=None,
-                                                cypher_type=None,
-                                                expiration=None)
+                                                algorithm='aes',
+                                                bit_length=256,
+                                                cypher_type='CDC',
+                                                expiration='2015-06-07T16:13'
+                                                           ':38.889851')
         self.assertTrue(self._are_equivalent(secret, created))
 
     def test_should_create_order(self):
