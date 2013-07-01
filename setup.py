@@ -24,9 +24,23 @@ name = 'python-barbicanclient'
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+def get_version():
+    PKG = "barbicanclient"
+    VERSIONFILE = os.path.join(PKG, "version.py")
+    version = "unknown"
+    try:
+        version_file = open(VERSIONFILE, "r")
+        for line in version_file:
+            if '__version__' in line:
+                version = line.split("'")[1]
+                break
+    except EnvironmentError:
+        pass  # Okay, there is no version file.
+    return version
+
 setuptools.setup(
     name=name,
-    version="0.2.1dev",
+    version=get_version(),
     description='Client Library for OpenStack Barbican Key Management API',
     long_description=read('README.md'),
     keywords="openstack encryption key-management secret",
