@@ -48,7 +48,8 @@ class Secret(object):
                 "         bit length: {6}\n"
                 "         algorithm: {7}\n"
                 "         cypher type: {8}\n"
+                "         expiration: {9}\n"
                 .format(self.id, self.secret_ref, self.name, self.created,
                         self.mime_type, self.status, self.bit_length,
-                        self.algorithm, self.cypher_type)
+                        self.algorithm, self.cypher_type, self.expiration)
                 )

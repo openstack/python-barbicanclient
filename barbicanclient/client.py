@@ -321,7 +321,8 @@ class Connection(object):
                      name=None,
                      algorithm=None,
                      bit_length=None,
-                     cypher_type=None):
+                     cypher_type=None,
+                     expiration=None):
         """
         Creates and returns an Order object with all of its metadata filled in.
 
@@ -330,6 +331,7 @@ class Connection(object):
         :param algorithm: The algorithm the secret is used with
         :param bit_length: The bit length of the secret
         :param cypher_type: The cypher type (e.g. block cipher mode)
+        :param expiration: The expiration time of the secret in ISO 8601 format
         """
         LOG.debug(_("Creating order of mime_type {0}").format(mime_type))
         href = "{0}/{1}".format(self._tenant, self.ORDERS_PATH)
@@ -340,6 +342,7 @@ class Connection(object):
         order_dict['secret']['algorithm'] = algorithm
         order_dict['secret']['bit_length'] = bit_length
         order_dict['secret']['cypher_type'] = cypher_type
+        order_dict['secret']['expiration'] = expiration
         self._remove_empty_keys(order_dict['secret'])
         LOG.debug(_("Request body: {0}").format(order_dict['secret']))
         hdrs, body = self._perform_http(href=href,

@@ -51,10 +51,11 @@ class Keep:
                                    'ult: %(default)s)')
         create_parser.add_argument('--name', '-n', help='a human-friendly name'
                                    ' used only for reference')
-        create_parser.add_argument('--algorithm', '-a', help='the algorithm us'
-                                   'ed only for reference')
+        create_parser.add_argument('--algorithm', '-a', default='aes', help='t'
+                                   'he algorithm used only for reference (defa'
+                                   'ult: %(default)s)')
         create_parser.add_argument('--bit_length', '-b', default=256,
-                                   help='the bit length of the secret used '
+                                   help='the bit length of the secret; used '
                                    'only for reference (default: %(default)s)',
                                    type=int)
         create_parser.add_argument('--cypher_type', '-c', help='the cypher typ'
@@ -62,8 +63,7 @@ class Keep:
         create_parser.add_argument('--plain_text', '-p', help='the unencrypted'
                                    ' secret (only used for secrets)')
         create_parser.add_argument('--expiration', '-e', help='the expiration '
-                                   'time for the secret in ISO 8601 format '
-                                   '(only used for secrets)')
+                                   'time for the secret in ISO 8601 format')
         create_parser.set_defaults(func=self.create)
 
     def add_delete_args(self):
@@ -118,7 +118,8 @@ class Keep:
                                            args.name,
                                            args.algorithm,
                                            args.bit_length,
-                                           args.cypher_type)
+                                           args.cypher_type,
+                                           args.expiration)
             print order
 
     def delete(self, args):
