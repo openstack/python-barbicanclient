@@ -198,10 +198,8 @@ class Connection(object):
         secret_dict['name'] = name
         secret_dict['algorithm'] = algorithm
         secret_dict['cypher_type'] = cypher_type
-        if bit_length is not None:
-            secret_dict['bit_length'] = int(bit_length)
-        if expiration is not None:
-            secret_dict['expiration'] = parse_isotime(expiration)
+        secret_dict['bit_length'] = bit_length
+        secret_dict['expiration'] = expiration
         self._remove_empty_keys(secret_dict)
         LOG.debug(_("Request body: {0}").format(secret_dict))
         hdrs, body = self._perform_http(href=href,
