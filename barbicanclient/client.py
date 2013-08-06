@@ -95,8 +95,8 @@ class Connection(object):
 
         self._session = requests.Session()
 
-        #headers = {"Client-Id": self._client_id}
-        #self._session.headers.update(headers)
+        # headers = {"Client-Id": self._client_id}
+        # self._session.headers.update(headers)
         self._session.verify = True
 
         if token:
@@ -171,9 +171,10 @@ class Connection(object):
         return secrets, prev_ref, next_ref
 
     def create_secret(self,
-                      mime_type,
-                      plain_text=None,
                       name=None,
+                      payload=None,
+                      payload_content_type=None,
+                      payload_content_encoding=None,
                       algorithm=None,
                       bit_length=None,
                       cypher_type=None,
@@ -181,21 +182,24 @@ class Connection(object):
         """
         Creates and returns a Secret object with all of its metadata filled in.
 
-        :param mime_type: The MIME type of the secret
-        :param plain_text: The unencrypted secret
         :param name: A friendly name for the secret
+        :param payload: The unencrypted secret
+        :param payload_content_type: The format/type of the secret
+        :param payload_content_encoding: The encoding of the secret
         :param algorithm: The algorithm the secret is used with
         :param bit_length: The bit length of the secret
         :param cypher_type: The cypher type (e.g. block cipher mode)
         :param expiration: The expiration time of the secret in ISO 8601 format
         """
-        LOG.debug(_("Creating secret of mime_type {0}").format(mime_type))
+        LOG.debug(_("Creating secret of payload content type {0}").format(
+            payload_content_type))
         href = "{0}/{1}".format(self._tenant, self.SECRETS_PATH)
         LOG.debug(_("href: {0}").format(href))
         secret_dict = {}
-        secret_dict['mime_type'] = mime_type
-        secret_dict['plain_text'] = plain_text
         secret_dict['name'] = name
+        secret_dict['payload'] = payload
+        secret_dict['payload_content_type'] = payload_content_type
+        secret_dict['payload_content_encoding'] = payload_content_encoding
         secret_dict['algorithm'] = algorithm
         secret_dict['cypher_type'] = cypher_type
         secret_dict['bit_length'] = bit_length
@@ -249,25 +253,25 @@ class Connection(object):
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
         return Secret(self._conn, body)
 
-    def get_raw_secret_by_id(self, secret_id, mime_type):
+    def get_raw_secret_by_id(self, secret_id, payload_content_type):
         """
         Returns the raw secret
 
         :param secret_id: The UUID of the secret
-        :param mime_type: The MIME type of the secret
+        :param payload_content_type: The data type of the secret
         """
         LOG.debug(_("Getting raw secret - Secret ID: {0}").format(secret_id))
         href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
-        return self.get_raw_secret(href, mime_type)
+        return self.get_raw_secret(href, payload_content_type)
 
-    def get_raw_secret(self, href, mime_type):
+    def get_raw_secret(self, href, payload_content_type):
         """
         Returns the raw secret
 
         :param href: The reference to the secret
-        :param mime_type: The MIME type of the secret
+        :param payload_content_type: The data type of the secret
         """
-        hdrs = {"Accept": mime_type}
+        hdrs = {"Accept": payload_content_type}
         hdrs, body = self._perform_http(href=href, method='GET', headers=hdrs,
                                         parse_json=False)
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
@@ -317,7 +321,6 @@ class Connection(object):
         return orders, prev_ref, next_ref
 
     def create_order(self,
-                     mime_type,
                      name=None,
                      algorithm=None,
                      bit_length=None,
@@ -326,19 +329,19 @@ class Connection(object):
         """
         Creates and returns an Order object with all of its metadata filled in.
 
-        :param mime_type: The MIME type of the secret
         :param name: A friendly name for the secret
         :param algorithm: The algorithm the secret is used with
         :param bit_length: The bit length of the secret
         :param cypher_type: The cypher type (e.g. block cipher mode)
         :param expiration: The expiration time of the secret in ISO 8601 format
         """
-        LOG.debug(_("Creating order of mime_type {0}").format(mime_type))
+        LOG.debug(_("Creating order"))
         href = "{0}/{1}".format(self._tenant, self.ORDERS_PATH)
         LOG.debug("href: {0}".format(href))
         order_dict = {'secret': {}}
         order_dict['secret']['name'] = name
-        order_dict['secret']['mime_type'] = mime_type
+        order_dict['secret'][
+            'payload_content_type'] = 'application/octet-stream'
         order_dict['secret']['algorithm'] = algorithm
         order_dict['secret']['bit_length'] = bit_length
         order_dict['secret']['cypher_type'] = cypher_type

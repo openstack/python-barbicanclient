@@ -3,9 +3,11 @@ from openstack.common.timeutils import parse_isotime
 
 
 class Secret(object):
+
     """
     A secret is any data the user has stored in the key management system.
     """
+
     def __init__(self, connection, secret_dict):
         """
         Builds a secret object from a json representation. Includes the
@@ -18,7 +20,9 @@ class Secret(object):
 
         self.algorithm = secret_dict.get('algorithm')
         self.bit_length = secret_dict.get('bit_length')
-        self.mime_type = secret_dict.get('mime_type')
+        self.payload_content_type = secret_dict.get('payload_content_type')
+        self.payload_content_encoding = secret_dict.get(
+            'payload_content_encoding')
         self.name = secret_dict.get('name')
         self.cypher_type = secret_dict.get('cypher_type')
 
@@ -43,13 +47,13 @@ class Secret(object):
                 "         reference: {1}\n"
                 "         name: {2}\n"
                 "         created: {3}\n"
-                "         MIME type: {4}\n"
+                "         payload content type: {4}\n"
                 "         status: {5}\n"
                 "         bit length: {6}\n"
                 "         algorithm: {7}\n"
                 "         cypher type: {8}\n"
                 "         expiration: {9}\n"
                 .format(self.id, self.secret_ref, self.name, self.created,
-                        self.mime_type, self.status, self.bit_length,
+                        self.payload_content_type, self.status, self.bit_length,
                         self.algorithm, self.cypher_type, self.expiration)
                 )
