@@ -47,13 +47,12 @@ class Secret(object):
                 "         reference: {1}\n"
                 "         name: {2}\n"
                 "         created: {3}\n"
-                "         payload content type: {4}\n"
-                "         status: {5}\n"
-                "         bit length: {6}\n"
-                "         algorithm: {7}\n"
-                "         cypher type: {8}\n"
-                "         expiration: {9}\n"
+                "         status: {4}\n"
+                "         bit length: {5}\n"
+                "         algorithm: {6}\n"
+                "         cypher type: {7}\n"
+                "         expiration: {8}\n"
                 .format(self.id, self.secret_ref, self.name, self.created,
-                        self.payload_content_type, self.status, self.bit_length,
-                        self.algorithm, self.cypher_type, self.expiration)
+                        self.status, self.bit_length, self.algorithm,
+                        self.cypher_type, self.expiration)
                 )

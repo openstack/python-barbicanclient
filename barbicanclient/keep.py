@@ -64,13 +64,13 @@ class Keep:
                                    'e a payload_content_type (only used for se'
                                    'crets)')
         create_parser.add_argument('--payload_content_type', '-t',
-                                   choices=["text/plain",
-                                            "text/plain; charset=utf-8",
-                                            "application/octet-stream"],
+                                   default='text/plain',
                                    help='the type/format of the provided '
                                    'secret data; "text/plain" is assumed to be'
                                    ' UTF-8; required when --payload is su'
-                                   'pplied (only used for secrets)')
+                                   'pplied (only used for secrets; orders are '
+                                   'assumed to be "application/octet-stream") '
+                                   '(default: %(default)s)')
         create_parser.add_argument('--payload_content_encoding', '-d',
                                    choices=["base64"],
                                    help='required if --payload_content_type is'
