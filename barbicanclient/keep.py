@@ -63,18 +63,13 @@ class Keep:
                                    'e a payload_content_type (only used for se'
                                    'crets)')
         create_parser.add_argument('--payload_content_type', '-t',
-                                   default='text/plain',
                                    help='the type/format of the provided '
                                    'secret data; "text/plain" is assumed to be'
                                    ' UTF-8; required when --payload is su'
-                                   'pplied (only used for secrets; orders are '
-                                   'assumed to be of type "application/octet-s'
-                                   'tream") (default: %(default)s)')
+                                   'pplied and when creating orders')
         create_parser.add_argument('--payload_content_encoding', '-d',
-                                   default='base64',
                                    help='required if --payload_content_type is'
-                                   ' "application/octet-stream" (default: %(de'
-                                   'fault)s)')
+                                   ' "application/octet-stream"')
 
         create_parser.add_argument('--expiration', '-e', help='the expiration '
                                    'time for the secret in ISO 8601 format')
@@ -132,6 +127,8 @@ class Keep:
             print secret
         else:
             order = self.conn.create_order(args.name,
+                                           args.payload_content_type,
+                                           args.payload_content_encoding,
                                            args.algorithm,
                                            args.bit_length,
                                            args.cypher_type,

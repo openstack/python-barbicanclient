@@ -153,6 +153,8 @@ class WhenTestingConnection(unittest.TestCase):
         order = client.Order(self.connection, body)
         self.request.return_value.content = json.dumps(body)
         created = self.connection.create_order(name='test_secret',
+                                               payload_content_type='application/octet-stream',
+                                               payload_content_encoding='base64',
                                                algorithm='aes',
                                                bit_length=256,
                                                cypher_type='cbc')

@@ -15,16 +15,16 @@ class Secret(object):
         """
         self.connection = connection
         self.secret_ref = secret_dict['secret_ref']
-        self.created = parse_isotime(secret_dict.get('created'))
+        self.created = parse_isotime(secret_dict['created'])
         self.status = secret_dict.get('status')
 
-        self.algorithm = secret_dict.get('algorithm')
-        self.bit_length = secret_dict.get('bit_length')
+        self.algorithm = secret_dict['algorithm']
+        self.bit_length = secret_dict['bit_length']
         self.payload_content_type = secret_dict.get('payload_content_type')
-        self.payload_content_encoding = secret_dict.get(
-            'payload_content_encoding')
+        self.payload_content_encoding = secret_dict.get('payload_content_encoding')
+
+        self.cypher_type = secret_dict['cypher_type']
         self.name = secret_dict.get('name')
-        self.cypher_type = secret_dict.get('cypher_type')
 
         if secret_dict.get('expiration') is not None:
             self.expiration = parse_isotime(secret_dict['expiration'])
@@ -48,11 +48,14 @@ class Secret(object):
                 "         name: {2}\n"
                 "         created: {3}\n"
                 "         status: {4}\n"
-                "         bit length: {5}\n"
-                "         algorithm: {6}\n"
-                "         cypher type: {7}\n"
-                "         expiration: {8}\n"
+                "         payload content type: {5}\n"
+                "         payload content encoding: {6}\n"
+                "         bit length: {7}\n"
+                "         algorithm: {8}\n"
+                "         cypher type: {9}\n"
+                "         expiration: {10}\n"
                 .format(self.id, self.secret_ref, self.name, self.created,
-                        self.status, self.bit_length, self.algorithm,
-                        self.cypher_type, self.expiration)
+                        self.status, self.payload_content_type,
+                        self.payload_content_encoding, self.bit_length,
+                        self.algorithm, self.cypher_type, self.expiration)
                 )
