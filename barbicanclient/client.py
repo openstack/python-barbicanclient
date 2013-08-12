@@ -322,9 +322,9 @@ class Connection(object):
 
     def create_order(self,
                      name=None,
-                     algorithm=None,
-                     bit_length=None,
-                     cypher_type=None,
+                     algorithm='aes',
+                     bit_length=256,
+                     cypher_type='cbc',
                      expiration=None):
         """
         Creates and returns an Order object with all of its metadata filled in.
@@ -342,6 +342,7 @@ class Connection(object):
         order_dict['secret']['name'] = name
         order_dict['secret'][
             'payload_content_type'] = 'application/octet-stream'
+        order_dict['secret']['payload_content_encoding'] = 'base64'
         order_dict['secret']['algorithm'] = algorithm
         order_dict['secret']['bit_length'] = bit_length
         order_dict['secret']['cypher_type'] = cypher_type

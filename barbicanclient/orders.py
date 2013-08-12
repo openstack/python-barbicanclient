@@ -15,6 +15,12 @@ class Order(object):
         self.secret_ref = order_dict.get('secret_ref')
         self.order_ref = order_dict.get('order_ref')
         self.created = parse_isotime(order_dict.get('created'))
+
+        if order_dict.get('expiration') is not None:
+            self.expiration = parse_isotime(order_dict['expiration'])
+        else:
+            self.expiration = None
+
         if order_dict.get('updated') is not None:
             self.updated = parse_isotime(order_dict['updated'])
         else:

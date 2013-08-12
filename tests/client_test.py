@@ -104,10 +104,9 @@ class WhenTestingConnection(unittest.TestCase):
                                                 endpoint=self.endpoint)
 
     def test_should_create_secret(self):
-        body = {'status': 'ACTIVE',
-                'content_types': {'default': 'text/plain'},
+        body = {'status': "ACTIVE",
                 'updated': '2013-06-07T16:13:38.889857',
-                'cypher_type': 'CDC',
+                'cypher_type': 'cbc',
                 'name': 'test_secret',
                 'algorithm': 'aes',
                 'created': '2013-06-07T16:13:38.889851',
@@ -115,19 +114,20 @@ class WhenTestingConnection(unittest.TestCase):
                               'b5e-3738-408e-aaba-05a7177cade5',
                 'expiration': '2015-06-07T16:13:38.889851',
                 'bit_length': 256,
-                'mime_type': 'text/plain'
+                'payload_content_type': 'text/plain'
                 }
 
         secret = client.Secret(self.connection, body)
         self.request.return_value.content = json.dumps(body)
-        created = self.connection.create_secret('text/plain',
-                                                'Test secret',
-                                                name='test_secret',
+        created = self.connection.create_secret(name='test_secret',
+                                                payload='Test secret',
                                                 algorithm='aes',
                                                 bit_length=256,
-                                                cypher_type='CDC',
+                                                cypher_type='cbc',
                                                 expiration='2015-06-07T16:13'
-                                                           ':38.889851')
+                                                           ':38.889851',
+                                                payload_content_type=
+                                                'text/plain')
         self.assertTrue(self._are_equivalent(secret, created))
 
     def test_should_create_order(self):
@@ -137,12 +137,14 @@ class WhenTestingConnection(unittest.TestCase):
                 "updated": "2013-06-07T19:00:37.338386",
                 "created": "2013-06-07T19:00:37.298704",
                 "secret": {
-                    "cypher_type": "CDC",
-                    "name": "test_secret",
-                    "algorithm": "aes",
-                    "expiration": "2015-06-07T19:00:37.298704",
-                    "bit_length": 256,
-                    "mime_type": "text/plain"
+                    'cypher_type': 'cbc',
+                    'name': 'test_secret',
+                    'algorithm': 'aes',
+                    'created': '2013-06-07T16:13:38.889851',
+                    'expiration': '2015-06-07T16:13:38.889851',
+                    'bit_length': 256,
+                    'payload_content_type': 'application/octet-stream',
+                    'payload_content_encoding': 'base64'
                 },
                 "order_ref": "http://localhost:9311/v1/12345/orders/003f2b91-"
                              "2f53-4c0a-a0f3-33796671efc3"
@@ -150,11 +152,10 @@ class WhenTestingConnection(unittest.TestCase):
 
         order = client.Order(self.connection, body)
         self.request.return_value.content = json.dumps(body)
-        created = self.connection.create_order('text/plain',
-                                               name='test_secret',
-                                               bit_length=256,
+        created = self.connection.create_order(name='test_secret',
                                                algorithm='aes',
-                                               cypher_type='CDC')
+                                               bit_length=256,
+                                               cypher_type='cbc')
         self.assertTrue(self._are_equivalent(order, created))
 
     def test_list_no_secrets(self):

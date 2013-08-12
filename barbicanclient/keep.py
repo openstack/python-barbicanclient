@@ -4,7 +4,6 @@ from barbicanclient import client
 
 
 class Keep:
-
     def __init__(self):
         self.parser = self.get_main_parser()
         self.subparsers = self.parser.add_subparsers(title='subcommands',
@@ -48,17 +47,17 @@ class Keep:
         create_parser = self.subparsers.add_parser('create', help='Create a '
                                                    'secret or an order')
         create_parser.add_argument('--name', '-n', help='a human-friendly name'
-                                   ' used only for reference')
+                                  )
         create_parser.add_argument('--algorithm', '-a', default='aes', help='t'
-                                   'he algorithm used only for reference (defa'
-                                   'ult: %(default)s)')
+                                   'he algorithm; used only for reference (def'
+                                   'ault: %(default)s)')
         create_parser.add_argument('--bit_length', '-b', default=256,
                                    help='the bit length of the secret; used '
                                    'only for reference (default: %(default)s)',
                                    type=int)
         create_parser.add_argument('--cypher_type', '-c', default="cbc",
-                                   help='the cypher type used only for referen'
-                                   'ce (default: %(default)s)')
+                                   help='the cypher type; used only for refere'
+                                   'nce (default: %(default)s)')
         create_parser.add_argument('--payload', '-p', help='the unencrypted'
                                    ' secret; if provided, you must also provid'
                                    'e a payload_content_type (only used for se'
@@ -69,13 +68,14 @@ class Keep:
                                    'secret data; "text/plain" is assumed to be'
                                    ' UTF-8; required when --payload is su'
                                    'pplied (only used for secrets; orders are '
-                                   'assumed to be "application/octet-stream") '
-                                   '(default: %(default)s)')
+                                   'assumed to be of type "application/octet-s'
+                                   'tream") (default: %(default)s)')
         create_parser.add_argument('--payload_content_encoding', '-d',
-                                   choices=["base64"],
+                                   default='base64',
                                    help='required if --payload_content_type is'
-                                   ' "application/octet-stream" (only used for'
-                                   ' secrets)')
+                                   ' "application/octet-stream" (default: %(de'
+                                   'fault)s)')
+
         create_parser.add_argument('--expiration', '-e', help='the expiration '
                                    'time for the secret in ISO 8601 format')
         create_parser.set_defaults(func=self.create)
