@@ -69,7 +69,8 @@ class Keep:
                                    'pplied and when creating orders')
         create_parser.add_argument('--payload_content_encoding', '-d',
                                    help='required if --payload_content_type is'
-                                   ' "application/octet-stream"')
+                                   ' "application/octet-stream" (only used for'
+                                   ' secrets)')
 
         create_parser.add_argument('--expiration', '-e', help='the expiration '
                                    'time for the secret in ISO 8601 format')
@@ -128,7 +129,6 @@ class Keep:
         else:
             order = self.conn.create_order(args.name,
                                            args.payload_content_type,
-                                           args.payload_content_encoding,
                                            args.algorithm,
                                            args.bit_length,
                                            args.cypher_type,

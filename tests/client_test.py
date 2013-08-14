@@ -143,8 +143,7 @@ class WhenTestingConnection(unittest.TestCase):
                     'created': '2013-06-07T16:13:38.889851',
                     'expiration': '2015-06-07T16:13:38.889851',
                     'bit_length': 256,
-                    'payload_content_type': 'application/octet-stream',
-                    'payload_content_encoding': 'base64'
+                    'payload_content_type': 'application/octet-stream'
                 },
                 "order_ref": "http://localhost:9311/v1/12345/orders/003f2b91-"
                              "2f53-4c0a-a0f3-33796671efc3"
@@ -154,7 +153,6 @@ class WhenTestingConnection(unittest.TestCase):
         self.request.return_value.content = json.dumps(body)
         created = self.connection.create_order(name='test_secret',
                                                payload_content_type='application/octet-stream',
-                                               payload_content_encoding='base64',
                                                algorithm='aes',
                                                bit_length=256,
                                                cypher_type='cbc')

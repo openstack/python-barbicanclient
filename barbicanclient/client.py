@@ -323,7 +323,6 @@ class Connection(object):
     def create_order(self,
                      name=None,
                      payload_content_type='application/octet-stream',
-                     payload_content_encoding='base64',
                      algorithm='aes',
                      bit_length=256,
                      cypher_type='cbc',
@@ -342,13 +341,8 @@ class Connection(object):
         LOG.debug("href: {0}".format(href))
         order_dict = {'secret': {}}
         order_dict['secret']['name'] = name
-
         order_dict['secret'][
-        'payload_content_type'] = payload_content_type
-
-        order_dict['secret'][
-        'payload_content_encoding'] = payload_content_encoding
-
+            'payload_content_type'] = payload_content_type
         order_dict['secret']['algorithm'] = algorithm
         order_dict['secret']['bit_length'] = bit_length
         order_dict['secret']['cypher_type'] = cypher_type
