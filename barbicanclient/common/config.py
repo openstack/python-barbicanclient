@@ -23,6 +23,7 @@ import logging.handlers
 import os
 import sys
 
+from barbicanclient.openstack.common.gettextutils import _
 from barbicanclient.version import __version__
 from oslo.config import cfg
 

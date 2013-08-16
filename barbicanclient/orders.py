@@ -10,11 +10,12 @@ class Order(object):
         connection object for subtasks.
         """
         self.connection = connection
-        self.status = order_dict.get('status')
-        self.secret = order_dict.get('secret')
+        self.secret = order_dict['secret']
+        self.order_ref = order_dict['order_ref']
+        self.created = parse_isotime(order_dict['created'])
         self.secret_ref = order_dict.get('secret_ref')
-        self.order_ref = order_dict.get('order_ref')
-        self.created = parse_isotime(order_dict.get('created'))
+        self.status = order_dict.get('status')
+
         if order_dict.get('updated') is not None:
             self.updated = parse_isotime(order_dict['updated'])
         else:

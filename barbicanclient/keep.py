@@ -46,24 +46,34 @@ class Keep:
     def add_create_args(self):
         create_parser = self.subparsers.add_parser('create', help='Create a '
                                                    'secret or an order')
-        create_parser.add_argument('--mime_type', '-m', default='text/plain',
-                                   help='the MIME type of the raw secret (defa'
-                                   'ult: %(default)s)')
-        create_parser.add_argument('--name', '-n', help='a human-friendly name'
-                                   ' used only for reference')
-        create_parser.add_argument('--algorithm', '-a', help='the algorithm us'
-                                   'ed only for reference')
+        create_parser.add_argument('--name', '-n',
+                                   help='a human-friendly name')
+        create_parser.add_argument('--algorithm', '-a', default='aes', help='t'
+                                   'he algorithm; used only for reference (def'
+                                   'ault: %(default)s)')
         create_parser.add_argument('--bit_length', '-b', default=256,
-                                   help='the bit length of the secret used '
+                                   help='the bit length of the secret; used '
                                    'only for reference (default: %(default)s)',
                                    type=int)
-        create_parser.add_argument('--cypher_type', '-c', help='the cypher typ'
-                                   'e used only for reference')
-        create_parser.add_argument('--plain_text', '-p', help='the unencrypted'
-                                   ' secret (only used for secrets)')
+        create_parser.add_argument('--cypher_type', '-c', default="cbc",
+                                   help='the cypher type; used only for refere'
+                                   'nce (default: %(default)s)')
+        create_parser.add_argument('--payload', '-p', help='the unencrypted'
+                                   ' secret; if provided, you must also provid'
+                                   'e a payload_content_type (only used for se'
+                                   'crets)')
+        create_parser.add_argument('--payload_content_type', '-t',
+                                   help='the type/format of the provided '
+                                   'secret data; "text/plain" is assumed to be'
+                                   ' UTF-8; required when --payload is su'
+                                   'pplied and when creating orders')
+        create_parser.add_argument('--payload_content_encoding', '-d',
+                                   help='required if --payload_content_type is'
+                                   ' "application/octet-stream" (only used for'
+                                   ' secrets)')
+
         create_parser.add_argument('--expiration', '-e', help='the expiration '
-                                   'time for the secret in ISO 8601 format '
-                                   '(only used for secrets)')
+                                   'time for the secret in ISO 8601 format')
         create_parser.set_defaults(func=self.create)
 
     def add_delete_args(self):
@@ -81,10 +91,12 @@ class Keep:
         get_parser.add_argument('UUID', help='the universally unique identi'
                                 'fier of the the secret or order')
         get_parser.add_argument('--raw', '-r', help='if specified, gets the ra'
-                                'w secret of type specified with --mime_type ('
-                                'only used for secrets)', action='store_true')
-        get_parser.add_argument('--mime_type', '-m', default='text/plain',
-                                help='the MIME type of the raw secret (defa'
+                                'w secret of type specified with --payload_con'
+                                'tent_type (only used for secrets)',
+                                action='store_true')
+        get_parser.add_argument('--payload_content_type', '-t',
+                                default='text/plain',
+                                help='the content type of the raw secret (defa'
                                 'ult: %(default)s; only used for secrets)')
         get_parser.set_defaults(func=self.get)
 
@@ -105,20 +117,22 @@ class Keep:
 
     def create(self, args):
         if args.type == 'secret':
-            secret = self.conn.create_secret(args.mime_type,
-                                             args.plain_text,
-                                             args.name,
+            secret = self.conn.create_secret(args.name,
+                                             args.payload,
+                                             args.payload_content_type,
+                                             args.payload_content_encoding,
                                              args.algorithm,
                                              args.bit_length,
                                              args.cypher_type,
                                              args.expiration)
             print secret
         else:
-            order = self.conn.create_order(args.mime_type,
-                                           args.name,
+            order = self.conn.create_order(args.name,
+                                           args.payload_content_type,
                                            args.algorithm,
                                            args.bit_length,
-                                           args.cypher_type)
+                                           args.cypher_type,
+                                           args.expiration)
             print order
 
     def delete(self, args):
@@ -130,7 +144,8 @@ class Keep:
     def get(self, args):
         if args.type == 'secret':
             if args.raw:
-                print self.conn.get_raw_secret_by_id(args.UUID, args.mime_type)
+                print self.conn.get_raw_secret_by_id(args.UUID,
+                                                     args.payload_content_type)
             else:
                 print self.conn.get_secret_by_id(args.UUID)
         else:
