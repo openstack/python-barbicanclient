@@ -14,16 +14,16 @@ class Secret(object):
         connection object for subtasks.
         """
         self.connection = connection
-        self.secret_ref = secret_dict['secret_ref']
-        self.created = parse_isotime(secret_dict['created'])
+        self.secret_ref = secret_dict.get('secret_ref')
+        self.created = parse_isotime(secret_dict.get('created'))
         self.status = secret_dict.get('status')
 
-        self.algorithm = secret_dict['algorithm']
-        self.bit_length = secret_dict['bit_length']
+        self.algorithm = secret_dict.get('algorithm')
+        self.bit_length = secret_dict.get('bit_length')
         self.payload_content_type = secret_dict.get('payload_content_type')
         self.payload_content_encoding = secret_dict.get('payload_content_encoding')
 
-        self.cypher_type = secret_dict['cypher_type']
+        self.cypher_type = secret_dict.get('cypher_type')
         self.name = secret_dict.get('name')
 
         if secret_dict.get('expiration') is not None:
