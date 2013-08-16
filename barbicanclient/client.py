@@ -11,7 +11,6 @@ from barbicanclient.common import auth
 from barbicanclient.openstack.common import log
 from barbicanclient.common.exceptions import ClientException
 from barbicanclient.openstack.common.gettextutils import _
-from openstack.common.timeutils import parse_isotime
 from urlparse import urljoin
 
 

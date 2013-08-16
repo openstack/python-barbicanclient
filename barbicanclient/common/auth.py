@@ -64,7 +64,7 @@ def authenticate(auth_url, user, key, tenant, **kwargs):
                 filter_value=region,
                 service_type=service_type,
                 endpoint_type=endpoint_type)
-        except exceptions.EndpointNotFound as ex:
+        except exceptions.EndpointNotFound:
             raise ClientException('Endpoint not found in service catalog')
 
     return endpoint, _ksclient.auth_token

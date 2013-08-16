@@ -46,8 +46,8 @@ class Keep:
     def add_create_args(self):
         create_parser = self.subparsers.add_parser('create', help='Create a '
                                                    'secret or an order')
-        create_parser.add_argument('--name', '-n', help='a human-friendly name'
-                                  )
+        create_parser.add_argument('--name', '-n',
+                                   help='a human-friendly name')
         create_parser.add_argument('--algorithm', '-a', default='aes', help='t'
                                    'he algorithm; used only for reference (def'
                                    'ault: %(default)s)')

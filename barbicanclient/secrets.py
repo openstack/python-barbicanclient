@@ -21,7 +21,8 @@ class Secret(object):
         self.algorithm = secret_dict.get('algorithm')
         self.bit_length = secret_dict.get('bit_length')
         self.payload_content_type = secret_dict.get('payload_content_type')
-        self.payload_content_encoding = secret_dict.get('payload_content_encoding')
+        self.payload_content_encoding = secret_dict.get(
+            'payload_content_encoding')
 
         self.cypher_type = secret_dict.get('cypher_type')
         self.name = secret_dict.get('name')
