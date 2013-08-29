@@ -26,6 +26,9 @@ pip-log.txt
 .tox
 nosetests.xml
 
+# pyenv
+.python-version
+
 # Translations
 *.mo
 
