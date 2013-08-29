@@ -3,6 +3,7 @@ eventlet.monkey_patch(socket=True, select=True)
 
 import json
 import os
+
 import requests
 
 from barbicanclient.secrets import Secret
@@ -18,7 +19,7 @@ LOG = log.getLogger(__name__)
 log.setup('barbicanclient')
 
 
-class Connection(object):
+class Client(object):
     SECRETS_PATH = 'secrets'
     ORDERS_PATH = 'orders'
 
@@ -45,7 +46,7 @@ class Connection(object):
         If a token is provided, an endpoint should be as well.
         """
 
-        LOG.debug(_("Creating Connection object"))
+        LOG.debug(_("Creating Client object"))
 
         self.env = kwargs.get('fake_env') or env
         self._auth_endpoint = auth_endpoint or self.env('OS_AUTH_URL')

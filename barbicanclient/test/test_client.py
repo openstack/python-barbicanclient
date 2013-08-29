@@ -14,23 +14,15 @@
 # limitations under the License.
 
 import json
-import unittest2 as unittest
 
 from mock import MagicMock
+import unittest2 as unittest
 
 from barbicanclient import client
 from barbicanclient.common.exceptions import ClientException
 
 
-def suite():
-    suite = unittest.TestSuite()
-
-    suite.addTest(WhenTestingConnection())
-
-    return suite
-
-
-class WhenTestingConnection(unittest.TestCase):
+class WhenTestingClient(unittest.TestCase):
     def setUp(self):
         self.auth_endpoint = 'https://keystone.com/v2'
         self.user = 'user'
@@ -60,23 +52,23 @@ class WhenTestingConnection(unittest.TestCase):
             'req-6c19d09e-1167-445c-b435-d6b0818b59b9'
         }
         self.request.return_value.ok = True
-        self.connection = client.Connection(self.auth_endpoint, self.user,
-                                            self.key, self.tenant,
-                                            token=self.auth_token,
-                                            authenticate=self.authenticate,
-                                            request=self.request,
-                                            endpoint=self.endpoint)
+        self.client = client.Client(self.auth_endpoint, self.user,
+                                    self.key, self.tenant,
+                                    token=self.auth_token,
+                                    authenticate=self.authenticate,
+                                    request=self.request,
+                                    endpoint=self.endpoint)
 
     def test_should_connect_with_token(self):
         self.assertFalse(self.authenticate.called)
 
     def test_should_connect_without_token(self):
-        self.connection = client.Connection(self.auth_endpoint,
-                                            self.user,
-                                            self.key,
-                                            self.tenant,
-                                            authenticate=self.authenticate,
-                                            endpoint=self.endpoint)
+        self.client = client.Client(self.auth_endpoint,
+                                    self.user,
+                                    self.key,
+                                    self.tenant,
+                                    authenticate=self.authenticate,
+                                    endpoint=self.endpoint)
         self.authenticate\
             .assert_called_once_with(self.auth_endpoint,
                                      self.user,
@@ -86,22 +78,22 @@ class WhenTestingConnection(unittest.TestCase):
                                      endpoint=self.endpoint,
                                      cacert=None
                                      )
-        self.assertEqual(self.auth_token, self.connection.auth_token)
-        self.assertEqual(self.auth_endpoint, self.connection._auth_endpoint)
-        self.assertEqual(self.user, self.connection._user)
-        self.assertEqual(self.key, self.connection._key)
-        self.assertEqual(self.tenant, self.connection._tenant)
-        self.assertEqual(self.endpoint, self.connection._endpoint)
+        self.assertEqual(self.auth_token, self.client.auth_token)
+        self.assertEqual(self.auth_endpoint, self.client._auth_endpoint)
+        self.assertEqual(self.user, self.client._user)
+        self.assertEqual(self.key, self.client._key)
+        self.assertEqual(self.tenant, self.client._tenant)
+        self.assertEqual(self.endpoint, self.client._endpoint)
 
     def test_should_raise_for_bad_args(self):
         with self.assertRaises(ClientException):
-            self.connection = client.Connection(None, self.user,
-                                                self.key, self.tenant,
-                                                fake_env=self.fake_env,
-                                                token=self.auth_token,
-                                                authenticate=self.authenticate,
-                                                request=self.request,
-                                                endpoint=self.endpoint)
+            self.client = client.Client(None, self.user,
+                                        self.key, self.tenant,
+                                        fake_env=self.fake_env,
+                                        token=self.auth_token,
+                                        authenticate=self.authenticate,
+                                        request=self.request,
+                                        endpoint=self.endpoint)
 
     def test_should_create_secret(self):
         body = {'status': "ACTIVE",
@@ -117,17 +109,17 @@ class WhenTestingConnection(unittest.TestCase):
                 'payload_content_type': 'text/plain'
                 }
 
-        secret = client.Secret(self.connection, body)
+        secret = client.Secret(self.client, body)
         self.request.return_value.content = json.dumps(body)
-        created = self.connection.create_secret(name='test_secret',
-                                                payload='Test secret',
-                                                algorithm='aes',
-                                                bit_length=256,
-                                                cypher_type='cbc',
-                                                expiration='2015-06-07T16:13'
-                                                           ':38.889851',
-                                                payload_content_type=
-                                                'text/plain')
+        created = self.client.create_secret(name='test_secret',
+                                            payload='Test secret',
+                                            algorithm='aes',
+                                            bit_length=256,
+                                            cypher_type='cbc',
+                                            expiration='2015-06-07T16:13'
+                                                       ':38.889851',
+                                            payload_content_type=
+                                            'text/plain')
         self.assertTrue(self._are_equivalent(secret, created))
 
     def test_should_create_order(self):
@@ -149,20 +141,22 @@ class WhenTestingConnection(unittest.TestCase):
                              "2f53-4c0a-a0f3-33796671efc3"
                 }
 
-        order = client.Order(self.connection, body)
+        order = client.Order(self.client, body)
         self.request.return_value.content = json.dumps(body)
-        created = self.connection.create_order(name='test_secret',
-                                               payload_content_type='application/octet-stream',
-                                               algorithm='aes',
-                                               bit_length=256,
-                                               cypher_type='cbc')
+        created = self.client.create_order(
+            name='test_secret',
+            payload_content_type='application/octet-stream',
+            algorithm='aes',
+            bit_length=256,
+            cypher_type='cbc'
+        )
         self.assertTrue(self._are_equivalent(order, created))
 
     def test_list_no_secrets(self):
         body0 = {'secrets': []}
         secrets = []
         self.request.return_value.content = json.dumps(body0)
-        secret_list, prev_ref, next_ref = self.connection.list_secrets(0, 0)
+        secret_list, prev_ref, next_ref = self.client.list_secrets(0, 0)
         self.assertTrue(self._are_equivalent(secrets, secret_list))
         self.assertIsNone(prev_ref)
         self.assertIsNone(next_ref)
@@ -182,15 +176,14 @@ class WhenTestingConnection(unittest.TestCase):
                              'expiration': None,
                              'bit_length': None,
                              'mime_type': 'text/plain'}],
-                 'next': "{0}/{1}?limit={2}&offset={2}".format(self.connection.
+                 'next': "{0}/{1}?limit={2}&offset={2}".format(self.client.
                                                                _tenant,
-                                                               self.connection.
+                                                               self.client.
                                                                SECRETS_PATH,
                                                                limit)}
-        secrets = [client.Secret(self.connection, body1['secrets'][0])]
+        secrets = [client.Secret(self.client, body1['secrets'][0])]
         self.request.return_value.content = json.dumps(body1)
-        secret_list, prev_ref, next_ref = self.connection.list_secrets(limit,
-                                                                       0)
+        secret_list, prev_ref, next_ref = self.client.list_secrets(limit, 0)
         self.assertTrue(self._are_equivalent(secrets, secret_list))
         self.assertIsNone(prev_ref)
         self.assertEqual(body1['next'], next_ref)
@@ -211,8 +204,8 @@ class WhenTestingConnection(unittest.TestCase):
                  'bit_length': None,
                  'mime_type': 'text/plain'}],
                  'previous': "{0}/{1}?limit={2}&offset={2}".format(
-                             self.connection._tenant,
-                             self.connection.
+                             self.client._tenant,
+                             self.client.
                              SECRETS_PATH,
                              limit)}
 
@@ -225,12 +218,11 @@ class WhenTestingConnection(unittest.TestCase):
                             + 'b6e-4ef1-48d1-8950-170c1a5838e1'
         body2['next'] = None
 
-        secrets = [client.Secret(self.connection, b['secrets'][0])
+        secrets = [client.Secret(self.client, b['secrets'][0])
                    for b in (body1, body2)]
         body2['secrets'].insert(0, body1['secrets'][0])
         self.request.return_value.content = json.dumps(body2)
-        secret_list, prev_ref, next_ref = self.connection.list_secrets(limit,
-                                                                       1)
+        secret_list, prev_ref, next_ref = self.client.list_secrets(limit, 1)
         self.assertTrue(self._are_equivalent(secrets, secret_list))
         self.assertEqual(body2['previous'], prev_ref)
         self.assertIsNone(next_ref)
@@ -239,7 +231,7 @@ class WhenTestingConnection(unittest.TestCase):
         body0 = {'orders': []}
         orders = []
         self.request.return_value.content = json.dumps(body0)
-        order_list, prev_ref, next_ref = self.connection.list_orders(0, 0)
+        order_list, prev_ref, next_ref = self.client.list_orders(0, 0)
         self.assertTrue(self._are_equivalent(orders, order_list))
         self.assertIsNone(prev_ref)
         self.assertIsNone(next_ref)
@@ -260,14 +252,14 @@ class WhenTestingConnection(unittest.TestCase):
                                         'expiration': None,
                                         'bit_length': None,
                                         'mime_type': 'text/plain'}}],
-                 'next': "{0}/{1}?limit={2}&offset={2}".format(self.connection.
+                 'next': "{0}/{1}?limit={2}&offset={2}".format(self.client.
                                                                _tenant,
-                                                               self.connection.
+                                                               self.client.
                                                                ORDERS_PATH,
                                                                limit)}
-        orders = [client.Order(self.connection, body1['orders'][0])]
+        orders = [client.Order(self.client, body1['orders'][0])]
         self.request.return_value.content = json.dumps(body1)
-        order_list, prev_ref, next_ref = self.connection.list_orders(limit, 0)
+        order_list, prev_ref, next_ref = self.client.list_orders(limit, 0)
         self.assertTrue(self._are_equivalent(orders, order_list))
         self.assertIsNone(prev_ref)
         self.assertEqual(body1['next'], next_ref)
@@ -289,8 +281,8 @@ class WhenTestingConnection(unittest.TestCase):
                                         'bit_length': None,
                                         'mime_type': 'text/plain'}}],
                  'previous': "{0}/{1}?limit={2}&offset={2}".format(
-                             self.connection._tenant,
-                             self.connection.
+                             self.client._tenant,
+                             self.client.
                              SECRETS_PATH,
                              limit)}
         body2 = body1
@@ -307,31 +299,31 @@ class WhenTestingConnection(unittest.TestCase):
                             + 'b6e-4ef1-48d1-8950-170c1a5838e1'
         body2['next'] = None
 
-        orders = [client.Order(self.connection, b['orders'][0])
+        orders = [client.Order(self.client, b['orders'][0])
                   for b in (body1, body2)]
         body2['orders'].insert(0, body1['orders'][0])
         self.request.return_value.content = json.dumps(body2)
-        order_list, prev_ref, next_ref = self.connection.list_orders(limit, 1)
+        order_list, prev_ref, next_ref = self.client.list_orders(limit, 1)
         self.assertTrue(self._are_equivalent(orders, order_list))
         self.assertEqual(body2['previous'], prev_ref)
         self.assertIsNone(next_ref)
 
     def test_should_get_response(self):
         self._setup_request()
-        headers, body = self.connection._perform_http('GET', self.href)
+        headers, body = self.client._perform_http('GET', self.href)
         self.assertEqual(self.request.return_value.headers, headers)
         self.assertEqual(json.loads(self.request.return_value.content), body)
 
     def test_should_parse_json(self):
         self._setup_request()
-        headers, body = self.connection._perform_http('GET', self.href,
-                                                      parse_json=True)
+        headers, body = self.client._perform_http('GET', self.href,
+                                                  parse_json=True)
         self.assertEqual(json.loads(self.request.return_value.content), body)
 
     def test_should_not_parse_json(self):
         self._setup_request()
-        headers, body = self.connection._perform_http('GET', self.href,
-                                                      parse_json=False)
+        headers, body = self.client._perform_http('GET', self.href,
+                                                  parse_json=False)
         self.assertEqual(self.request.return_value.content, body)
 
     def test_should_raise_for_bad_response(self):
@@ -339,7 +331,7 @@ class WhenTestingConnection(unittest.TestCase):
         self.request.return_value.ok = False
         self.request.return_value.status_code = 404
         with self.assertRaises(ClientException) as e:
-            self.connection._perform_http('GET', self.href)
+            self.client._perform_http('GET', self.href)
         exception = e.exception
         self.assertEqual(404, exception.http_status)
 
@@ -353,7 +345,3 @@ class WhenTestingConnection(unittest.TestCase):
             return all([self._are_equivalent(x, y) for x, y in zip(a, b)])
         else:
             return (a.__dict__ == b.__dict__)
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -169,10 +169,10 @@ class Keep:
 
     def execute(self, **kwargs):
         args = self.parser.parse_args(kwargs.get('argv'))
-        self.conn = client.Connection(args.auth_endpoint, args.user,
-                                      args.password, args.tenant,
-                                      args.token,
-                                      endpoint=args.endpoint)
+        self.conn = client.Client(args.auth_endpoint, args.user,
+                                  args.password, args.tenant,
+                                  args.token,
+                                  endpoint=args.endpoint)
 
         args.func(args)
 
