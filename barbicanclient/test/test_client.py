@@ -26,8 +26,10 @@ class WhenTestingClient(unittest.TestCase):
     def setUp(self):
         self.auth_endpoint = 'https://keystone.com/v2'
         self.user = 'user'
-        self.key = 'key'
+        self.password = 'password'
         self.tenant = 'tenant'
+        
+        self.key = 'key'
         self.endpoint = 'http://localhost:9311/v1/'
         self.auth_token = 'token'
         self.href = 'http://localhost:9311/v1/12345/orders'
@@ -52,21 +54,34 @@ class WhenTestingClient(unittest.TestCase):
             'req-6c19d09e-1167-445c-b435-d6b0818b59b9'
         }
         self.request.return_value.ok = True
-        self.client = client.Client(self.auth_endpoint, self.user,
-                                    self.key, self.tenant,
+        self.client = client.Client(auth_endpoint=self.auth_endpoint, 
+                                    user=self.user,
+                                    key=self.key, tenant=self.tenant,
                                     token=self.auth_token,
                                     authenticate=self.authenticate,
                                     request=self.request,
-                                    endpoint=self.endpoint)
+                                    endpoint=self.endpoint,
+                                    auth=False)
+
+    def test_authenticated_client_requires_endpoint_user_pw_tenant(self):
+        with self.assertRaises(ValueError):
+            c = client.Client(auth=True)
+        with self.assertRaises(ValueError):
+            c = client.Client()  # default auth=True
+        c=client.Client(auth_endpoint=self.auth_endpoint, user=self.user,
+                        password=self.password, tenant=self.tenant,
+                        #TODO(dmend): remove authenticate below
+                        authenticate=self.authenticate)
 
     def test_should_connect_with_token(self):
         self.assertFalse(self.authenticate.called)
 
     def test_should_connect_without_token(self):
-        self.client = client.Client(self.auth_endpoint,
-                                    self.user,
-                                    self.key,
-                                    self.tenant,
+        self.client = client.Client(auth=False,
+                                    auth_endpoint=self.auth_endpoint,
+                                    user=self.user,
+                                    key=self.key,
+                                    tenant=self.tenant,
                                     authenticate=self.authenticate,
                                     endpoint=self.endpoint)
         self.authenticate\
@@ -87,8 +102,11 @@ class WhenTestingClient(unittest.TestCase):
 
     def test_should_raise_for_bad_args(self):
         with self.assertRaises(ClientException):
-            self.client = client.Client(None, self.user,
-                                        self.key, self.tenant,
+            self.client = client.Client(auth=False, 
+                                        auth_endpoint=None, 
+                                        user=self.user,
+                                        key=self.key,
+                                        tenant=self.tenant,
                                         fake_env=self.fake_env,
                                         token=self.auth_token,
                                         authenticate=self.authenticate,

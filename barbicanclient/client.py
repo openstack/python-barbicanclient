@@ -1,6 +1,3 @@
-import eventlet
-eventlet.monkey_patch(socket=True, select=True)
-
 import json
 import os
 
@@ -23,8 +20,9 @@ class Client(object):
     SECRETS_PATH = 'secrets'
     ORDERS_PATH = 'orders'
 
-    def __init__(self, auth_endpoint=None, user=None, key=None, tenant=None,
-                 token=None, **kwargs):
+    def __init__(self, auth=True,
+                 auth_endpoint=None, user=None, password=None, tenant=None,
+                 key=None, token=None, **kwargs):
         """
         Authenticate and connect to the service endpoint, which can be
         received through authentication.
@@ -32,27 +30,44 @@ class Client(object):
         Environment variables will be used by default when their corresponding
         arguments are not passed in.
 
-        :param auth_endpoint: The auth URL to authenticate against
-                              default: env('OS_AUTH_URL')
-        :param user: The user to authenticate as
-                     default: env('OS_USERNAME')
-        :param key: The API key or password to auth with
-                    default: env('OS_PASSWORD')
+        :param auth: Whether the client should use keystone
+            authentication, defaults to True
+        :param auth_endpoint: The keystone URL used for authentication
+            required if auth=True
+            default: env('OS_AUTH_URL')
+        :param user: keystone user account, required if auth=True
+            default: env('OS_USERNAME')
+        :param password: password associated with the user
+            required if auth=Tru
+            default: env('OS_PASSWORD')
         :param tenant: The tenant ID
-                       default: env('OS_TENANT_NAME')
-        :keyword param endpoint: The barbican endpoint to connect to
-                       default: env('BARBICAN_ENDPOINT')
+            default: env('OS_TENANT_NAME')
 
-        If a token is provided, an endpoint should be as well.
+        :param key: The API key or password to auth with
+        :keyword param endpoint: The barbican endpoint to connect to
+            default: env('BARBICAN_ENDPOINT')
         """
 
         LOG.debug(_("Creating Client object"))
 
         self.env = kwargs.get('fake_env') or env
+
+        if auth:
+            LOG.debug(_('Using authentication with keystone'))
+            self._auth_endpoint = auth_endpoint or self.env('OS_AUTH_URL')
+            self._user = user or self.env('OS_USERNAME')
+            self._password = password or self.env('OS_PASSWORD')
+            self._tenant = tenant or self.env('OS_TENANT_NAME')
+            if not all([self._auth_endpoint, self._user,
+                        self._password, self._tenant]):
+                raise ValueError('Authentication requires an endpoint, user, '
+                                 'password, and tenant.')
+        #TODO(dmend): remove these
         self._auth_endpoint = auth_endpoint or self.env('OS_AUTH_URL')
         self._user = user or self.env('OS_USERNAME')
-        self._key = key or self.env('OS_PASSWORD')
         self._tenant = tenant or self.env('OS_TENANT_NAME')
+        self._key = key or self._password
+
         if not all([self._auth_endpoint, self._user, self._key, self._tenant]):
             raise ClientException("The authorization endpoint, username, key,"
                                   " and tenant name should either be passed i"
