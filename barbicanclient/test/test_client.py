@@ -19,16 +19,21 @@ from mock import MagicMock
 import unittest2 as unittest
 
 from barbicanclient import client
+from barbicanclient.common import auth
 from barbicanclient.common.exceptions import ClientException
 
 
 class WhenTestingClient(unittest.TestCase):
     def setUp(self):
-        self.auth_endpoint = 'https://keystone.com/v2'
+        self.auth_endpoint = 'https://localhost:5000/v2.0/'
         self.user = 'user'
         self.password = 'password'
         self.tenant = 'tenant'
-        
+        self.keystone = auth.KeystoneAuth(endpoint=self.auth_endpoint,
+                                          username=self.user,
+                                          password=self.password,
+                                          tenant_name=self.tenant)
+
         self.key = 'key'
         self.endpoint = 'http://localhost:9311/v1/'
         self.auth_token = 'token'
@@ -54,7 +59,7 @@ class WhenTestingClient(unittest.TestCase):
             'req-6c19d09e-1167-445c-b435-d6b0818b59b9'
         }
         self.request.return_value.ok = True
-        self.client = client.Client(auth_endpoint=self.auth_endpoint, 
+        self.client = client.Client(auth_endpoint=self.auth_endpoint,
                                     user=self.user,
                                     key=self.key, tenant=self.tenant,
                                     token=self.auth_token,
@@ -102,8 +107,8 @@ class WhenTestingClient(unittest.TestCase):
 
     def test_should_raise_for_bad_args(self):
         with self.assertRaises(ClientException):
-            self.client = client.Client(auth=False, 
-                                        auth_endpoint=None, 
+            self.client = client.Client(auth=False,
+                                        auth_endpoint=None,
                                         user=self.user,
                                         key=self.key,
                                         tenant=self.tenant,
