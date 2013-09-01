@@ -12,12 +12,16 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import unittest2 as unittest
+"""
+Base utilites to build API operation managers.
+"""
 
-from barbicanclient.common import auth
+class BaseEntityManager(object):
+    def __init__(self, api, entity):
+        self.api = api
+        self.entity = entity
 
-
-class WhenTestingKeystoneAuthentication(unittest.TestCase):
-    def test_endpoint_username_password_tenant_are_required(self):
-        with self.assertRaises(ValueError):
-            keystone = auth.KeystoneAuth()
+    def _remove_empty_keys(self, dictionary):
+        for k in dictionary.keys():
+            if dictionary[k] is None:
+                dictionary.pop(k)

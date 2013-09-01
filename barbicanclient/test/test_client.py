@@ -29,10 +29,6 @@ class WhenTestingClient(unittest.TestCase):
         self.user = 'user'
         self.password = 'password'
         self.tenant = 'tenant'
-        self.keystone = auth.KeystoneAuth(endpoint=self.auth_endpoint,
-                                          username=self.user,
-                                          password=self.password,
-                                          tenant_name=self.tenant)
 
         self.key = 'key'
         self.endpoint = 'http://localhost:9311/v1/'
@@ -66,17 +62,7 @@ class WhenTestingClient(unittest.TestCase):
                                     authenticate=self.authenticate,
                                     request=self.request,
                                     endpoint=self.endpoint,
-                                    auth=False)
-
-    def test_authenticated_client_requires_endpoint_user_pw_tenant(self):
-        with self.assertRaises(ValueError):
-            c = client.Client(auth=True)
-        with self.assertRaises(ValueError):
-            c = client.Client()  # default auth=True
-        c=client.Client(auth_endpoint=self.auth_endpoint, user=self.user,
-                        password=self.password, tenant=self.tenant,
-                        #TODO(dmend): remove authenticate below
-                        authenticate=self.authenticate)
+                                    tenant_id='test_tenant')
 
     def test_should_connect_with_token(self):
         self.assertFalse(self.authenticate.called)
@@ -88,7 +74,8 @@ class WhenTestingClient(unittest.TestCase):
                                     key=self.key,
                                     tenant=self.tenant,
                                     authenticate=self.authenticate,
-                                    endpoint=self.endpoint)
+                                    endpoint=self.endpoint,
+                                    tenant_id='test_tenant')
         self.authenticate\
             .assert_called_once_with(self.auth_endpoint,
                                      self.user,
@@ -116,7 +103,8 @@ class WhenTestingClient(unittest.TestCase):
                                         token=self.auth_token,
                                         authenticate=self.authenticate,
                                         request=self.request,
-                                        endpoint=self.endpoint)
+                                        endpoint=self.endpoint,
+                                        tenant_id='test_tenant')
 
     def test_should_create_secret(self):
         body = {'status': "ACTIVE",

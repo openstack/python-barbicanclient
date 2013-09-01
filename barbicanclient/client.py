@@ -1,8 +1,10 @@
 import json
 import os
+import urlparse
 
 import requests
 
+from barbicanclient import secrets
 from barbicanclient.secrets import Secret
 from barbicanclient.orders import Order
 from barbicanclient.common import auth
@@ -20,9 +22,8 @@ class Client(object):
     SECRETS_PATH = 'secrets'
     ORDERS_PATH = 'orders'
 
-    def __init__(self, auth=True,
-                 auth_endpoint=None, user=None, password=None, tenant=None,
-                 key=None, token=None, **kwargs):
+    def __init__(self, auth_plugin=None, endpoint=None, tenant_id=None,
+                 **kwargs):
         """
         Authenticate and connect to the service endpoint, which can be
         received through authentication.
@@ -30,18 +31,9 @@ class Client(object):
         Environment variables will be used by default when their corresponding
         arguments are not passed in.
 
-        :param auth: Whether the client should use keystone
-            authentication, defaults to True
-        :param auth_endpoint: The keystone URL used for authentication
-            required if auth=True
-            default: env('OS_AUTH_URL')
-        :param user: keystone user account, required if auth=True
-            default: env('OS_USERNAME')
-        :param password: password associated with the user
-            required if auth=Tru
-            default: env('OS_PASSWORD')
-        :param tenant: The tenant ID
-            default: env('OS_TENANT_NAME')
+        :param auth_plugin: Authentication backend plugin
+            defaults to None
+        :param endpoint: Barbican endpoint url
 
         :param key: The API key or password to auth with
         :keyword param endpoint: The barbican endpoint to connect to
@@ -50,34 +42,49 @@ class Client(object):
 
         LOG.debug(_("Creating Client object"))
 
-        self.env = kwargs.get('fake_env') or env
+        self._session = requests.Session()
+        self.auth_plugin = auth_plugin
 
-        if auth:
-            LOG.debug(_('Using authentication with keystone'))
-            self._auth_endpoint = auth_endpoint or self.env('OS_AUTH_URL')
-            self._user = user or self.env('OS_USERNAME')
-            self._password = password or self.env('OS_PASSWORD')
-            self._tenant = tenant or self.env('OS_TENANT_NAME')
-            if not all([self._auth_endpoint, self._user,
-                        self._password, self._tenant]):
-                raise ValueError('Authentication requires an endpoint, user, '
-                                 'password, and tenant.')
-        #TODO(dmend): remove these
-        self._auth_endpoint = auth_endpoint or self.env('OS_AUTH_URL')
-        self._user = user or self.env('OS_USERNAME')
-        self._tenant = tenant or self.env('OS_TENANT_NAME')
-        self._key = key or self._password
+        if self.auth_plugin is not None:
+            self._barbican_url = self.auth_plugin.barbican_url
+            self._tenant_id = self.auth_plugin.tenant_id
+            self._session.headers.update(
+                {'X-Auth-Token': self.auth_plugin.auth_token}
+            )
+        else:
+            if endpoint is None:
+                raise ValueError('Barbican endpoint url must be provided, or '
+                                 'must be available from auth_plugin')
+            if tenant_id is None:
+                raise ValueError('Tenant ID must be provided, or must be available'
+                                 ' from auth_plugin')
+            if endpoint.endswith('/'):
+                self._barbican_url = endpoint[:-1]
+            else:
+                self._barbican_url = endpoint
+            self._tenant_id = tenant_id
 
-        if not all([self._auth_endpoint, self._user, self._key, self._tenant]):
-            raise ClientException("The authorization endpoint, username, key,"
-                                  " and tenant name should either be passed i"
-                                  "n or defined as environment variables.")
-        self.authenticate = kwargs.get('authenticate') or auth.authenticate
-        self.request = kwargs.get('request') or requests.request
-        self._endpoint = (kwargs.get('endpoint') or
-                          self.env('BARBICAN_ENDPOINT'))
-        self._cacert = kwargs.get('cacert')
-        self.connect(token=(token or self.env('AUTH_TOKEN')))
+        self.base_url = '{0}/{1}'.format(self._barbican_url, self._tenant_id)
+        self.secrets = secrets.SecretManager(self)
+
+        # self.env = kwargs.get('fake_env') or env
+
+        # #TODO(dmend): remove these
+        # self._auth_endpoint = kwargs.get('auth_endpoint') or self.env('OS_AUTH_URL')
+        # self._user = kwargs.get('user') or self.env('OS_USERNAME')
+        # self._tenant = kwargs.get('tenant') or self.env('OS_TENANT_NAME')
+        # self._key = kwargs.get('key')
+
+        # if not all([self._auth_endpoint, self._user, self._key, self._tenant]):
+        #     raise ClientException("The authorization endpoint, username, key,"
+        #                           " and tenant name should either be passed i"
+        #                           "n or defined as environment variables.")
+        # self.authenticate = kwargs.get('authenticate') or auth.authenticate
+        # self.request = kwargs.get('request') or requests.request
+        # self._endpoint = (kwargs.get('endpoint') or
+        #                   self.env('BARBICAN_ENDPOINT'))
+        # self._cacert = kwargs.get('cacert')
+        # self.connect(token=(kwargs.get('token') or self.env('AUTH_TOKEN')))
 
     @property
     def _conn(self):
@@ -194,40 +201,15 @@ class Client(object):
                       bit_length=None,
                       cypher_type=None,
                       expiration=None):
-        """
-        Creates and returns a Secret object with all of its metadata filled in.
-
-        :param name: A friendly name for the secret
-        :param payload: The unencrypted secret
-        :param payload_content_type: The format/type of the secret
-        :param payload_content_encoding: The encoding of the secret
-        :param algorithm: The algorithm the secret is used with
-        :param bit_length: The bit length of the secret
-        :param cypher_type: The cypher type (e.g. block cipher mode)
-        :param expiration: The expiration time of the secret in ISO 8601 format
-        """
-        LOG.debug(_("Creating secret of payload content type {0}").format(
-            payload_content_type))
-        href = "{0}/{1}".format(self._tenant, self.SECRETS_PATH)
-        LOG.debug(_("href: {0}").format(href))
-        secret_dict = {}
-        secret_dict['name'] = name
-        secret_dict['payload'] = payload
-        secret_dict['payload_content_type'] = payload_content_type
-        secret_dict['payload_content_encoding'] = payload_content_encoding
-        secret_dict['algorithm'] = algorithm
-        secret_dict['cypher_type'] = cypher_type
-        secret_dict['bit_length'] = bit_length
-        secret_dict['expiration'] = expiration
-        self._remove_empty_keys(secret_dict)
-        LOG.debug(_("Request body: {0}").format(secret_dict))
-        hdrs, body = self._perform_http(href=href,
-                                        method='POST',
-                                        request_body=json.dumps(secret_dict))
-
-        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
-
-        return self.get_secret(body['secret_ref'])
+        """Deprecated"""
+        self.secrets.create(name=name,
+                            payload=payload,
+                            payload_content_type=payload_content_type,
+                            payload_content_encoding=payload_content_encoding,
+                            algorithm=algorithm,
+                            bit_length=bit_length,
+                            mode=cypher_type,
+                            expiration=expiration)
 
     def delete_secret_by_id(self, secret_id):
         """
@@ -411,11 +393,6 @@ class Client(object):
         LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
         return Order(self._conn, body)
 
-    def _remove_empty_keys(self, dictionary):
-        for k in dictionary.keys():
-            if dictionary[k] is None:
-                dictionary.pop(k)
-
     def _perform_http(self, method, href, request_body='', headers={},
                       parse_json=True):
         """
@@ -456,6 +433,28 @@ class Client(object):
             resp_body = ''
 
         return response.headers, resp_body
+
+    def _request(self, url, method, headers):
+        resp = self._session.request()
+
+    def get(self, path, params):
+        url = '{0}/{1}/'.format(self.base_url, path)
+        headers = {'content-type': 'application/json'}
+        resp = self._session.get(url, params=params, headers=headers)
+        self._check_status_code(resp)
+        return resp.json()
+
+    def post(self, path, data):
+        url = '{0}/{1}/'.format(self.base_url, path)
+        headers = {'content-type': 'application/json'}
+        resp = self._session.post(url, data=json.dumps(data), headers=headers)
+        self._check_status_code(resp)
+        return resp.json()
+
+    #TODO(dmend): beef this up
+    def _check_status_code(self, resp):
+        status = resp.status_code
+        print('status {0}'.format(status))
 
 
 def env(*vars, **kwargs):

@@ -35,6 +35,9 @@ class KeystoneAuth(object):
         self._service_type = 'keystore'
         self._endpoint_type = 'publicURL'
 
+        self.tenant_name = self._keystone.tenant_name
+        self.tenant_id = self._keystone.tenant_id
+
     @property
     def auth_token(self):
         return self._keystone.auth_token
