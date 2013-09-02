@@ -1,46 +1,48 @@
+# Copyright (c) 2013 Rackspace, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import json
 import os
-import urlparse
 
 import requests
 
+from barbicanclient.openstack.common import log as logging
+from barbicanclient.openstack.common.gettextutils import _
 from barbicanclient import orders
 from barbicanclient import secrets
-from barbicanclient.secrets import Secret
-from barbicanclient.orders import Order
-from barbicanclient.common import auth
-from barbicanclient.openstack.common import log
-from barbicanclient.common.exceptions import ClientException
-from barbicanclient.openstack.common.gettextutils import _
-from urlparse import urljoin
 
 
-LOG = log.getLogger(__name__)
-log.setup('barbicanclient')
+LOG = logging.getLogger(__name__)
+logging.setup('barbicanclient')
 
 
 class Client(object):
-    SECRETS_PATH = 'secrets'
-    ORDERS_PATH = 'orders'
 
     def __init__(self, auth_plugin=None, endpoint=None, tenant_id=None,
                  **kwargs):
         """
-        Authenticate and connect to the service endpoint, which can be
-        received through authentication.
-
-        Environment variables will be used by default when their corresponding
-        arguments are not passed in.
+        Barbican client object used to interact with barbican service.
 
         :param auth_plugin: Authentication backend plugin
             defaults to None
-        :param endpoint: Barbican endpoint url
-
-        :param key: The API key or password to auth with
-        :keyword param endpoint: The barbican endpoint to connect to
-            default: env('BARBICAN_ENDPOINT')
+        :param endpoint: Barbican endpoint url.  Required when not using
+            an auth_plugin.  When not provided, the client will try to
+            fetch this from the auth service catalog
+        :param tenant_id: The tenant ID used for context in barbican.
+            Required when not using auth_plugin.  When not provided,
+            the client will try to get this from the auth_plugin.
         """
-
         LOG.debug(_("Creating Client object"))
 
         self._session = requests.Session()
@@ -68,133 +70,6 @@ class Client(object):
         self.base_url = '{0}/{1}'.format(self._barbican_url, self._tenant_id)
         self.secrets = secrets.SecretManager(self)
         self.orders = orders.OrderManager(self)
-
-        # self.env = kwargs.get('fake_env') or env
-
-        # #TODO(dmend): remove these
-        # self._auth_endpoint = kwargs.get('auth_endpoint') or self.env('OS_AUTH_URL')
-        # self._user = kwargs.get('user') or self.env('OS_USERNAME')
-        # self._tenant = kwargs.get('tenant') or self.env('OS_TENANT_NAME')
-        # self._key = kwargs.get('key')
-
-        # if not all([self._auth_endpoint, self._user, self._key, self._tenant]):
-        #     raise ClientException("The authorization endpoint, username, key,"
-        #                           " and tenant name should either be passed i"
-        #                           "n or defined as environment variables.")
-        # self.authenticate = kwargs.get('authenticate') or auth.authenticate
-        # self.request = kwargs.get('request') or requests.request
-        # self._endpoint = (kwargs.get('endpoint') or
-        #                   self.env('BARBICAN_ENDPOINT'))
-        # self._cacert = kwargs.get('cacert')
-        # self.connect(token=(kwargs.get('token') or self.env('AUTH_TOKEN')))
-
-    @property
-    def _conn(self):
-        """Property to enable decorators to work properly"""
-        return self
-
-    @property
-    def auth_endpoint(self):
-        """The fully-qualified URI of the auth endpoint"""
-        return self._auth_endpoint
-
-    @property
-    def endpoint(self):
-        """The fully-qualified URI of the endpoint"""
-        return self._endpoint
-
-    @endpoint.setter
-    def endpoint(self, value):
-        self._endpoint = value
-
-    def connect(self, token=None):
-        """
-        Establishes a connection. If token is not None or empty, it will be
-        used for this connection, and authentication will not take place.
-
-        :param token: An authentication token
-        """
-
-        LOG.debug(_("Establishing connection"))
-
-        self._session = requests.Session()
-
-        # headers = {"Client-Id": self._client_id}
-        # self._session.headers.update(headers)
-        self._session.verify = True
-
-        if token:
-            self.auth_token = token
-        else:
-            LOG.debug(_("Authenticating token"))
-            endpoint, self.auth_token = self.authenticate(
-                self._auth_endpoint,
-                self._user,
-                self._key,
-                self._tenant,
-                service_type='key-store',
-                endpoint=self._endpoint,
-                cacert=self._cacert
-            )
-            if self.endpoint is None:
-                self.endpoint = endpoint
-
-    @property
-    def auth_token(self):
-        try:
-            return self._session.headers['X-Auth-Token']
-        except KeyError:
-            return None
-
-    @auth_token.setter
-    def auth_token(self, value):
-        self._token = value
-        self._session.headers['X-Auth-Token'] = value
-
-
-    def _perform_http(self, method, href, request_body='', headers={},
-                      parse_json=True):
-        """
-        Perform an HTTP operation, checking for appropriate
-        errors, etc. and returns the response
-
-        Returns the headers and body as a tuple.
-
-        :param method: The http method to use (GET, PUT, etc)
-        :param body: The optional body to submit
-        :param headers: Any additional headers to submit
-        :param parse_json: Whether the response body should be parsed as json
-        """
-        if not isinstance(request_body, str):
-            request_body = json.dumps(request_body)
-
-        if not self.endpoint.endswith('/'):
-            self.endpoint += '/'
-
-        url = urljoin(self.endpoint, href)
-
-        headers['X-Auth-Token'] = self.auth_token
-
-        response = self.request(method=method, url=url, data=request_body,
-                                headers=headers)
-        # Check if the status code is 2xx class
-        if not response.ok:
-            LOG.error('Bad response: {0}'.format(response.status_code))
-            raise ClientException(href=href, method=method,
-                                  http_status=response.status_code,
-                                  http_response_content=response.content)
-
-        if response.content and parse_json is True:
-            resp_body = json.loads(response.content)
-        elif response.content and parse_json is False:
-            resp_body = response.content
-        else:
-            resp_body = ''
-
-        return response.headers, resp_body
-
-    def _request(self, url, method, headers):
-        resp = self._session.request()
 
     def get(self, path, params=None):
         url = '{0}/{1}/'.format(self.base_url, path)
