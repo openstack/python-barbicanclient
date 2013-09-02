@@ -4,6 +4,7 @@ import urlparse
 
 import requests
 
+from barbicanclient import orders
 from barbicanclient import secrets
 from barbicanclient.secrets import Secret
 from barbicanclient.orders import Order
@@ -66,6 +67,7 @@ class Client(object):
 
         self.base_url = '{0}/{1}'.format(self._barbican_url, self._tenant_id)
         self.secrets = secrets.SecretManager(self)
+        self.orders = orders.OrderManager(self)
 
         # self.env = kwargs.get('fake_env') or env
 
@@ -149,124 +151,6 @@ class Client(object):
         self._token = value
         self._session.headers['X-Auth-Token'] = value
 
-    def list_orders(self, limit=10, offset=0):
-        """
-        Returns a tuple containing three items: a list of orders pertaining
-        to the given offset and limit, a reference to the previous set of
-        orders, and a reference to the next set of orders. Either of the
-        references may be None.
-
-        :param limit: The limit to the number of orders to list
-        :param offset: The offset from the beginning to start listing
-        """
-        LOG.debug(_("Listing orders - offset: {0}, limit: {1}").format(offset,
-                                                                       limit))
-        href = "{0}/{1}?limit={2}&offset={3}".format(self._tenant,
-                                                     self.ORDERS_PATH,
-                                                     limit, offset)
-        return self.list_orders_by_href(href)
-
-    def list_orders_by_href(self, href):
-        """
-        Returns a tuple containing three items: a list of orders pertaining
-        to the offset and limit within href, a reference to the previous set
-        of orders, and a reference to the next set of orders. Either of the
-        references may be None.
-
-        :param href: The full orders URI
-        """
-        LOG.debug(_("Listing orders by href"))
-        LOG.debug("href: {0}".format(href))
-        if href is None:
-            return [], None, None
-
-        hdrs, body = self._perform_http(href=href, method='GET')
-        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
-
-        orders_dict = body['orders']
-        orders = [Order(self._conn, o) for o in orders_dict]
-
-        prev_ref = body.get('previous')
-
-        next_ref = body.get('next')
-
-        return orders, prev_ref, next_ref
-
-    def create_order(self,
-                     name=None,
-                     payload_content_type='application/octet-stream',
-                     algorithm='aes',
-                     bit_length=256,
-                     cypher_type='cbc',
-                     expiration=None):
-        """
-        Creates and returns an Order object with all of its metadata filled in.
-
-        :param name: A friendly name for the secret
-        :param algorithm: The algorithm the secret is used with
-        :param bit_length: The bit length of the secret
-        :param cypher_type: The cypher type (e.g. block cipher mode)
-        :param expiration: The expiration time of the secret in ISO 8601 format
-        """
-        LOG.debug(_("Creating order"))
-        href = "{0}/{1}".format(self._tenant, self.ORDERS_PATH)
-        LOG.debug("href: {0}".format(href))
-        order_dict = {'secret': {}}
-        order_dict['secret']['name'] = name
-        order_dict['secret'][
-            'payload_content_type'] = payload_content_type
-        order_dict['secret']['algorithm'] = algorithm
-        order_dict['secret']['bit_length'] = bit_length
-        order_dict['secret']['cypher_type'] = cypher_type
-        order_dict['secret']['expiration'] = expiration
-        self._remove_empty_keys(order_dict['secret'])
-        LOG.debug(_("Request body: {0}").format(order_dict['secret']))
-        hdrs, body = self._perform_http(href=href,
-                                        method='POST',
-                                        request_body=json.dumps(order_dict))
-
-        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
-
-        return self.get_order(body['order_ref'])
-
-    def delete_order_by_id(self, order_id):
-        """
-        Deletes an order
-
-        :param order_id: The UUID of the order
-        """
-        LOG.info(_("Deleting order - Order ID: {0}").format(order_id))
-        href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
-        return self.delete_order(href)
-
-    def delete_order(self, href):
-        """
-        Deletes an order
-
-        :param href: The full URI of the order
-        """
-        hdrs, body = self._perform_http(href=href, method='DELETE')
-        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
-
-    def get_order_by_id(self, order_id):
-        """
-        Returns an Order object
-
-        :param order_id: The UUID of the order
-        """
-        LOG.debug(_("Getting order - Order ID: {0}").format(order_id))
-        href = "{0}/{1}/{2}".format(self._tenant, self.ORDERS_PATH, order_id)
-        return self.get_order(href)
-
-    def get_order(self, href):
-        """
-        Returns an Order object
-
-        :param href: The full URI of the order
-        """
-        hdrs, body = self._perform_http(href=href, method='GET')
-        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
-        return Order(self._conn, body)
 
     def _perform_http(self, method, href, request_body='', headers={},
                       parse_json=True):
