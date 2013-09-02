@@ -99,6 +99,7 @@ class Client(object):
     def _check_status_code(self, resp):
         status = resp.status_code
         print('status {0}'.format(status))
+        print('body {0}'.format(resp.content))
 
 
 def env(*vars, **kwargs):

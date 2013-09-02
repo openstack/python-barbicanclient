@@ -12,13 +12,12 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from urlparse import urlparse
-
-from openstack.common.gettextutils import _
-from openstack.common import log as logging
-from openstack.common.timeutils import parse_isotime
+import urlparse
 
 from barbicanclient import base
+from barbicanclient.openstack.common.gettextutils import _
+from barbicanclient.openstack.common import log as logging
+from barbicanclient.openstack.common import timeutils
 from barbicanclient import secrets
 
 
@@ -34,9 +33,9 @@ class Order(object):
         """
         self.order_ref = order_dict['order_ref']
         self.status = order_dict.get('status')
-        self.created = parse_isotime(order_dict['created'])
+        self.created = timeutils.parse_isotime(order_dict['created'])
         if order_dict.get('updated') is not None:
-            self.updated = parse_isotime(order_dict['updated'])
+            self.updated = timeutils.parse_isotime(order_dict['updated'])
         else:
             self.updated = None
         secret_dict = order_dict['secret']
@@ -47,7 +46,7 @@ class Order(object):
                             'created': order_dict['created']})
         self.secret = secrets.Secret(secret_dict)
 
-        self.id = urlparse(self.order_ref).path.split('/').pop()
+        self.id = urlparse.urlparse(self.order_ref).path.split('/').pop()
 
     def __str__(self):
         return ("Order - ID: {0}\n"

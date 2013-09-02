@@ -18,6 +18,7 @@
 import os
 import setuptools
 
+
 name = 'python-barbicanclient'
 
 
@@ -46,15 +47,16 @@ setuptools.setup(
     keywords="openstack encryption key-management secret",
     url='https://github.com/cloudkeep/barbican',
     license='Apache License (2.0)',
-    author='OpenStack, LLC.',
-    author_email='openstack-admins@lists.launchpad.net',
-    packages=setuptools.find_packages(exclude=['tests', 'tests.*', 'examples', 'examples.*']),
+    author='Rackspace, Inc.',
+    author_email='openstack-dev@lists.openstack.org',
+    packages=setuptools.find_packages(
+        exclude=['tests', 'tests.*', 'examples', 'examples.*']
+    ),
     install_requires=[
-        'eventlet>=0.12.1',
-        'httplib2>=0.7.7',
         'argparse>=1.2.1',
-        'python-keystoneclient>=0.2.3',
-        'iso8601>=0.1.4'
+        'eventlet>=0.13.0',
+        'requests>=1.2.3',
+        'python-keystoneclient>=0.3.2',
     ],
     test_suite='nose.collector',
     tests_require=['nose'],

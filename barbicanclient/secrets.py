@@ -12,12 +12,11 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from urlparse import urlparse
-
-from openstack.common import log as logging
-from openstack.common.timeutils import parse_isotime
+import urlparse
 
 from barbicanclient import base
+from barbicanclient.openstack.common import log as logging
+from barbicanclient.openstack.common.timeutils import parse_isotime
 
 
 LOG = logging.getLogger(__name__)
@@ -51,7 +50,7 @@ class Secret(object):
         self.mode = secret_dict.get('cypher_type')
 
         self.content_types = secret_dict.get('content_types')
-        self.id = urlparse(self.secret_ref).path.split('/').pop()
+        self.id = urlparse.urlparse(self.secret_ref).path.split('/').pop()
 
     def __str__(self):
         return ("Secret - ID: {0}\n"
@@ -97,7 +96,8 @@ class SecretManager(base.BaseEntityManager):
         :param algorithm: The algorithm barbican should use to encrypt
         :param bit_length: The bit length of the key used for ecnryption
         :param mode: The algorithm mode (e.g. CBC or CTR mode)
-        :param expiration: The expiration time of the secret in ISO 8601 format
+        :param expiration: The expiration time of the secret in ISO 8601
+                           format
         :returns: Secret ID for the stored secret
         """
         LOG.debug("Creating secret of payload content type {0}".format(
