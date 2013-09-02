@@ -12,6 +12,9 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Command-line interface to the Barbican API.
+"""
 import argparse
 
 from barbicanclient.common import auth
@@ -25,93 +28,118 @@ class Keep:
                                                      description=
                                                      'Action to perform')
         self.add_create_args()
-        self.add_delete_args()
+        self._add_store_args()
         self.add_get_args()
         self.add_list_args()
+        self.add_delete_args()
 
     def get_main_parser(self):
         parser = argparse.ArgumentParser(
-            description='Access the Barbican key management sevice.'
+            description=__doc__.strip()
         )
-        parser.add_argument('type',
-                            choices=["order", "secret"],
-                            help="type to operate on")
+        parser.add_argument('command',
+                            choices=['order', 'secret'],
+                            help='Entity used for command.')
         auth_group = parser.add_mutually_exclusive_group()
-        auth_group.add_argument('--no_auth', '-N', action='store_true',
+        auth_group.add_argument('--no-auth', '-N', action='store_true',
                                 help='Do not use authentication')
-        auth_group.add_argument('--auth_url', '-A',
+        auth_group.add_argument('--os-auth-url', '-A',
+                                metavar='<auth-url>',
                                 default=client.env('OS_AUTH_URL'),
-                                help='the URL used for authentication '
-                                     '(default: %(default)s)')
-        parser.add_argument('--username', '-U', default=client.env('OS_USERNAME'),
-                            help='the user for authentication '
-                            '(default: %(default)s)')
-        parser.add_argument('--password', '-P',
+                                help='Defaults to env[OS_AUTH_URL].')
+        parser.add_argument('--os-username', '-U',
+                            metavar='<auth-user-name>',
+                            default=client.env('OS_USERNAME'),
+                            help='Defaults to env[OS_USERNAME].')
+        parser.add_argument('--os-password', '-P',
+                            metavar='<auth-password>',
                             default=client.env('OS_PASSWORD'),
-                            help='the password for authentication'
-                            ' (default: %(default)s)')
-        parser.add_argument('--tenant_name', '-T',
+                            help='Defaults to env[OS_PASSWORD].')
+        parser.add_argument('--os-tenant-name', '-T',
+                            metavar='<auth-tenant-name>',
                             default=client.env('OS_TENANT_NAME'),
-                            help='the tenant name for authentication '
-                                 '(default: %(default)s)')
-        parser.add_argument('--tenant_id', '-I',
-                            help='the tenant ID for context ')
+                            help='Defaults to env[OS_TENANT_NAME].')
+        parser.add_argument('--os-tenant-id', '-I',
+                            metavar='<tenant-id>',
+                            default=client.env('OS_TENANT_ID'),
+                            help='Defaults to env[OS_TENANT_ID].')
         parser.add_argument('--endpoint', '-E',
+                            metavar='<barbican-url>',
                             default=client.env('BARBICAN_ENDPOINT'),
-                            help='the URL of the barbican server (default: '
-                                 '%(default)s)')
+                            help='Defaults to env[BARBICAN_ENDPOINT].')
         return parser
 
     def add_create_args(self):
-        create_parser = self.subparsers.add_parser('create', help='Create a '
-                                                   'secret or an order')
+        create_parser = self.subparsers.add_parser('create',
+                                                   help='Create a new order.')
         create_parser.add_argument('--name', '-n',
-                                   help='a human-friendly name')
-        create_parser.add_argument('--algorithm', '-a', default='aes', help='t'
-                                   'he algorithm; used only for reference (def'
-                                   'ault: %(default)s)')
-        create_parser.add_argument('--bit_length', '-b', default=256,
-                                   help='the bit length of the secret; used '
-                                   'only for reference (default: %(default)s)',
+                                   help='a human-friendly name.')
+        create_parser.add_argument('--algorithm', '-a', default='aes',
+                                   help='the algorithm (default: %(default)s).')
+        create_parser.add_argument('--bit-length', '-b', default=256,
+                                   help='the bit length '
+                                        '(default: %(default)s).',
                                    type=int)
-        create_parser.add_argument('--mode', '-m', default="cbc",
+        create_parser.add_argument('--mode', '-m', default='cbc',
                                    help='the algorithmm mode; used only for '
                                    'reference (default: %(default)s)')
-        create_parser.add_argument('--payload', '-p', help='the unencrypted'
-                                   ' secret; if provided, you must also provid'
-                                   'e a payload_content_type (only used for se'
-                                   'crets)')
-        create_parser.add_argument('--payload_content_type', '-t',
-                                   help='the type/format of the provided '
-                                   'secret data; "text/plain" is assumed to be'
-                                   ' UTF-8; required when --payload is su'
-                                   'pplied and when creating orders')
-        create_parser.add_argument('--payload_content_encoding', '-d',
-                                   help='required if --payload_content_type is'
-                                   ' "application/octet-stream" (only used for'
-                                   ' secrets)')
-
+        create_parser.add_argument('--payload-content-type', '-t',
+                                   help='the type/format of the secret to be'
+                                        ' generated.')
         create_parser.add_argument('--expiration', '-e', help='the expiration '
-                                   'time for the secret in ISO 8601 format')
+                                   'time for the secret in ISO 8601 format.')
         create_parser.set_defaults(func=self.create)
 
+    def _add_store_args(self):
+        store_parser = self.subparsers.add_parser(
+            'store',
+            help='Store a secret in barbican.'
+        )
+        store_parser.add_argument('--name', '-n',
+                                  help='a human-friendly name.')
+        store_parser.add_argument('--payload', '-p', help='the unencrypted'
+                                  ' secret; if provided, you must also provide'
+                                  ' a payload_content_type')
+        store_parser.add_argument('--payload-content-type', '-t',
+                                  help='the type/format of the provided '
+                                  'secret data; "text/plain" is assumed to be'
+                                  ' UTF-8; required when --payload is'
+                                  ' supplied.')
+        store_parser.add_argument('--payload-content-encoding', '-d',
+                                  help='required if --payload-content-type is'
+                                  ' "application/octet-stream".')
+        store_parser.add_argument('--algorithm', '-a', default='aes',
+                                  help='the algorithm (default: %(default)s).')
+        store_parser.add_argument('--bit-length', '-b', default=256,
+                                  help='the bit length '
+                                       '(default: %(default)s).',
+                                  type=int)
+        store_parser.add_argument('--mode', '-m', default='cbc',
+                                  help='the algorithmm mode; used only for '
+                                  'reference (default: %(default)s)')
+        store_parser.add_argument('--expiration', '-e', help='the expiration '
+                                  'time for the secret in ISO 8601 format.')
+        store_parser.set_defaults(func=self.store)
+
     def add_delete_args(self):
-        delete_parser = self.subparsers.add_parser('delete', help='Delete a se'
-                                                   'cret or an order by provid'
-                                                   'ing its UUID')
+        delete_parser = self.subparsers.add_parser(
+            'delete',
+            help='Delete a secret or an order by providing its UUID.'
+        )
         delete_parser.add_argument('UUID', help='the universally unique identi'
                                    'fier of the the secret or order')
         delete_parser.set_defaults(func=self.delete)
 
     def add_get_args(self):
-        get_parser = self.subparsers.add_parser('get', help='Retrieve a secret'
-                                                ' or an order by providing its'
-                                                ' UUID.')
+        get_parser = self.subparsers.add_parser(
+            'get',
+            help='Retrieve a secret or an order by providing its UUID.'
+        )
         get_parser.add_argument('UUID', help='the universally unique identi'
-                                'fier of the the secret or order')
+                                'fier of the the secret or order.')
         get_parser.add_argument('--raw', '-r', help='if specified, gets the ra'
                                 'w secret of type specified with --payload_con'
-                                'tent_type (only used for secrets)',
+                                'tent_type (only used for secrets).',
                                 action='store_true')
         get_parser.add_argument('--payload_content_type', '-t',
                                 default='text/plain',
@@ -131,18 +159,20 @@ class Keep:
                                  type=int)
         list_parser.set_defaults(func=self.list)
 
-    def create(self, args):
-        if args.type == 'secret':
+    def store(self, args):
+        if args.command == 'secret':
             secret = self.client.secrets.store(args.name,
-                                              args.payload,
-                                              args.payload_content_type,
-                                              args.payload_content_encoding,
-                                              args.algorithm,
-                                              args.bit_length,
-                                              args.mode,
-                                              args.expiration)
+                                               args.payload,
+                                               args.payload_content_type,
+                                               args.payload_content_encoding,
+                                               args.algorithm,
+                                               args.bit_length,
+                                               args.mode,
+                                               args.expiration)
             print secret
-        else:
+
+    def create(self, args):
+        if args.command == 'order':
             order = self.client.orders.create(args.name,
                                               args.payload_content_type,
                                               args.algorithm,
@@ -152,29 +182,29 @@ class Keep:
             print order
 
     def delete(self, args):
-        if args.type == 'secret':
+        if args.command == 'secret':
             self.client.secret.delete(args.UUID)
         else:
             self.client.orders.delete(args.UUID)
 
     def get(self, args):
-        if args.type == 'secret':
+        if args.command == 'secret':
             if args.raw:
                 print self.client.secrets.raw(args.UUID,
                                               args.payload_content_type)
             else:
                 print self.client.secrets.get(args.UUID)
         else:
-            print self.client.orers.get(args.UUID)
+            print self.client.orders.get(args.UUID)
 
     def list(self, args):
-        if args.type == 'secret':
+        if args.command == 'secret':
             ls = self.client.secrets.list(args.limit, args.offset)
         else:
             ls = self.client.orders.list(args.limit, args.offset)
         for obj in ls:
             print obj
-        print '{0}s displayed: {1} - offset: {2}'.format(args.type, len(ls),
+        print '{0}s displayed: {1} - offset: {2}'.format(args.command, len(ls),
                                                          args.offset)
 
     def execute(self, **kwargs):
