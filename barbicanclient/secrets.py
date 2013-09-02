@@ -124,6 +124,20 @@ class SecretManager(base.BaseEntityManager):
         resp = self.api.get(path)
         return Secret(resp)
 
+    def raw(self, secret_id, content_type):
+        """
+        Returns the actual secret data stored in Barbican.
+
+        :param secret_id: The UUID of the secret
+        :param content_type: The content_type of the secret
+        :returns: secret data
+        """
+        if not all([secret_id, content_type]):
+            raise ValueError('secret_id and content_type are required.')
+        path = '{0}/{1}'.format(self.entity, secret_id)
+        headers = {'Accept': content_type}
+        return self.api.get_raw(path, headers)
+
     def delete(self, secret_id):
         """
         Deletes a secret

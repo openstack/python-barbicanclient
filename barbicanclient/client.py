@@ -149,88 +149,6 @@ class Client(object):
         self._token = value
         self._session.headers['X-Auth-Token'] = value
 
-    def create_secret(self,
-                      name=None,
-                      payload=None,
-                      payload_content_type=None,
-                      payload_content_encoding=None,
-                      algorithm=None,
-                      bit_length=None,
-                      cypher_type=None,
-                      expiration=None):
-        """Deprecated"""
-        self.secrets.create(name=name,
-                            payload=payload,
-                            payload_content_type=payload_content_type,
-                            payload_content_encoding=payload_content_encoding,
-                            algorithm=algorithm,
-                            bit_length=bit_length,
-                            mode=cypher_type,
-                            expiration=expiration)
-
-    def delete_secret_by_id(self, secret_id):
-        """
-        Deletes a secret
-
-        :param secret_id: The UUID of the secret
-        """
-        href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
-        LOG.info(_("Deleting secret - Secret ID: {0}").format(secret_id))
-        return self.delete_secret(href)
-
-    def delete_secret(self, href):
-        """
-        Deletes a secret
-
-        :param href: The full URI of the secret
-        """
-        hdrs, body = self._perform_http(href=href, method='DELETE')
-        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
-
-    def get_secret_by_id(self, secret_id):
-        """
-        Returns a Secret object
-
-        :param secret_id: The UUID of the secret
-        """
-        LOG.debug(_("Getting secret - Secret ID: {0}").format(secret_id))
-        href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
-        return self.get_secret(href)
-
-    def get_secret(self, href):
-        """
-        Returns a Secret object
-
-        :param href: The full URI of the secret
-        """
-        hdrs, body = self._perform_http(href=href, method='GET')
-        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
-        return Secret(self._conn, body)
-
-    def get_raw_secret_by_id(self, secret_id, payload_content_type):
-        """
-        Returns the raw secret
-
-        :param secret_id: The UUID of the secret
-        :param payload_content_type: The data type of the secret
-        """
-        LOG.debug(_("Getting raw secret - Secret ID: {0}").format(secret_id))
-        href = "{0}/{1}/{2}".format(self._tenant, self.SECRETS_PATH, secret_id)
-        return self.get_raw_secret(href, payload_content_type)
-
-    def get_raw_secret(self, href, payload_content_type):
-        """
-        Returns the raw secret
-
-        :param href: The reference to the secret
-        :param payload_content_type: The data type of the secret
-        """
-        hdrs = {"Accept": payload_content_type}
-        hdrs, body = self._perform_http(href=href, method='GET', headers=hdrs,
-                                        parse_json=False)
-        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
-        return body
-
     def list_orders(self, limit=10, offset=0):
         """
         Returns a tuple containing three items: a list of orders pertaining
@@ -396,10 +314,16 @@ class Client(object):
 
     def get(self, path, params=None):
         url = '{0}/{1}/'.format(self.base_url, path)
-        headers = {'content-type': 'application/json'}
+        headers = {'Accept': 'application/json'}
         resp = self._session.get(url, params=params, headers=headers)
         self._check_status_code(resp)
         return resp.json()
+
+    def get_raw(self, path, headers):
+        url = '{0}/{1}/'.format(self.base_url, path)
+        resp = self._session.get(url, headers=headers)
+        self._check_status_code(resp)
+        return resp.content
 
     def post(self, path, data):
         url = '{0}/{1}/'.format(self.base_url, path)
