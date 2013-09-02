@@ -29,8 +29,7 @@ logging.setup('barbicanclient')
 
 class Client(object):
 
-    def __init__(self, auth_plugin=None, endpoint=None, tenant_id=None,
-                 **kwargs):
+    def __init__(self, auth_plugin=None, endpoint=None, tenant_id=None):
         """
         Barbican client object used to interact with barbican service.
 

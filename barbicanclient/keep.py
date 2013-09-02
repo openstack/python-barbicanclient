@@ -1,5 +1,20 @@
+# Copyright (c) 2013 Rackspace, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import argparse
 
+from barbicanclient.common import auth
 from barbicanclient import client
 
 
@@ -15,32 +30,36 @@ class Keep:
         self.add_list_args()
 
     def get_main_parser(self):
-        parser = argparse.ArgumentParser(description='Access the Barbican'
-                                         ' key management sevice.')
+        parser = argparse.ArgumentParser(
+            description='Access the Barbican key management sevice.'
+        )
         parser.add_argument('type',
                             choices=["order", "secret"],
                             help="type to operate on")
-        parser.add_argument('--auth_endpoint', '-A',
-                            default=client.env('OS_AUTH_URL'),
-                            help='the URL to authenticate against (default: '
-                                 '%(default)s)')
-        parser.add_argument('--user', '-U', default=client.env('OS_USERNAME'),
-                            help='the user to authenticate as (default: %(de'
-                                 'fault)s)')
+        auth_group = parser.add_mutually_exclusive_group()
+        auth_group.add_argument('--no_auth', '-N', action='store_true',
+                                help='Do not use authentication')
+        auth_group.add_argument('--auth_url', '-A',
+                                default=client.env('OS_AUTH_URL'),
+                                help='the URL used for authentication '
+                                     '(default: %(default)s)')
+        parser.add_argument('--username', '-U', default=client.env('OS_USERNAME'),
+                            help='the user for authentication '
+                            '(default: %(default)s)')
         parser.add_argument('--password', '-P',
                             default=client.env('OS_PASSWORD'),
-                            help='the API key or password to authenticate with'
+                            help='the password for authentication'
                             ' (default: %(default)s)')
-        parser.add_argument('--tenant', '-T',
+        parser.add_argument('--tenant_name', '-T',
                             default=client.env('OS_TENANT_NAME'),
-                            help='the tenant ID (default: %(default)s)')
+                            help='the tenant name for authentication '
+                                 '(default: %(default)s)')
+        parser.add_argument('--tenant_id', '-I',
+                            help='the tenant ID for context ')
         parser.add_argument('--endpoint', '-E',
                             default=client.env('BARBICAN_ENDPOINT'),
-                            help='the URL of the barbican server (default: %'
-                            '(default)s)')
-        parser.add_argument('--token', '-K',
-                            default=client.env('AUTH_TOKEN'), help='the au'
-                            'thentication token (default: %(default)s)')
+                            help='the URL of the barbican server (default: '
+                                 '%(default)s)')
         return parser
 
     def add_create_args(self):
@@ -55,9 +74,9 @@ class Keep:
                                    help='the bit length of the secret; used '
                                    'only for reference (default: %(default)s)',
                                    type=int)
-        create_parser.add_argument('--cypher_type', '-c', default="cbc",
-                                   help='the cypher type; used only for refere'
-                                   'nce (default: %(default)s)')
+        create_parser.add_argument('--mode', '-m', default="cbc",
+                                   help='the algorithmm mode; used only for '
+                                   'reference (default: %(default)s)')
         create_parser.add_argument('--payload', '-p', help='the unencrypted'
                                    ' secret; if provided, you must also provid'
                                    'e a payload_content_type (only used for se'
@@ -110,70 +129,67 @@ class Keep:
         list_parser.add_argument('--offset', '-o', default=0, help='specify t'
                                  'he page offset (default: %(default)s)',
                                  type=int)
-        list_parser.add_argument('--URI', '-u', help='the full reference to '
-                                 'what is to be listed; put in quotes to avoid'
-                                 ' backgrounding when \'&\' is in the URI')
-        list_parser.set_defaults(func=self.lst)
+        list_parser.set_defaults(func=self.list)
 
     def create(self, args):
         if args.type == 'secret':
-            secret = self.conn.create_secret(args.name,
-                                             args.payload,
-                                             args.payload_content_type,
-                                             args.payload_content_encoding,
-                                             args.algorithm,
-                                             args.bit_length,
-                                             args.cypher_type,
-                                             args.expiration)
+            secret = self.client.secrets.store(args.name,
+                                              args.payload,
+                                              args.payload_content_type,
+                                              args.payload_content_encoding,
+                                              args.algorithm,
+                                              args.bit_length,
+                                              args.mode,
+                                              args.expiration)
             print secret
         else:
-            order = self.conn.create_order(args.name,
-                                           args.payload_content_type,
-                                           args.algorithm,
-                                           args.bit_length,
-                                           args.cypher_type,
-                                           args.expiration)
+            order = self.client.orders.create(args.name,
+                                              args.payload_content_type,
+                                              args.algorithm,
+                                              args.bit_length,
+                                              args.mode,
+                                              args.expiration)
             print order
 
     def delete(self, args):
         if args.type == 'secret':
-            self.conn.delete_secret_by_id(args.UUID)
+            self.client.secret.delete(args.UUID)
         else:
-            self.conn.delete_order_by_id(args.UUID)
+            self.client.orders.delete(args.UUID)
 
     def get(self, args):
         if args.type == 'secret':
             if args.raw:
-                print self.conn.get_raw_secret_by_id(args.UUID,
-                                                     args.payload_content_type)
+                print self.client.secrets.raw(args.UUID,
+                                              args.payload_content_type)
             else:
-                print self.conn.get_secret_by_id(args.UUID)
+                print self.client.secrets.get(args.UUID)
         else:
-            print self.conn.get_order_by_id(args.UUID)
+            print self.client.orers.get(args.UUID)
 
-    def lst(self, args):
+    def list(self, args):
         if args.type == 'secret':
-            if args.URI:
-                l = self.conn.list_secrets_by_href(args.URI)
-            else:
-                l = self.conn.list_secrets(args.limit, args.offset)
+            ls = self.client.secrets.list(args.limit, args.offset)
         else:
-            if args.URI:
-                l = self.conn.list_orders_by_href(args.URI)
-            else:
-                l = self.conn.list_orders(args.limit, args.offset)
-        for i in l[0]:
-            print i
-        print '{0}s displayed: {1} - offset: {2}'.format(args.type, len(l[0]),
+            ls = self.client.orders.list(args.limit, args.offset)
+        for obj in ls:
+            print obj
+        print '{0}s displayed: {1} - offset: {2}'.format(args.type, len(ls),
                                                          args.offset)
 
     def execute(self, **kwargs):
         args = self.parser.parse_args(kwargs.get('argv'))
-        self.conn = client.Client(args.auth_endpoint, args.user,
-                                  args.password, args.tenant,
-                                  args.token,
-                                  endpoint=args.endpoint)
-
+        if args.no_auth:
+            self.client = client.Client(endpoint=args.endpoint,
+                                        tenant_id=args.tenant_id)
+        else:
+            self._keystone = auth.KeystoneAuth(auth_url=args.auth_url,
+                                               username=args.username,
+                                               password=args.password,
+                                               tenant_name=args.tenant_name)
+            self.client = client.Client(auth_plugin=self._keystone,
+                                        endpoint=args.endpoint,
+                                        tenant_id=args.tenant_id)
         args.func(args)
 
 
