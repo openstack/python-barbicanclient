@@ -149,49 +149,6 @@ class Client(object):
         self._token = value
         self._session.headers['X-Auth-Token'] = value
 
-    def list_secrets(self, limit=10, offset=0):
-        """
-        Returns a tuple containing three items: a list of secrets pertaining
-        to the given offset and limit, a reference to the previous set of
-        secrets, and a reference to the next set of secrets. Either of the
-        references may be None.
-
-        :param limit: The limit to the number of secrets to list
-        :param offset: The offset from the beginning to start listing
-        """
-        LOG.debug(_("Listing secrets - offset: {0}, limit: {1}").format(offset,
-                                                                        limit))
-        href = "{0}/{1}?limit={2}&offset={3}".format(self._tenant,
-                                                     self.SECRETS_PATH,
-                                                     limit, offset)
-        return self.list_secrets_by_href(href)
-
-    def list_secrets_by_href(self, href):
-        """
-        Returns a tuple containing three items: a list of secrets pertaining
-        to the offset and limit within href, a reference to the previous set
-        of secrets, and a reference to the next set of secrets. Either of the
-        references may be None.
-
-        :param href: The full secrets URI
-        """
-        LOG.debug(_("Listing secrets by href"))
-        LOG.debug("href: {0}".format(href))
-        if href is None:
-            return [], None, None
-
-        hdrs, body = self._perform_http(href=href, method='GET')
-        LOG.debug(_("Response - headers: {0}\nbody: {1}").format(hdrs, body))
-
-        secrets_dict = body['secrets']
-        secrets = [Secret(self._conn, s) for s in secrets_dict]
-
-        prev_ref = body.get('previous')
-
-        next_ref = body.get('next')
-
-        return secrets, prev_ref, next_ref
-
     def create_secret(self,
                       name=None,
                       payload=None,
@@ -437,7 +394,7 @@ class Client(object):
     def _request(self, url, method, headers):
         resp = self._session.request()
 
-    def get(self, path, params):
+    def get(self, path, params=None):
         url = '{0}/{1}/'.format(self.base_url, path)
         headers = {'content-type': 'application/json'}
         resp = self._session.get(url, params=params, headers=headers)
@@ -450,6 +407,11 @@ class Client(object):
         resp = self._session.post(url, data=json.dumps(data), headers=headers)
         self._check_status_code(resp)
         return resp.json()
+
+    def delete(self, path):
+        url = '{0}/{1}/'.format(self.base_url, path)
+        resp = self._session.delete(url)
+        self._check_status_code(resp)
 
     #TODO(dmend): beef this up
     def _check_status_code(self, resp):
