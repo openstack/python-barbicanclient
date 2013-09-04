@@ -102,6 +102,10 @@ class Client(object):
         self._check_status_code(resp)
         return resp.content
 
+    def delete(self, href):
+        resp = self._session.delete(href)
+        self._check_status_code(resp)
+
     def post(self, path, data):
         url = '{0}/{1}/'.format(self.base_url, path)
         headers = {'content-type': 'application/json'}
@@ -109,22 +113,29 @@ class Client(object):
         self._check_status_code(resp)
         return resp.json()
 
-    def delete(self, href):
-        resp = self._session.delete(href)
-        self._check_status_code(resp)
-
     def _check_status_code(self, resp):
         status = resp.status_code
         LOG.debug('Response status {0}'.format(status))
         if status == 401:
-            LOG.error('Auth error: {0}'.format(resp.content))
-            raise HTTPAuthError('{0}'.format(resp.content))
+            LOG.error('Auth error: {0}'.format(self._get_error_message(resp)))
+            raise HTTPAuthError('{0}'.format(self._get_error_message(resp)))
         if status >= 500:
-            LOG.error('5xx Server error: {0}'.format(resp.content))
-            raise HTTPServerError('{0}'.format(resp.content))
+            LOG.error('5xx Server error: {0}'.format(
+                self._get_error_message(resp)
+            ))
+            raise HTTPServerError('{0}'.format(self._get_error_message(resp)))
         if status >= 400:
-            LOG.error('4xx Client error: {0}'.format(resp.content))
-            raise HTTPClientError('{0}'.format(resp.content))
+            LOG.error('4xx Client error: {0}'.format(
+                self._get_error_message(resp)
+            ))
+            raise HTTPClientError('{0}'.format(self._get_error_message(resp)))
+
+    def _get_error_message(self, resp):
+        try:
+            message = resp.json()['title']
+        except ValueError:
+            message = resp.content
+        return message
 
 
 def env(*vars, **kwargs):

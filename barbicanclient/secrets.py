@@ -12,8 +12,6 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import urlparse
-
 from barbicanclient import base
 from barbicanclient.openstack.common import log as logging
 from barbicanclient.openstack.common.timeutils import parse_isotime
@@ -118,7 +116,7 @@ class SecretManager(base.BaseEntityManager):
 
     def get(self, secret_ref):
         """
-        Returns a Secret object with information about the secret.
+        Returns a Secret object with metadata about the secret.
 
         :param secret_ref: The href for the secret
         """
@@ -127,16 +125,21 @@ class SecretManager(base.BaseEntityManager):
         resp = self.api.get(secret_ref)
         return Secret(resp)
 
-    def decrypt(self, secret_ref, content_type):
+    def decrypt(self, secret_ref, content_type=None):
         """
         Returns the actual secret data stored in Barbican.
 
         :param secret_ref: The href for the secret
-        :param content_type: The content_type of the secret
+        :param content_type: The content_type of the secret, if not
+            provided, the client will fetch the secret meta and use the
+            default content_type to decrypt the secret
         :returns: secret data
         """
-        if not all([secret_ref, content_type]):
-            raise ValueError('secret_ref and content_type are required.')
+        if not secret_ref:
+            raise ValueError('secret_ref is required.')
+        if not content_type:
+            secret = self.get(secret_ref)
+            content_type = secret.content_types['default']
         headers = {'Accept': content_type}
         return self.api.get_raw(secret_ref, headers)
 
@@ -151,10 +154,17 @@ class SecretManager(base.BaseEntityManager):
         self.api.delete(secret_ref)
 
     def list(self, limit=10, offset=0):
+        """
+        List all secrets for the tenant
 
+        :param limit: Max number of secrets returned
+        :param offset: Offset secrets to begin list
+        :returns: list of Secret metadata objects
+        """
         LOG.debug('Listing secrets - offset {0} limit {1}'.format(offset,
                                                                   limit))
+        href = '{0}/{1}'.format(self.api.base_url, self.entity)
         params = {'limit': limit, 'offset': offset}
-        resp = self.api.get(self.entity, params)
+        resp = self.api.get(href, params)
 
         return [Secret(s) for s in resp['secrets']]

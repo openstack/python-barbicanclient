@@ -12,13 +12,10 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import urlparse
-
 from barbicanclient import base
 from barbicanclient.openstack.common.gettextutils import _
 from barbicanclient.openstack.common import log as logging
 from barbicanclient.openstack.common import timeutils
-from barbicanclient import secrets
 
 
 LOG = logging.getLogger(__name__)
@@ -99,7 +96,7 @@ class OrderManager(base.BaseEntityManager):
 
         :param order_ref: The href for the order
         """
-        LOG.debug(_("Getting order - Order href: {0}").format(secret_ref))
+        LOG.debug(_("Getting order - Order href: {0}").format(order_ref))
         if not order_ref:
             raise ValueError('order_ref is required.')
         resp = self.api.get(order_ref)
@@ -116,7 +113,16 @@ class OrderManager(base.BaseEntityManager):
         self.api.delete(order_ref)
 
     def list(self, limit=10, offset=0):
+        """
+        Lists all orders for the tenant
+
+        :param limit: Max number of orders returned
+        :param offset: Offset orders to begin list
+        :returns: list of Order objects
+        """
+        LOG.debug('Listing orders - offest {0} limit {1}').format(offset, limit)
+        href = '{0}/{1}'.format(self.api.base_url, self.entity)
         params = {'limit': limit, 'offset': offset}
-        resp = self.api.get(self.entity, params)
+        resp = self.api.get(href, params)
 
         return [Order(o) for o in resp['orders']]

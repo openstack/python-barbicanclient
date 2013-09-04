@@ -16,6 +16,7 @@
 Base utilites to build API operation managers.
 """
 
+
 class BaseEntityManager(object):
     def __init__(self, api, entity):
         self.api = api
