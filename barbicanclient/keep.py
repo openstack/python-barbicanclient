@@ -80,10 +80,11 @@ class Keep:
                                    help='a human-friendly name.')
         create_parser.add_argument('--algorithm', '-a', default='aes',
                                    help='the algorithm to be used with the '
-                                        'requested key (default: %(default)s).')
+                                        'requested key (default: '
+                                        '%(default)s).')
         create_parser.add_argument('--bit-length', '-b', default=256,
-                                   help='the bit length of the requested secret'
-                                        ' key (default: %(default)s).',
+                                   help='the bit length of the requested'
+                                        ' secret key (default: %(default)s).',
                                    type=int)
         create_parser.add_argument('--mode', '-m', default='cbc',
                                    help='the algorithmm mode to be used with '
@@ -151,8 +152,9 @@ class Keep:
                                 action='store_true')
         get_parser.add_argument('--payload_content_type', '-t',
                                 default='text/plain',
-                                help='the content type of the decrypted secret '
-                                '(default: %(default)s; only used for secrets)')
+                                help='the content type of the decrypted'
+                                ' secret (default: %(default)s; only used for'
+                                ' secrets)')
         get_parser.set_defaults(func=self.get)
 
     def _add_list_args(self):
@@ -192,8 +194,8 @@ class Keep:
                                               args.expiration)
             print order
         else:
-            self.parser.exit(status=1, message='ERROR: create is only supported'
-                                               ' for orders\n')
+            self.parser.exit(status=1, message='ERROR: create is only '
+                                               'supported for orders\n')
 
     def delete(self, args):
         if args.command == 'secret':

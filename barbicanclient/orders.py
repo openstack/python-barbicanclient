@@ -120,7 +120,8 @@ class OrderManager(base.BaseEntityManager):
         :param offset: Offset orders to begin list
         :returns: list of Order objects
         """
-        LOG.debug('Listing orders - offest {0} limit {1}'.format(offset, limit))
+        LOG.debug('Listing orders - offest {0} limit {1}'.format(offset,
+                                                                 limit))
         href = '{0}/{1}'.format(self.api.base_url, self.entity)
         params = {'limit': limit, 'offset': offset}
         resp = self.api.get(href, params)

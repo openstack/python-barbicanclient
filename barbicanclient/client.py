@@ -79,8 +79,8 @@ class Client(object):
                 raise ValueError('Barbican endpoint url must be provided, or '
                                  'must be available from auth_plugin')
             if tenant_id is None:
-                raise ValueError('Tenant ID must be provided, or must be available'
-                                 ' from auth_plugin')
+                raise ValueError('Tenant ID must be provided, or must be'
+                                 ' available from the auth_plugin')
             if endpoint.endswith('/'):
                 self._barbican_url = endpoint[:-1]
             else:
