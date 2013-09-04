@@ -34,6 +34,7 @@ class Secret(object):
         self.secret_ref = secret_dict.get('secret_ref')
         self.name = secret_dict.get('name')
         self.status = secret_dict.get('status')
+        self.content_types = secret_dict.get('content_types')
 
         self.created = parse_isotime(secret_dict.get('created'))
         if secret_dict.get('expiration') is not None:
@@ -47,23 +48,19 @@ class Secret(object):
 
         self.algorithm = secret_dict.get('algorithm')
         self.bit_length = secret_dict.get('bit_length')
-        self.mode = secret_dict.get('cypher_type')
-
-        self.content_types = secret_dict.get('content_types')
-        self.id = urlparse.urlparse(self.secret_ref).path.split('/').pop()
+        self.mode = secret_dict.get('mode')
 
     def __str__(self):
-        return ("Secret - ID: {0}\n"
-                "         href: {1}\n"
-                "         name: {2}\n"
-                "         created: {3}\n"
-                "         status: {4}\n"
-                "         content types: {5}\n"
-                "         algorithm: {6}\n"
-                "         bit length: {7}\n"
-                "         mode: {8}\n"
-                "         expiration: {9}\n"
-                .format(self.id, self.secret_ref, self.name, self.created,
+        return ("Secret - href: {0}\n"
+                "         name: {1}\n"
+                "         created: {2}\n"
+                "         status: {3}\n"
+                "         content types: {4}\n"
+                "         algorithm: {5}\n"
+                "         bit length: {6}\n"
+                "         mode: {7}\n"
+                "         expiration: {8}\n"
+                .format(self.secret_ref, self.name, self.created,
                         self.status, self.content_types, self.algorithm,
                         self.bit_length, self.mode, self.expiration)
                 )
@@ -93,12 +90,12 @@ class SecretManager(base.BaseEntityManager):
         :param payload: The unencrypted secret data
         :param payload_content_type: The format/type of the secret data
         :param payload_content_encoding: The encoding of the secret data
-        :param algorithm: The algorithm barbican should use to encrypt
-        :param bit_length: The bit length of the key used for ecnryption
-        :param mode: The algorithm mode (e.g. CBC or CTR mode)
+        :param algorithm: The algorithm associated with this secret key
+        :param bit_length: The bit length of this secret key
+        :param mode: The algorithm mode used with this secret key
         :param expiration: The expiration time of the secret in ISO 8601
                            format
-        :returns: Secret ID for the stored secret
+        :returns: Secret href for the stored secret
         """
         LOG.debug("Creating secret of payload content type {0}".format(
             payload_content_type))
@@ -109,8 +106,7 @@ class SecretManager(base.BaseEntityManager):
         secret_dict['payload_content_type'] = payload_content_type
         secret_dict['payload_content_encoding'] = payload_content_encoding
         secret_dict['algorithm'] = algorithm
-        #TODO(dmend): Change this to 'mode'
-        secret_dict['cypher_type'] = mode
+        secret_dict['mode'] = mode
         secret_dict['bit_length'] = bit_length
         secret_dict['expiration'] = expiration
         self._remove_empty_keys(secret_dict)
@@ -118,48 +114,41 @@ class SecretManager(base.BaseEntityManager):
         LOG.debug("Request body: {0}".format(secret_dict))
 
         resp = self.api.post(self.entity, secret_dict)
-        #TODO(dmend): return secret object?
-        #secret = Secret(resp)
-        secret_id = resp['secret_ref'].split('/')[-1]
+        return resp['secret_ref']
 
-        return secret_id
-
-    def get(self, secret_id):
+    def get(self, secret_ref):
         """
         Returns a Secret object with information about the secret.
 
-        :param secret_id: The UUID of the secret
+        :param secret_ref: The href for the secret
         """
-        if not secret_id:
-            raise ValueError('secret_id is required.')
-        path = '{0}/{1}'.format(self.entity, secret_id)
-        resp = self.api.get(path)
+        if not secret_ref:
+            raise ValueError('secret_ref is required.')
+        resp = self.api.get(secret_ref)
         return Secret(resp)
 
-    def raw(self, secret_id, content_type):
+    def decrypt(self, secret_ref, content_type):
         """
         Returns the actual secret data stored in Barbican.
 
-        :param secret_id: The UUID of the secret
+        :param secret_ref: The href for the secret
         :param content_type: The content_type of the secret
         :returns: secret data
         """
-        if not all([secret_id, content_type]):
-            raise ValueError('secret_id and content_type are required.')
-        path = '{0}/{1}'.format(self.entity, secret_id)
+        if not all([secret_ref, content_type]):
+            raise ValueError('secret_ref and content_type are required.')
         headers = {'Accept': content_type}
-        return self.api.get_raw(path, headers)
+        return self.api.get_raw(secret_ref, headers)
 
-    def delete(self, secret_id):
+    def delete(self, secret_ref):
         """
         Deletes a secret
 
-        :param secret_id: The UUID of the secret
+        :param secret_ref: The href for the secret
         """
-        if not secret_id:
-            raise ValueError('secret_id is required.')
-        path = '{0}/{1}'.format(self.entity, secret_id)
-        self.api.delete(path)
+        if not secret_ref:
+            raise ValueError('secret_ref is required.')
+        self.api.delete(secret_ref)
 
     def list(self, limit=10, offset=0):
 

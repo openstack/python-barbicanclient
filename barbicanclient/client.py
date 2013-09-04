@@ -91,16 +91,14 @@ class Client(object):
         self.secrets = secrets.SecretManager(self)
         self.orders = orders.OrderManager(self)
 
-    def get(self, path, params=None):
-        url = '{0}/{1}/'.format(self.base_url, path)
+    def get(self, href, params=None):
         headers = {'Accept': 'application/json'}
-        resp = self._session.get(url, params=params, headers=headers)
+        resp = self._session.get(href, params=params, headers=headers)
         self._check_status_code(resp)
         return resp.json()
 
-    def get_raw(self, path, headers):
-        url = '{0}/{1}/'.format(self.base_url, path)
-        resp = self._session.get(url, headers=headers)
+    def get_raw(self, href, headers):
+        resp = self._session.get(href, headers=headers)
         self._check_status_code(resp)
         return resp.content
 
@@ -111,9 +109,8 @@ class Client(object):
         self._check_status_code(resp)
         return resp.json()
 
-    def delete(self, path):
-        url = '{0}/{1}/'.format(self.base_url, path)
-        resp = self._session.delete(url)
+    def delete(self, href):
+        resp = self._session.delete(href)
         self._check_status_code(resp)
 
     def _check_status_code(self, resp):
@@ -122,10 +119,10 @@ class Client(object):
         if status == 401:
             LOG.error('Auth error: {0}'.format(resp.content))
             raise HTTPAuthError('{0}'.format(resp.content))
-        if status >=500:
+        if status >= 500:
             LOG.error('5xx Server error: {0}'.format(resp.content))
             raise HTTPServerError('{0}'.format(resp.content))
-        if status >=400:
+        if status >= 400:
             LOG.error('4xx Client error: {0}'.format(resp.content))
             raise HTTPClientError('{0}'.format(resp.content))
 

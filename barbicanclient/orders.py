@@ -28,8 +28,7 @@ class Order(object):
 
     def __init__(self, order_dict):
         """
-        Builds an order object from a json representation. Includes the
-        connection object for subtasks.
+        Builds an order object from a dictionary.
         """
         self.order_ref = order_dict['order_ref']
         self.status = order_dict.get('status')
@@ -38,30 +37,19 @@ class Order(object):
             self.updated = timeutils.parse_isotime(order_dict['updated'])
         else:
             self.updated = None
-        secret_dict = order_dict['secret']
-        #TODO(dmend): This is a hack because secret_ref is in different
-        #             spots.  Secret will be missing content_types also.
-        #             Maybe we should fetch the secret for this?
-        secret_dict.update({'secret_ref': order_dict['secret_ref'],
-                            'created': order_dict['created']})
-        self.secret = secrets.Secret(secret_dict)
-
-        self.id = urlparse.urlparse(self.order_ref).path.split('/').pop()
+        self.secret_ref = order_dict.get('secret_ref')
 
     def __str__(self):
-        return ("Order - ID: {0}\n"
-                "        order href: {1}\n"
-                "        secret href: {2}\n"
-                "        created: {3}\n"
-                "        status: {4}\n"
-                .format(self.id, self.order_ref, self.secret.secret_ref,
+        return ("Order - order href: {0}\n"
+                "        secret href: {1}\n"
+                "        created: {2}\n"
+                "        status: {3}\n"
+                .format(self.order_ref, self.secret.secret_ref,
                         self.created, self.status)
                 )
 
     def __repr__(self):
-        return 'Order(id="{0}", secret=Secret(id="{1}")'.format(
-            self.id, self.secret.id
-        )
+        return 'Order(order_ref={0})'.format(self.order_ref)
 
 
 class OrderManager(base.BaseEntityManager):
@@ -79,14 +67,14 @@ class OrderManager(base.BaseEntityManager):
         """
         Creates a new Order in Barbican
 
-        :param name: A friendly name for the
+        :param name: A friendly name for the secret
         :param payload_content_type: The format/type of the secret data
-        :param algorithm: The algorithm the secret is used with
+        :param algorithm: The algorithm the secret associated with
         :param bit_length: The bit length of the secret
         :param mode: The algorithm mode (e.g. CBC or CTR mode)
         :param expiration: The expiration time of the secret in ISO 8601
             format
-        :returns: Order ID for the created order
+        :returns: Order href for the created order
         """
         LOG.debug(_("Creating order"))
 
@@ -96,42 +84,36 @@ class OrderManager(base.BaseEntityManager):
             'payload_content_type'] = payload_content_type
         order_dict['secret']['algorithm'] = algorithm
         order_dict['secret']['bit_length'] = bit_length
-        #TODO(dmend): Change this to mode
-        order_dict['secret']['cypher_type'] = mode
+        order_dict['secret']['mode'] = mode
         order_dict['secret']['expiration'] = expiration
         self._remove_empty_keys(order_dict['secret'])
 
         LOG.debug(_("Request body: {0}").format(order_dict['secret']))
 
         resp = self.api.post(self.entity, order_dict)
-        #TODO(dmend): return order object?
-        order_id = resp['order_ref'].split('/')[-1]
+        return resp['order_ref']
 
-        return order_id
-
-    def get(self, order_id):
+    def get(self, order_ref):
         """
         Returns an Order object
 
-        :param order_id: The UUID of the order
+        :param order_ref: The href for the order
         """
-        LOG.debug(_("Getting order - Order ID: {0}").format(order_id))
-        if not order_id:
-            raise ValueError('order_id is required.')
-        path = '{0}/{1}'.format(self.entity, order_id)
-        resp = self.api.get(path)
+        LOG.debug(_("Getting order - Order href: {0}").format(secret_ref))
+        if not order_ref:
+            raise ValueError('order_ref is required.')
+        resp = self.api.get(order_ref)
         return Order(resp)
 
-    def delete(self, order_id):
+    def delete(self, order_ref):
         """
         Deletes an order
 
-        :param order_id: The UUID of the order
+        :param order_ref: The href for the order
         """
-        if not order_id:
-            raise ValueError('order_id is required.')
-        path = '{0}/{1}'.format(self.entity, order_id)
-        self.api.delete(path)
+        if not order_ref:
+            raise ValueError('order_ref is required.')
+        self.api.delete(order_ref)
 
     def list(self, limit=10, offset=0):
         params = {'limit': limit, 'offset': offset}
