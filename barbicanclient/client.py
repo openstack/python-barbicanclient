@@ -27,6 +27,27 @@ LOG = logging.getLogger(__name__)
 logging.setup('barbicanclient')
 
 
+class HTTPError(Exception):
+    """Base exception for HTTP errors."""
+    def __init__(self, message):
+        super(HTTPError, self).__init__(message)
+
+
+class HTTPServerError(HTTPError):
+    """Raised for 5xx responses from the server."""
+    pass
+
+
+class HTTPClientError(HTTPError):
+    """Raised for 4xx responses from the server."""
+    pass
+
+
+class HTTPAuthError(HTTPError):
+    """Raised for 401 Unauthorized responses from the server."""
+    pass
+
+
 class Client(object):
 
     def __init__(self, auth_plugin=None, endpoint=None, tenant_id=None):
@@ -95,11 +116,18 @@ class Client(object):
         resp = self._session.delete(url)
         self._check_status_code(resp)
 
-    #TODO(dmend): beef this up
     def _check_status_code(self, resp):
         status = resp.status_code
-        print('status {0}'.format(status))
-        print('body {0}'.format(resp.content))
+        LOG.debug('Response status {0}'.format(status))
+        if status == 401:
+            LOG.error('Auth error: {0}'.format(resp.content))
+            raise HTTPAuthError('{0}'.format(resp.content))
+        if status >=500:
+            LOG.error('5xx Server error: {0}'.format(resp.content))
+            raise HTTPServerError('{0}'.format(resp.content))
+        if status >=400:
+            LOG.error('4xx Client error: {0}'.format(resp.content))
+            raise HTTPClientError('{0}'.format(resp.content))
 
 
 def env(*vars, **kwargs):
