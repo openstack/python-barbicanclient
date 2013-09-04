@@ -22,7 +22,7 @@ class AuthException(Exception):
         self.message = message
 
 
-class KeystoneAuth(object):
+class KeystoneAuthV2(object):
     def __init__(self, auth_url='', username='', password='',
                  tenant_name='', tenant_id=''):
         if not all([auth_url, username, password, tenant_name or tenant_id]):

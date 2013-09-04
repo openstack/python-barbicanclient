@@ -20,4 +20,4 @@ from barbicanclient.common import auth
 class WhenTestingKeystoneAuthentication(unittest.TestCase):
     def test_endpoint_username_password_tenant_are_required(self):
         with self.assertRaises(ValueError):
-            keystone = auth.KeystoneAuth()
+            keystone = auth.KeystoneAuthV2()

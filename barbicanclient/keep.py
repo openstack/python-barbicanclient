@@ -228,10 +228,12 @@ class Keep:
                                         tenant_id=args.os_tenant_id)
         elif all([args.os_auth_url, args.os_username, args.os_password,
                   args.os_tenant_name]):
-            self._keystone = auth.KeystoneAuth(auth_url=args.os_auth_url,
-                                               username=args.os_username,
-                                               password=args.os_password,
-                                               tenant_name=args.os_tenant_name)
+            self._keystone = auth.KeystoneAuthV2(
+                auth_url=args.os_auth_url,
+                username=args.os_username,
+                password=args.os_password,
+                tenant_name=args.os_tenant_name
+            )
             self.client = client.Client(auth_plugin=self._keystone,
                                         endpoint=args.endpoint,
                                         tenant_id=args.tenant_id)
