@@ -20,7 +20,6 @@ import unittest2 as unittest
 
 from barbicanclient import client
 from barbicanclient.common import auth
-from barbicanclient.common.exceptions import ClientException
 
 
 class FakeAuth(object):
