@@ -199,15 +199,15 @@ class Keep:
 
     def delete(self, args):
         if args.command == 'secret':
-            self.client.secret.delete(args.URI)
+            self.client.secrets.delete(args.URI)
         else:
             self.client.orders.delete(args.URI)
 
     def get(self, args):
         if args.command == 'secret':
             if args.decrypt:
-                print self.client.secrets.raw(args.URI,
-                                              args.payload_content_type)
+                print self.client.secrets.decrypt(args.URI,
+                                                  args.payload_content_type)
             else:
                 print self.client.secrets.get(args.URI)
         else:
