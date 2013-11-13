@@ -238,7 +238,7 @@ class Keep:
             )
             self.client = client.Client(auth_plugin=self._keystone,
                                         endpoint=args.endpoint,
-                                        tenant_id=args.tenant_id)
+                                        tenant_id=args.os_tenant_id)
         else:
             self.parser.exit(
                 status=1,
