@@ -26,7 +26,7 @@ class KeystoneAuthV2(object):
     def __init__(self, auth_url='', username='', password='',
                  tenant_name='', tenant_id=''):
         if not all([auth_url, username, password, tenant_name or tenant_id]):
-            raise ValueError('Please provide auht_url, username, password,'
+            raise ValueError('Please provide auth_url, username, password,'
                              ' and tenant_id or tenant_name)')
         self._keystone = ksclient.Client(username=username,
                                          password=password,
