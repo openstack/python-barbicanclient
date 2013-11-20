@@ -71,6 +71,14 @@ class Keep:
                             metavar='<barbican-url>',
                             default=client.env('BARBICAN_ENDPOINT'),
                             help='Defaults to env[BARBICAN_ENDPOINT].')
+        parser.add_argument('--insecure',
+                            default=False,
+                            action="store_true",
+                            help='Explicitly allow barbicanclient to perform '
+                                 '"insecure" TLS (https) requests. The '
+                                 'server\'s certificate will not be verified '
+                                 'against any certificate authorities. This '
+                                 'option should be used with caution.')
         return parser
 
     def _add_create_args(self):
@@ -227,18 +235,21 @@ class Keep:
         args = self.parser.parse_args(kwargs.get('argv'))
         if args.no_auth:
             self.client = client.Client(endpoint=args.endpoint,
-                                        tenant_id=args.os_tenant_id)
+                                        tenant_id=args.os_tenant_id,
+                                        insecure=args.insecure)
         elif all([args.os_auth_url, args.os_username, args.os_password,
                   args.os_tenant_name]):
             self._keystone = auth.KeystoneAuthV2(
                 auth_url=args.os_auth_url,
                 username=args.os_username,
                 password=args.os_password,
-                tenant_name=args.os_tenant_name
+                tenant_name=args.os_tenant_name,
+                insecure=args.insecure
             )
             self.client = client.Client(auth_plugin=self._keystone,
                                         endpoint=args.endpoint,
-                                        tenant_id=args.os_tenant_id)
+                                        tenant_id=args.os_tenant_id,
+                                        insecure=args.insecure)
         else:
             self.parser.exit(
                 status=1,
