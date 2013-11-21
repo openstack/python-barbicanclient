@@ -91,3 +91,15 @@ class WhenTestingClient(unittest.TestCase):
         c = client.Client(auth_plugin=self.fake_auth)
         with self.assertRaises(client.HTTPClientError):
             c._check_status_code(resp)
+
+
+class WhenTestingSecretsResource(unittest.TestCase):
+    def setUp(self):
+        self.endpoint = 'https://localhost:9311/v1/'
+        self.tenant_id = 'tenant_id'
+
+        self.session = mock.MagicMock()
+        self.session.read.return_value = self.json
+
+    def test_should_create_secret
+

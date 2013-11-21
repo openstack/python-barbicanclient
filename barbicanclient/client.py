@@ -21,6 +21,7 @@ from barbicanclient.openstack.common import log as logging
 from barbicanclient.openstack.common.gettextutils import _
 from barbicanclient import orders
 from barbicanclient import secrets
+from barbicanclient import verifications
 
 
 LOG = logging.getLogger(__name__)
@@ -50,7 +51,8 @@ class HTTPAuthError(HTTPError):
 
 class Client(object):
 
-    def __init__(self, auth_plugin=None, endpoint=None, tenant_id=None):
+    def __init__(self, session=None, auth_plugin=None,
+                 endpoint=None, tenant_id=None):
         """
         Barbican client object used to interact with barbican service.
 
@@ -65,7 +67,7 @@ class Client(object):
         """
         LOG.debug(_("Creating Client object"))
 
-        self._session = requests.Session()
+        self._session = session or requests.Session()
         self.auth_plugin = auth_plugin
 
         if self.auth_plugin is not None:
@@ -90,6 +92,7 @@ class Client(object):
         self.base_url = '{0}/{1}'.format(self._barbican_url, self._tenant_id)
         self.secrets = secrets.SecretManager(self)
         self.orders = orders.OrderManager(self)
+        self.verifications = verifications.VerificationManager(self)
 
     def get(self, href, params=None):
         headers = {'Accept': 'application/json'}
