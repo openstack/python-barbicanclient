@@ -24,14 +24,15 @@ class AuthException(Exception):
 
 class KeystoneAuthV2(object):
     def __init__(self, auth_url='', username='', password='',
-                 tenant_name='', tenant_id=''):
+                 tenant_name='', tenant_id='', insecure=False):
         if not all([auth_url, username, password, tenant_name or tenant_id]):
             raise ValueError('Please provide auth_url, username, password,'
                              ' and tenant_id or tenant_name)')
         self._keystone = ksclient.Client(username=username,
                                          password=password,
                                          tenant_name=tenant_name,
-                                         auth_url=auth_url)
+                                         auth_url=auth_url,
+                                         insecure=insecure)
         self._barbican_url = None
         #TODO(dmend): make these configurable
         self._service_type = 'keystore'
