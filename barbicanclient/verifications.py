@@ -81,7 +81,7 @@ class VerificationManager(base.BaseEntityManager):
                resource_type=None,
                resource_ref=None,
                resource_action=None,
-               impersonation_allowed=None):
+               impersonation_allowed=False):
         """
         Creates a new Verification in Barbican
 
