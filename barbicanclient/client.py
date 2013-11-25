@@ -13,18 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
+import logging
 import os
 
 import requests
 
-from barbicanclient.openstack.common import log as logging
 from barbicanclient.openstack.common.gettextutils import _
 from barbicanclient import orders
 from barbicanclient import secrets
 
 
 LOG = logging.getLogger(__name__)
-logging.setup('barbicanclient')
 
 
 class HTTPError(Exception):
