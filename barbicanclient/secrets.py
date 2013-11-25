@@ -12,8 +12,9 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
+
 from barbicanclient import base
-from barbicanclient.openstack.common import log as logging
 from barbicanclient.openstack.common.timeutils import parse_isotime
 
 

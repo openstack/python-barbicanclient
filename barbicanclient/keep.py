@@ -19,6 +19,9 @@ import argparse
 
 from barbicanclient.common import auth
 from barbicanclient import client
+from barbicanclient.openstack.common import log as logging
+
+logging.setup('barbicanclient')
 
 
 class Keep:
