@@ -12,12 +12,35 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import mock
 import unittest2 as unittest
 
 from barbicanclient.common import auth
 
 
 class WhenTestingKeystoneAuthentication(unittest.TestCase):
+
+    def setUp(self):
+        self.keystone_client = mock.MagicMock()
+
+        self.auth_url = 'https://www.yada.com'
+        self.username = 'user'
+        self.password = 'pw'
+        self.tenant_id = '1234'
+
+        self.keystone_auth = auth.KeystoneAuthV2(auth_url=self.auth_url,
+                                                 username=self.username,
+                                                 password=self.password,
+                                                 tenant_id=self.tenant_id,
+                                                 keystone=
+                                                 self.keystone_client)
+
     def test_endpoint_username_password_tenant_are_required(self):
         with self.assertRaises(ValueError):
             keystone = auth.KeystoneAuthV2()
+
+    def test_get_barbican_url(self):
+        barbican_url = 'https://www.barbican.com'
+        self.keystone_auth._barbican_url = barbican_url
+        self.assertEquals(barbican_url, self.keystone_auth.barbican_url)

@@ -24,7 +24,9 @@ class OrderData(object):
         self.created = str(timeutils.utcnow())
 
         self.secret = test_secrets.SecretData()
+        self.status = 'ACTIVE'
         self.order_dict = {'created': self.created,
+                           'status': self.status,
                            'secret': self.secret.get_dict()}
 
     def get_dict(self, order_ref, secret_ref=None):
@@ -35,7 +37,7 @@ class OrderData(object):
         return order
 
 
-class WhenTestingOrdersManager(test_client.BaseEntityResource):
+class WhenTestingOrders(test_client.BaseEntityResource):
 
     def setUp(self):
         self._setUp('orders')
@@ -43,6 +45,19 @@ class WhenTestingOrdersManager(test_client.BaseEntityResource):
         self.order = OrderData()
 
         self.manager = orders.OrderManager(self.api)
+
+    def test_should_entity_str(self):
+        order_obj = orders.Order(self.order.get_dict(self.entity_href))
+        order_obj.error_status_code = '500'
+        order_obj.error_reason = 'Something is broken'
+        self.assertIn('status: ' + self.order.status,
+                      str(order_obj))
+        self.assertIn('error_status_code: 500', str(order_obj))
+
+    def test_should_entity_repr(self):
+        order_obj = orders.Order(self.order.get_dict(self.entity_href))
+        self.assertIn('order_ref=' + self.entity_href,
+                      repr(order_obj))
 
     def test_should_create(self):
         self.api.post.return_value = {'order_ref': self.entity_href}
@@ -86,6 +101,26 @@ class WhenTestingOrdersManager(test_client.BaseEntityResource):
         args, kwargs = self.api.delete.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
+
+    def test_should_get_list(self):
+        order_resp = self.order.get_dict(self.entity_href)
+        self.api.get.return_value = {"orders":
+                                     [order_resp for v in xrange(3)]}
+
+        orders_list = self.manager.list(limit=10, offset=5)
+        self.assertTrue(len(orders_list) == 3)
+        self.assertIsInstance(orders_list[0], orders.Order)
+        self.assertEqual(self.entity_href, orders_list[0].order_ref)
+
+        # Verify the correct URL was used to make the call.
+        args, kwargs = self.api.get.call_args
+        url = args[0]
+        self.assertEqual(self.entity_base[:-1], url)
+
+        # Verify that correct information was sent in the call.
+        params = args[1]
+        self.assertEqual(10, params['limit'])
+        self.assertEqual(5, params['offset'])
 
     def test_should_fail_get_no_href(self):
         with self.assertRaises(ValueError):

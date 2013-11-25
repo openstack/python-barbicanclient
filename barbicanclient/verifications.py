@@ -105,28 +105,28 @@ class VerificationManager(base.BaseEntityManager):
         resp = self.api.post(self.entity, verif_dict)
         return resp['verification_ref']
 
-    def get(self, verif_ref):
+    def get(self, verification_ref):
         """
         Returns a verification object
 
-        :param verif_ref: The href for the verification instance
+        :param verification_ref: The href for the verification instance
         """
         LOG.debug(_("Getting verification - "
-                    "Verification href: {0}").format(verif_ref))
-        if not verif_ref:
+                    "Verification href: {0}").format(verification_ref))
+        if not verification_ref:
             raise ValueError('verif_ref is required.')
-        resp = self.api.get(verif_ref)
+        resp = self.api.get(verification_ref)
         return Verification(resp)
 
-    def delete(self, verif_ref):
+    def delete(self, verification_ref):
         """
         Deletes a verification
 
-        :param verif_ref: The href for the verification instance
+        :param verification_ref: The href for the verification instance
         """
-        if not verif_ref:
+        if not verification_ref:
             raise ValueError('verif_ref is required.')
-        self.api.delete(verif_ref)
+        self.api.delete(verification_ref)
 
     def list(self, limit=10, offset=0):
         """

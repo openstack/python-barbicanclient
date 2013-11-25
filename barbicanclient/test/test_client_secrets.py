@@ -41,7 +41,7 @@ class SecretData(object):
         return secret
 
 
-class WhenTestingSecretsManager(test_client.BaseEntityResource):
+class WhenTestingSecrets(test_client.BaseEntityResource):
 
     def setUp(self):
         self._setUp('secrets')
@@ -49,6 +49,15 @@ class WhenTestingSecretsManager(test_client.BaseEntityResource):
         self.secret = SecretData()
 
         self.manager = secrets.SecretManager(self.api)
+
+    def test_should_entity_str(self):
+        secret_obj = secrets.Secret(self.secret.get_dict(self.entity_href))
+        self.assertIn('name: ' + self.secret.name,
+                      str(secret_obj))
+
+    def test_should_entity_repr(self):
+        secret_obj = secrets.Secret(self.secret.get_dict(self.entity_href))
+        self.assertIn('name="{0}"'.format(self.secret.name), repr(secret_obj))
 
     def test_should_store(self):
         self.api.post.return_value = {'secret_ref': self.entity_href}
@@ -132,6 +141,26 @@ class WhenTestingSecretsManager(test_client.BaseEntityResource):
         args, kwargs = self.api.delete.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
+
+    def test_should_get_list(self):
+        secret_resp = self.secret.get_dict(self.entity_href)
+        self.api.get.return_value = {"secrets":
+                                     [secret_resp for v in xrange(3)]}
+
+        secrets_list = self.manager.list(limit=10, offset=5)
+        self.assertTrue(len(secrets_list) == 3)
+        self.assertIsInstance(secrets_list[0], secrets.Secret)
+        self.assertEqual(self.entity_href, secrets_list[0].secret_ref)
+
+        # Verify the correct URL was used to make the call.
+        args, kwargs = self.api.get.call_args
+        url = args[0]
+        self.assertEqual(self.entity_base[:-1], url)
+
+        # Verify that correct information was sent in the call.
+        params = args[1]
+        self.assertEqual(10, params['limit'])
+        self.assertEqual(5, params['offset'])
 
     def test_should_fail_get_no_href(self):
         with self.assertRaises(ValueError):
