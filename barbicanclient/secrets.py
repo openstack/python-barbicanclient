@@ -139,6 +139,12 @@ class SecretManager(base.BaseEntityManager):
             raise ValueError('secret_ref is required.')
         if not content_type:
             secret = self.get(secret_ref)
+            if secret.content_types is None:
+                raise ValueError('Secret has no encrypted data to decrypt.')
+            if 'default' not in secret.content_types:
+                raise ValueError("Must specify decrypt content-type as "
+                                 "secret does not specify a 'default' "
+                                 "content-type.")
             content_type = secret.content_types['default']
         headers = {'Accept': content_type}
         return self.api.get_raw(secret_ref, headers)
