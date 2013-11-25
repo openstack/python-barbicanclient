@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
+import logging
 import os
 
 import requests
 
-from barbicanclient.openstack.common import log as logging
 from barbicanclient.openstack.common.gettextutils import _
 from barbicanclient import orders
 from barbicanclient import secrets
@@ -25,7 +25,6 @@ from barbicanclient import verifications
 
 
 LOG = logging.getLogger(__name__)
-logging.setup('barbicanclient')
 
 
 class HTTPError(Exception):
@@ -51,8 +50,8 @@ class HTTPAuthError(HTTPError):
 
 class Client(object):
 
-    def __init__(self, session=None, auth_plugin=None,
-                 endpoint=None, tenant_id=None):
+    def __init__(self, session=None, auth_plugin=None, endpoint=None,
+                 tenant_id=None, insecure=False):
         """
         Barbican client object used to interact with barbican service.
 
@@ -68,6 +67,7 @@ class Client(object):
         LOG.debug(_("Creating Client object"))
 
         self._session = session or requests.Session()
+        self.verify = not insecure
         self.auth_plugin = auth_plugin
 
         if self.auth_plugin is not None:
@@ -96,23 +96,25 @@ class Client(object):
 
     def get(self, href, params=None):
         headers = {'Accept': 'application/json'}
-        resp = self._session.get(href, params=params, headers=headers)
+        resp = self._session.get(href, params=params, headers=headers,
+                                 verify=self.verify)
         self._check_status_code(resp)
         return resp.json()
 
     def get_raw(self, href, headers):
-        resp = self._session.get(href, headers=headers)
+        resp = self._session.get(href, headers=headers, verify=self.verify)
         self._check_status_code(resp)
         return resp.content
 
     def delete(self, href):
-        resp = self._session.delete(href)
+        resp = self._session.delete(href, verify=self.verify)
         self._check_status_code(resp)
 
     def post(self, path, data):
         url = '{0}/{1}/'.format(self.base_url, path)
         headers = {'content-type': 'application/json'}
-        resp = self._session.post(url, data=json.dumps(data), headers=headers)
+        resp = self._session.post(url, data=json.dumps(data), headers=headers,
+                                  verify=self.verify)
         self._check_status_code(resp)
         return resp.json()
 

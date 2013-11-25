@@ -12,10 +12,11 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
+
 from keystoneclient.v2_0 import client as ksclient
 from keystoneclient import exceptions
 
-from barbicanclient.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
@@ -28,14 +29,15 @@ class AuthException(Exception):
 
 class KeystoneAuthV2(object):
     def __init__(self, auth_url='', username='', password='',
-                 tenant_name='', tenant_id='', keystone=None):
+                 tenant_name='', tenant_id='', insecure=False, keystone=None):
         if not all([auth_url, username, password, tenant_name or tenant_id]):
             raise ValueError('Please provide auth_url, username, password,'
                              ' and tenant_id or tenant_name)')
         self._keystone = keystone or ksclient.Client(username=username,
                                                      password=password,
                                                      tenant_name=tenant_name,
-                                                     auth_url=auth_url)
+                                                     auth_url=auth_url,
+                                                     insecure=insecure)
         self._barbican_url = None
         #TODO(dmend): make these configurable
         self._service_type = 'keystore'

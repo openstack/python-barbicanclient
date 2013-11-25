@@ -19,6 +19,9 @@ import argparse
 
 from barbicanclient.common import auth
 from barbicanclient import client
+from barbicanclient.openstack.common import log as logging
+
+logging.setup('barbicanclient')
 
 
 class Keep:
@@ -72,22 +75,35 @@ class Keep:
                             metavar='<barbican-url>',
                             default=client.env('BARBICAN_ENDPOINT'),
                             help='Defaults to env[BARBICAN_ENDPOINT].')
+        parser.add_argument('--insecure',
+                            default=False,
+                            action="store_true",
+                            help='Explicitly allow barbicanclient to perform '
+                                 '"insecure" TLS (https) requests. The '
+                                 'server\'s certificate will not be verified '
+                                 'against any certificate authorities. This '
+                                 'option should be used with caution.')
         return parser
 
     def _add_verify_args(self):
         verify_parser = self.subparsers.add_parser('verify',
-                                                   help='Create a new verification.')
+                                                   help='Create a new '
+                                                        'verification.')
         verify_parser.add_argument('--type', '-t', default='image',
-                                   help='resource type to verify, such as "image".')
+                                   help='resource type to verify, '
+                                        'such as "image".')
 
         verify_parser.add_argument('--ref', '-r',
-                                   help='reference URI to resource to verify.')
+                                   help='reference URI to '
+                                        'resource to verify.')
 
         verify_parser.add_argument('--action', '-a', default='vm_attach',
-                                   help='action to perform on resource, such as "vm_attach".')
+                                   help='action to perform on '
+                                        'resource, such as "vm_attach".')
 
         verify_parser.add_argument('--impersonation', '-i', default=True,
-                                   help='is impersonation allowed for the resource.')
+                                   help='is impersonation allowed '
+                                        'for the resource.')
         verify_parser.set_defaults(func=self.verify)
 
     def _add_create_args(self):
@@ -110,7 +126,8 @@ class Keep:
                                    default='application/octet-stream',
                                    help='the type/format of the secret to be'
                                         ' generated (default: %(default)s).')
-        create_parser.add_argument('--expiration', '-x', help='the expiration '
+        create_parser.add_argument('--expiration', '-x',
+                                   help='the expiration '
                                    'time for the secret in ISO 8601 format.')
         create_parser.set_defaults(func=self.create)
 
@@ -122,7 +139,8 @@ class Keep:
         store_parser.add_argument('--name', '-n',
                                   help='a human-friendly name.')
         store_parser.add_argument('--payload', '-p', help='the unencrypted'
-                                  ' secret; if provided, you must also provide'
+                                  ' secret; if provided, '
+                                  'you must also provide'
                                   ' a payload_content_type')
         store_parser.add_argument('--payload-content-type', '-t',
                                   help='the type/format of the provided '
@@ -133,7 +151,8 @@ class Keep:
                                   help='required if --payload-content-type is'
                                   ' "application/octet-stream".')
         store_parser.add_argument('--algorithm', '-a', default='aes',
-                                  help='the algorithm (default: %(default)s).')
+                                  help='the algorithm (default: '
+                                       '%(default)s).')
         store_parser.add_argument('--bit-length', '-b', default=256,
                                   help='the bit length '
                                        '(default: %(default)s).',
@@ -148,18 +167,22 @@ class Keep:
     def _add_delete_args(self):
         delete_parser = self.subparsers.add_parser(
             'delete',
-            help='Delete a secret, order or verification by providing its href.'
+            help='Delete a secret, order or '
+                 'verification by providing its href.'
         )
         delete_parser.add_argument('URI', help='The URI reference for the'
-                                               ' secret, order or verification')
+                                               ' secret, order '
+                                               'or verification')
         delete_parser.set_defaults(func=self.delete)
 
     def _add_get_args(self):
         get_parser = self.subparsers.add_parser(
             'get',
-            help='Retrieve a secret, order or verification by providing its URI.'
+            help='Retrieve a secret, order or '
+                 'verification by providing its URI.'
         )
-        get_parser.add_argument('URI', help='The URI reference for the secret, '
+        get_parser.add_argument('URI', help='The URI reference '
+                                            'for the secret, '
                                 'order or verification.')
         get_parser.add_argument('--decrypt', '-d', help='if specified, keep'
                                 ' will retrieve the unencrypted secret data;'
@@ -176,9 +199,11 @@ class Keep:
 
     def _add_list_args(self):
         list_parser = self.subparsers.add_parser('list',
-                                                 help='List secrets, orders or verifications')
-        list_parser.add_argument('--limit', '-l', default=10, help='specify t'
-                                 'he limit to the number of items to list per'
+                                                 help='List secrets, '
+                                                      'orders or '
+                                                      'verifications')
+        list_parser.add_argument('--limit', '-l', default=10, help='specify '
+                                 'the limit to the number of items to list per'
                                  ' page (default: %(default)s; maximum: 100)',
                                  type=int)
         list_parser.add_argument('--offset', '-o', default=0, help='specify t'
@@ -223,7 +248,8 @@ class Keep:
             self.client.orders.delete(args.URI)
         else:
             self.parser.exit(status=1, message='ERROR: delete is only '
-                                               'supported for secrets, orders or verifications\n')
+                                               'supported for secrets, '
+                                               'orders or verifications\n')
 
     def get(self, args):
         if args.command == 'secret':
@@ -238,7 +264,8 @@ class Keep:
             print self.client.orders.get(args.URI)
         else:
             self.parser.exit(status=1, message='ERROR: get is only '
-                                               'supported for secrets, orders or verifications\n')
+                                               'supported for secrets, '
+                                               'orders or verifications\n')
 
     def list(self, args):
         if args.command == 'secret':
@@ -249,7 +276,8 @@ class Keep:
             ls = self.client.orders.list(args.limit, args.offset)
         else:
             self.parser.exit(status=1, message='ERROR: get list is only '
-                                               'supported for secrets, orders or verifications\n')
+                                               'supported for secrets, '
+                                               'orders or verifications\n')
         for obj in ls:
             print obj
         print '{0}s displayed: {1} - offset: {2}'.format(args.command, len(ls),
@@ -271,18 +299,21 @@ class Keep:
         args = self.parser.parse_args(kwargs.get('argv'))
         if args.no_auth:
             self.client = client.Client(endpoint=args.endpoint,
-                                        tenant_id=args.os_tenant_id)
+                                        tenant_id=args.os_tenant_id,
+                                        insecure=args.insecure)
         elif all([args.os_auth_url, args.os_username, args.os_password,
                   args.os_tenant_name]):
             self._keystone = auth.KeystoneAuthV2(
                 auth_url=args.os_auth_url,
                 username=args.os_username,
                 password=args.os_password,
-                tenant_name=args.os_tenant_name
+                tenant_name=args.os_tenant_name,
+                insecure=args.insecure
             )
             self.client = client.Client(auth_plugin=self._keystone,
                                         endpoint=args.endpoint,
-                                        tenant_id=args.os_tenant_id)
+                                        tenant_id=args.os_tenant_id,
+                                        insecure=args.insecure)
         else:
             self.parser.exit(
                 status=1,
