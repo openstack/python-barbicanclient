@@ -46,28 +46,6 @@ class FakeResp(object):
         return self.content
 
 
-class SecretData(object):
-    def __init__(self):
-        self.name = 'Self destruction sequence'
-        self.payload = 'the magic words are squeamish ossifrage'
-        self.payload_content_type = 'text/plain'
-        self.content = 'text/plain'
-        self.algorithm = 'AES'
-        self.created = str(timeutils.utcnow())
-
-        self.secret_dict = {'name': self.name,
-                            'status': 'ACTIVE',
-                            'algorithm': self.algorithm,
-                            'created': self.created}
-
-    def get_dict(self, secret_ref, content_types_dict=None):
-        secret_dict = self.secret_dict
-        secret_dict['secret_ref'] = secret_ref
-        if content_types_dict:
-            secret_dict['content_types'] = content_types_dict
-        return secret_dict
-
-
 class WhenTestingClientInit(unittest.TestCase):
     def setUp(self):
         self.auth_endpoint = 'https://localhost:5000/v2.0/'
