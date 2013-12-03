@@ -21,6 +21,7 @@ import requests
 from barbicanclient.openstack.common.gettextutils import _
 from barbicanclient import orders
 from barbicanclient import secrets
+from barbicanclient import verifications
 
 
 LOG = logging.getLogger(__name__)
@@ -49,8 +50,8 @@ class HTTPAuthError(HTTPError):
 
 class Client(object):
 
-    def __init__(self, auth_plugin=None, endpoint=None, tenant_id=None,
-                 insecure=False):
+    def __init__(self, session=None, auth_plugin=None, endpoint=None,
+                 tenant_id=None, insecure=False):
         """
         Barbican client object used to interact with barbican service.
 
@@ -65,7 +66,7 @@ class Client(object):
         """
         LOG.debug(_("Creating Client object"))
 
-        self._session = requests.Session()
+        self._session = session or requests.Session()
         self.verify = not insecure
         self.auth_plugin = auth_plugin
 
@@ -98,6 +99,7 @@ class Client(object):
         self.base_url = '{0}/{1}'.format(self._barbican_url, self._tenant_id)
         self.secrets = secrets.SecretManager(self)
         self.orders = orders.OrderManager(self)
+        self.verifications = verifications.VerificationManager(self)
 
     def get(self, href, params=None):
         headers = {'Accept': 'application/json'}
@@ -124,12 +126,12 @@ class Client(object):
         return resp.json()
 
     def _check_status_code(self, resp):
-        status = resp.status_code
+        status = resp.status_code if resp else None
         LOG.debug('Response status {0}'.format(status))
         if status == 401:
             LOG.error('Auth error: {0}'.format(self._get_error_message(resp)))
             raise HTTPAuthError('{0}'.format(self._get_error_message(resp)))
-        if status >= 500:
+        if not status or status >= 500:
             LOG.error('5xx Server error: {0}'.format(
                 self._get_error_message(resp)
             ))

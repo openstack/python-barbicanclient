@@ -13,13 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
 import mock
 import unittest2 as unittest
 
 from barbicanclient import client
-from barbicanclient.common import auth
+from barbicanclient.openstack.common import timeutils
+from barbicanclient.openstack.common import jsonutils
 
 
 class FakeAuth(object):
@@ -30,7 +29,24 @@ class FakeAuth(object):
         self.tenant_id = tenant_id
 
 
-class WhenTestingClient(unittest.TestCase):
+class FakeResp(object):
+    def __init__(self, status_code, response_dict=None, content=None):
+        self.status_code = status_code
+        self.response_dict = response_dict
+        self.content = content
+
+    def json(self):
+        if self.response_dict is None:
+            return None
+        resp = self.response_dict
+        resp['title'] = 'some title here'
+        return resp
+
+    def content(self):
+        return self.content
+
+
+class WhenTestingClientInit(unittest.TestCase):
     def setUp(self):
         self.auth_endpoint = 'https://localhost:5000/v2.0/'
         self.auth_token = 'fake_auth_token'
@@ -91,3 +107,98 @@ class WhenTestingClient(unittest.TestCase):
         c = client.Client(auth_plugin=self.fake_auth)
         with self.assertRaises(client.HTTPClientError):
             c._check_status_code(resp)
+
+
+class WhenTestingClientWithSession(unittest.TestCase):
+    def setUp(self):
+        self.endpoint = 'https://localhost:9311/v1/'
+        self.tenant_id = '1234567'
+
+        self.entity = 'dummy-entity'
+        base = self.endpoint + self.tenant_id + "/"
+        self.entity_base = base + self.entity + "/"
+        self.entity_href = self.entity_base + '1234'
+
+        self.entity_name = 'name'
+        self.entity_dict = {'name': self.entity_name}
+
+        self.session = mock.MagicMock()
+
+        self.client = client.Client(session=self.session,
+                                    endpoint=self.endpoint,
+                                    tenant_id=self.tenant_id)
+
+    def test_should_post(self):
+        self.session.post.return_value = FakeResp(200, {'entity_ref':
+                                                        self.entity_href})
+
+        resp_dict = self.client.post(self.entity, self.entity_dict)
+
+        self.assertEqual(self.entity_href, resp_dict['entity_ref'])
+
+        # Verify the correct URL was used to make the call.
+        args, kwargs = self.session.post.call_args
+        url = args[0]
+        self.assertEqual(self.entity_base, url)
+
+        # Verify that correct information was sent in the call.
+        data = jsonutils.loads(kwargs['data'])
+        self.assertEqual(self.entity_name, data['name'])
+
+    def test_should_get(self):
+        self.session.get.return_value = FakeResp(200, {'name':
+                                                       self.entity_name})
+
+        resp_dict = self.client.get(self.entity_href)
+
+        self.assertEqual(self.entity_name, resp_dict['name'])
+
+        # Verify the correct URL was used to make the call.
+        args, kwargs = self.session.get.call_args
+        url = args[0]
+        self.assertEqual(self.entity_href, url)
+
+        # Verify that correct information was sent in the call.
+        headers = kwargs['headers']
+        self.assertEqual('application/json', headers['Accept'])
+
+    def test_should_get_raw(self):
+        self.session.get.return_value = FakeResp(200, content='content')
+
+        headers = {'Accept': 'application/octet-stream'}
+        content = self.client.get_raw(self.entity_href, headers)
+
+        self.assertEqual('content', content)
+
+        # Verify the correct URL was used to make the call.
+        args, kwargs = self.session.get.call_args
+        url = args[0]
+        self.assertEqual(self.entity_href, url)
+
+        # Verify that correct information was sent in the call.
+        headers = kwargs['headers']
+        self.assertEqual('application/octet-stream', headers['Accept'])
+
+    def test_should_delete(self):
+        self.session.delete.return_value = FakeResp(200)
+
+        self.client.delete(self.entity_href)
+
+        # Verify the correct URL was used to make the call.
+        args, kwargs = self.session.delete.call_args
+        url = args[0]
+        self.assertEqual(self.entity_href, url)
+
+
+class BaseEntityResource(unittest.TestCase):
+    def _setUp(self, entity):
+        self.endpoint = 'https://localhost:9311/v1/'
+        self.tenant_id = '1234567'
+
+        self.entity = entity
+        base = self.endpoint + self.tenant_id + "/"
+        self.entity_base = base + self.entity + "/"
+        self.entity_href = self.entity_base + '1234'
+
+        self.api = mock.MagicMock()
+        self.api.base_url = base[:-1]
