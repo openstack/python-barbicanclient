@@ -4,10 +4,18 @@ This is a client for the [Barbican](https://github.com/stackforge/barbican)
 Key Management API.  There is a Python library for accessing the API
 (`barbicanclient` module), and a command-line script (`keep`).
 
+## Installation
+
+The client is [pip installable](https://pypi.python.org/pypi/python-barbicanclient) as follows: 
+
+```bash
+pip install python-barbicanclient
+```
+
 ## barbicanclient - Python API
 The full api is [documented in the wiki](https://github.com/cloudkeep/python-barbicanclient/wiki/Client-Usage).
 
-### Quickstart
+## Python Library
 Store a secret in barbican using keystone for authentication:
 ```python
 >>> from barbicanclient.common import auth
@@ -44,7 +52,7 @@ usage: keep [-h] [--no-auth | --os-auth-url <auth-url>]
 Command-line interface to the Barbican API.
 
 positional arguments:
-  <entity>              Entity used for command, e.g., order, secret.
+  <entity>              Entity used for command, e.g., order, secret or verification.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -68,7 +76,8 @@ subcommands:
   <action>
     create              Create a new order.
     store               Store a secret in barbican.
-    get                 Retrieve a secret or an order by providing its URI.
-    list                List secrets or orders
-    delete              Delete a secret or an order by providing its href.
+    verify              Begin a verification process in barbican.
+    get                 Retrieve a secret, an order or a verification result by providing its URI.
+    list                List secrets, orders or verifications.
+    delete              Delete a secret, order or verification by providing its href.
 ```
