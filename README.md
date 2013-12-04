@@ -12,11 +12,12 @@ The client is [pip installable](https://pypi.python.org/pypi/python-barbicanclie
 pip install python-barbicanclient
 ```
 
-## barbicanclient - Python API
+## barbicanclient - Python Library
 The full api is [documented in the wiki](https://github.com/cloudkeep/python-barbicanclient/wiki/Client-Usage).
 
-## Python Library
-Store a secret in barbican using keystone for authentication:
+
+Here's an example of storing a secret in barbican using the python library 
+with keystone authentication:
 ```python
 >>> from barbicanclient.common import auth
 >>> from barbicanclient import client
