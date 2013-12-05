@@ -61,7 +61,7 @@ setuptools.setup(
     test_suite='nose.collector',
     tests_require=['nose'],
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Environment :: OpenStack',
         'Intended Audience :: Developers',
