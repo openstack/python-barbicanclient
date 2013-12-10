@@ -117,7 +117,8 @@ class WhenTestingClientWithSession(unittest.TestCase):
         self.entity = 'dummy-entity'
         base = self.endpoint + self.tenant_id + "/"
         self.entity_base = base + self.entity + "/"
-        self.entity_href = self.entity_base + '1234'
+        self.entity_href = self.entity_base + \
+            'abcd1234-eabc-5678-9abc-abcdef012345'
 
         self.entity_name = 'name'
         self.entity_dict = {'name': self.entity_name}
@@ -198,7 +199,8 @@ class BaseEntityResource(unittest.TestCase):
         self.entity = entity
         base = self.endpoint + self.tenant_id + "/"
         self.entity_base = base + self.entity + "/"
-        self.entity_href = self.entity_base + '1234'
+        self.entity_href = self.entity_base + \
+            'abcd1234-eabc-5678-9abc-abcdef012345'
 
         self.api = mock.MagicMock()
         self.api.base_url = base[:-1]

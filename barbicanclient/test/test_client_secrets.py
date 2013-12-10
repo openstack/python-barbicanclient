@@ -162,6 +162,10 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(10, params['limit'])
         self.assertEqual(5, params['offset'])
 
+    def test_should_fail_get_invalid_secret(self):
+        with self.assertRaises(ValueError):
+            self.manager.get('12345')
+
     def test_should_fail_get_no_href(self):
         with self.assertRaises(ValueError):
             self.manager.get(None)

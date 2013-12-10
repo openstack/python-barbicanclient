@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+import urlparse
+import re
 
 from barbicanclient import base
 from barbicanclient.openstack.common.timeutils import parse_isotime
@@ -35,7 +37,10 @@ class Secret(object):
         self.status = secret_dict.get('status')
         self.content_types = secret_dict.get('content_types')
 
-        self.created = parse_isotime(secret_dict.get('created'))
+        if secret_dict.get('created') is not None:
+            self.created = parse_isotime(secret_dict['created'])
+        else:
+            self.created = None
         if secret_dict.get('expiration') is not None:
             self.expiration = parse_isotime(secret_dict['expiration'])
         else:
@@ -123,6 +128,16 @@ class SecretManager(base.BaseEntityManager):
         """
         if not secret_ref:
             raise ValueError('secret_ref is required.')
+        try:
+            url = urlparse.urlparse(secret_ref)
+            parts = url.path.rstrip('/').split('/')
+            reuuid = re.compile(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-'
+                                '[0-9a-f]{4}-[0-9a-f]{12}', re.I)
+            if not reuuid.findall(parts[-1]):
+                raise ValueError('secret uuid format error.')
+        except:
+            raise ValueError('secret incorrectly specified.')
+
         resp = self.api.get(secret_ref)
         return Secret(resp)
 
