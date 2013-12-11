@@ -209,6 +209,18 @@ class Keep:
         list_parser.add_argument('--offset', '-o', default=0, help='specify t'
                                  'he page offset (default: %(default)s)',
                                  type=int)
+        list_parser.add_argument('--name', '-n', default=None, help='specify t'
+                                 'he secret name (default: %(default)s)')
+        list_parser.add_argument('--algorithm', '-a', default=None,
+                                 help='the algorithm filter for the list'
+                                      '(default: %(default)s).')
+        list_parser.add_argument('--bit-length', '-b', default=0,
+                                 help='the bit length filter for the list'
+                                      ' (default: %(default)s).',
+                                 type=int)
+        list_parser.add_argument('--mode', '-m', default=None,
+                                 help='the algorithmm mode filter for the'
+                                      ' list (default: %(default)s).')
         list_parser.set_defaults(func=self.list)
 
     def store(self, args):
@@ -269,7 +281,12 @@ class Keep:
 
     def list(self, args):
         if args.command == 'secret':
-            ls = self.client.secrets.list(args.limit, args.offset)
+            ls = self.client.secrets.list(limit=args.limit,
+                                          offset=args.offset,
+                                          name=args.name,
+                                          mode=args.mode,
+                                          algorithm=args.algorithm,
+                                          bits=args.bit_length)
         elif args.command == 'verification':
             ls = self.client.verifications.list(args.limit, args.offset)
         elif args.command == 'order':

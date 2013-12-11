@@ -175,7 +175,8 @@ class SecretManager(base.BaseEntityManager):
             raise ValueError('secret_ref is required.')
         self.api.delete(secret_ref)
 
-    def list(self, limit=10, offset=0):
+    def list(self, limit=10, offset=0, name=None, algorithm=None,
+             mode=None, bits=0):
         """
         List all secrets for the tenant
 
@@ -187,6 +188,15 @@ class SecretManager(base.BaseEntityManager):
                                                                   limit))
         href = '{0}/{1}'.format(self.api.base_url, self.entity)
         params = {'limit': limit, 'offset': offset}
+        if name:
+            params['name'] = name
+        if algorithm:
+            params['alg'] = algorithm
+        if mode:
+            params['mode'] = mode
+        if bits > 0:
+            params['bits'] = bits
+
         resp = self.api.get(href, params)
 
         return [Secret(s) for s in resp['secrets']]
