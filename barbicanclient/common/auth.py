@@ -12,10 +12,13 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import abc
+import json
 import logging
 
 from keystoneclient.v2_0 import client as ksclient
 from keystoneclient import exceptions
+import requests
 
 
 LOG = logging.getLogger(__name__)
@@ -23,16 +26,34 @@ LOG = logging.getLogger(__name__)
 
 class AuthException(Exception):
     """Raised when authorization fails."""
-    def __init__(self, message):
-        self.message = message
+    pass
 
 
-class KeystoneAuthV2(object):
+class AuthPluginBase(object):
+    """Base class for Auth plugins."""
+
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractproperty
+    def auth_token(self):
+        """
+        Returns a valid token to be used in X-Auth-Token header for
+        api requests.
+        """
+
+    @abc.abstractproperty
+    def barbican_url(self):
+        """
+        Returns the barbican endpoint url, including the version.
+        """
+
+
+class KeystoneAuthV2(AuthPluginBase):
     def __init__(self, auth_url='', username='', password='',
                  tenant_name='', tenant_id='', insecure=False, keystone=None):
         if not all([auth_url, username, password, tenant_name or tenant_id]):
             raise ValueError('Please provide auth_url, username, password,'
-                             ' and tenant_id or tenant_name)')
+                             ' and tenant_id or tenant_name.')
         self._keystone = keystone or ksclient.Client(username=username,
                                                      password=password,
                                                      tenant_name=tenant_name,
@@ -67,3 +88,76 @@ class KeystoneAuthV2(object):
                 LOG.error('Barbican endpoint not found in keystone catalog.')
                 raise AuthException('Barbican endpoint not found.')
         return self._barbican_url
+
+
+class RackspaceAuthV2(AuthPluginBase):
+    def __init__(self, auth_url='', username='', api_key='', password=''):
+        if not all([auth_url, username, api_key or password]):
+            raise ValueError('Please provide auth_url, username, api_key or '
+                             'password.')
+        self._auth_url = auth_url
+        self._username = username
+        self._api_key = api_key
+        self._password = password
+        self._auth_token = None
+        self._barbican_url = None
+        self.tenant_id = None
+        self._authenticate()
+
+    @property
+    def auth_token(self):
+        return self._auth_token
+
+    @property
+    def barbican_url(self):
+        return self._barbican_url
+
+    def _authenticate(self):
+        auth_url = '{0}/tokens'.format(self._auth_url)
+        headers = {'Accept': 'application/json',
+                   'Content-Type': 'application/json'}
+        if self._api_key:
+            payload = self._authenticate_with_api_key()
+        else:
+            payload = self._authenticate_with_password()
+
+        r = requests.post(auth_url, data=json.dumps(payload), headers=headers)
+
+        try:
+            r.raise_for_status()
+        except requests.HTTPError:
+            msg = 'HTTPError ({0}): Unable to authenticate with Rackspace.'
+            msg = msg.format(r.status_code)
+            LOG.error(msg)
+            raise AuthException(msg)
+
+        try:
+            data = r.json()
+        except ValueError:
+            msg = 'Error parsing response from Rackspace Identity.'
+            LOG.error(msg)
+            raise AuthException(msg)
+        else:
+            #TODO(dmend): get barbican_url from catalog
+            self._auth_token = data['access']['token']['id']
+            self.tenant_id = data['access']['token']['tenant']['id']
+
+    def _authenticate_with_api_key(self):
+        return {
+            'auth': {
+                'RAX-KSKEY:apiKeyCredentials': {
+                    'username': self._username,
+                    'apiKey': self._api_key
+                }
+            }
+        }
+
+    def _authenticate_with_password(self):
+        return {
+            'auth': {
+                'passwordCredentials': {
+                    'username': self._username,
+                    'password': self._password
+                }
+            }
+        }
