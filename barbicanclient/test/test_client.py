@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import mock
+import requests
 import unittest2 as unittest
 
 from barbicanclient import client
@@ -60,6 +61,12 @@ class WhenTestingClientInit(unittest.TestCase):
         self.fake_auth = FakeAuth(self.auth_token, self.endpoint,
                                   self.tenant_name, self.tenant_id)
 
+    def _mock_response(self, content=None, status_code=200):
+        resp = requests.Response()
+        resp._content = content or '{"title": {"generic mocked response"}}'
+        resp.status_code = status_code
+        return resp
+
     def test_can_be_used_without_auth_plugin(self):
         c = client.Client(auth_plugin=None, endpoint=self.endpoint,
                           tenant_id=self.tenant_id)
@@ -88,22 +95,19 @@ class WhenTestingClientInit(unittest.TestCase):
         self.assertTrue(c.base_url.endswith(self.tenant_id))
 
     def test_should_raise_for_unauthorized_response(self):
-        resp = mock.MagicMock()
-        resp.status_code = 401
+        resp = self._mock_response(status_code=401)
         c = client.Client(auth_plugin=self.fake_auth)
         with self.assertRaises(client.HTTPAuthError):
             c._check_status_code(resp)
 
     def test_should_raise_for_server_error(self):
-        resp = mock.MagicMock()
-        resp.status_code = 500
+        resp = self._mock_response(status_code=500)
         c = client.Client(auth_plugin=self.fake_auth)
         with self.assertRaises(client.HTTPServerError):
             c._check_status_code(resp)
 
     def test_should_raise_for_client_errors(self):
-        resp = mock.MagicMock()
-        resp.status_code = 400
+        resp = self._mock_response(status_code=400)
         c = client.Client(auth_plugin=self.fake_auth)
         with self.assertRaises(client.HTTPClientError):
             c._check_status_code(resp)

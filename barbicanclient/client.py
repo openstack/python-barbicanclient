@@ -126,7 +126,7 @@ class Client(object):
         return resp.json()
 
     def _check_status_code(self, resp):
-        status = resp.status_code if resp else None
+        status = resp.status_code
         LOG.debug('Response status {0}'.format(status))
         if status == 401:
             LOG.error('Auth error: {0}'.format(self._get_error_message(resp)))
