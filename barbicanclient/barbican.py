@@ -24,7 +24,7 @@ from barbicanclient.openstack.common import log as logging
 logging.setup('barbicanclient')
 
 
-class Keep:
+class Barbican:
     def __init__(self):
         self.parser = self._get_main_parser()
         self.subparsers = self.parser.add_subparsers(
@@ -340,7 +340,7 @@ class Keep:
 
 
 def main():
-    k = Keep()
+    k = Barbican()
     k.execute()
 
 
