@@ -18,27 +18,27 @@ import os
 import sys
 import unittest2 as unittest
 
-import barbicanclient.keep
+import barbicanclient.barbican
 
 
 def suite():
     suite = unittest.TestSuite()
 
-    suite.addTest(TestKeep())
+    suite.addTest(TestBarbican())
 
     return suite
 
 
-class TestKeep(unittest.TestCase):
-    def keep(self, argstr):
+class TestBarbican(unittest.TestCase):
+    def barbican(self, argstr):
         """Source: Keystone client's shell method in test_shell.py"""
         orig = sys.stdout
         clean_env = {}
         _old_env, os.environ = os.environ, clean_env.copy()
         try:
             sys.stdout = cStringIO.StringIO()
-            _keep = barbicanclient.keep.Keep()
-            _keep.execute(argv=argstr.split())
+            _barbican = barbicanclient.barbican.Barbican()
+            _barbican.execute(argv=argstr.split())
         except SystemExit:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             self.assertEqual(exc_value.code, 0)
@@ -54,7 +54,7 @@ class TestKeep(unittest.TestCase):
 
     def test_help(self):
         args = "-h"
-        self.assertIn('usage: ', self.keep(args))
+        self.assertIn('usage: ', self.barbican(args))
 
 if __name__ == '__main__':
     unittest.main()
