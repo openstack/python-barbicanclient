@@ -1,3 +1,5 @@
+pbr>=0.5.21,<1.0
+
 argparse>=1.2.1
 eventlet>=0.13.0
 requests>=1.2.3

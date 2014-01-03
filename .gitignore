@@ -48,3 +48,7 @@ flake8.log
 
 # OSX metadata
 .DS_Store
+
+# PBR
+AUTHORS
+ChangeLog
