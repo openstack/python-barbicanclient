@@ -44,6 +44,12 @@ class WhenTestingKeystoneAuthentication(unittest.TestCase):
         with self.assertRaises(ValueError):
             keystone = auth.KeystoneAuthV2()
 
+    def test_nothing_is_required_if_keystone_is_present(self):
+        fake_keystone = mock.Mock(tenant_name='foo', tenant_id='bar')
+        keystone_auth = auth.KeystoneAuthV2(keystone=fake_keystone)
+        self.assertEqual('foo', keystone_auth.tenant_name)
+        self.assertEqual('bar', keystone_auth.tenant_id)
+
     def test_get_barbican_url(self):
         barbican_url = 'https://www.barbican.com'
         self.keystone_auth._barbican_url = barbican_url

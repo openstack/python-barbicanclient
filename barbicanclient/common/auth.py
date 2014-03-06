@@ -51,20 +51,23 @@ class AuthPluginBase(object):
 class KeystoneAuthV2(AuthPluginBase):
     def __init__(self, auth_url='', username='', password='',
                  tenant_name='', tenant_id='', insecure=False, keystone=None):
-        if not all([auth_url, username, password, tenant_name or tenant_id]):
-            raise ValueError('Please provide auth_url, username, password,'
-                             ' and tenant_id or tenant_name.')
+        if not keystone:
+            tenant_info = tenant_name or tenant_id
+            if not all([auth_url, username, password, tenant_info]):
+                raise ValueError('Please provide auth_url, username, password,'
+                                 ' and tenant_id or tenant_name.')
+
+        self._barbican_url = None
+        #TODO(dmend): make these configurable
+        self._service_type = 'keystore'
+        self._endpoint_type = 'publicURL'
+
         self._keystone = keystone or ksclient.Client(username=username,
                                                      password=password,
                                                      tenant_name=tenant_name,
                                                      tenant_id=tenant_id,
                                                      auth_url=auth_url,
                                                      insecure=insecure)
-        self._barbican_url = None
-        #TODO(dmend): make these configurable
-        self._service_type = 'keystore'
-        self._endpoint_type = 'publicURL'
-
         self.tenant_name = self._keystone.tenant_name
         self.tenant_id = self._keystone.tenant_id
 
