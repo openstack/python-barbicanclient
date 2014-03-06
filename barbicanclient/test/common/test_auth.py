@@ -29,11 +29,13 @@ class WhenTestingKeystoneAuthentication(unittest.TestCase):
         self.auth_url = 'https://www.yada.com'
         self.username = 'user'
         self.password = 'pw'
+        self.tenant_name = 'tenant'
         self.tenant_id = '1234'
 
         self.keystone_auth = auth.KeystoneAuthV2(auth_url=self.auth_url,
                                                  username=self.username,
                                                  password=self.password,
+                                                 tenant_name=self.tenant_name,
                                                  tenant_id=self.tenant_id,
                                                  keystone=
                                                  self.keystone_client)

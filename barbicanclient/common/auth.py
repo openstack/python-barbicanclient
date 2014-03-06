@@ -57,6 +57,7 @@ class KeystoneAuthV2(AuthPluginBase):
         self._keystone = keystone or ksclient.Client(username=username,
                                                      password=password,
                                                      tenant_name=tenant_name,
+                                                     tenant_id=tenant_id,
                                                      auth_url=auth_url,
                                                      insecure=insecure)
         self._barbican_url = None
