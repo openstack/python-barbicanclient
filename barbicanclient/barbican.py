@@ -12,16 +12,16 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """
 Command-line interface to the Barbican API.
 """
+
 import argparse
+import logging
 
 from barbicanclient.common import auth
 from barbicanclient import client
-from barbicanclient.openstack.common import log as logging
-
-logging.setup('barbicanclient')
 
 
 class Barbican:

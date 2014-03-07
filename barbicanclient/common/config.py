@@ -17,26 +17,13 @@
 Configuration setup for Barbican Client.
 """
 
-import logging
-import logging.config
-import logging.handlers
 import os
 import sys
 
-from barbicanclient.openstack.common.gettextutils import _
 from barbicanclient.version import __version__
 from oslo.config import cfg
 
 CONF = cfg.CONF
-CONF.import_opt('verbose', 'barbicanclient.openstack.common.log')
-CONF.import_opt('debug', 'barbicanclient.openstack.common.log')
-CONF.import_opt('log_dir', 'barbicanclient.openstack.common.log')
-CONF.import_opt('log_file', 'barbicanclient.openstack.common.log')
-CONF.import_opt('log_config', 'barbicanclient.openstack.common.log')
-CONF.import_opt('log_format', 'barbicanclient.openstack.common.log')
-CONF.import_opt('log_date_format', 'barbicanclient.openstack.common.log')
-CONF.import_opt('use_syslog', 'barbicanclient.openstack.common.log')
-CONF.import_opt('syslog_log_facility', 'barbicanclient.openstack.common.log')
 
 
 def parse_args(args=None, usage=None, default_config_files=None):
