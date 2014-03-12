@@ -16,22 +16,112 @@ import abc
 import json
 import logging
 
+from keystoneclient.auth.base import BaseAuthPlugin
 from keystoneclient.v2_0 import client as ksclient
 from keystoneclient import exceptions
+from keystoneclient import session as ks_session
+from keystoneclient import discover
 import requests
 import six
 
 
 LOG = logging.getLogger(__name__)
 
+"""
+This class is for backward compatibility only and is an
+adapter for using barbican style auth_plugin in place of
+the recommended keystone auth_plugin.
+"""
+
+
+class KeystoneAuthPluginWrapper(BaseAuthPlugin):
+
+    def __init__(self, barbican_auth_plugin):
+        self.barbican_auth_plugin = barbican_auth_plugin
+
+    def get_token(self, session, **kwargs):
+        return self.barbican_auth_plugin.auth_token
+
+    def get_endpoint(self, session, **kwargs):
+        # NOTE(gyee): this is really a hack as Barbican auth plugin only
+        # cares about Barbican endpoint.
+        return self.barbican_auth_plugin.barbican_url
+
+
+def _discover_keystone_info(auth_url):
+    # From the auth_url, figure the keystone client version to use
+    try:
+        disco = discover.Discover(auth_url=auth_url)
+        versions = disco.available_versions()
+    except:
+        error_msg = 'Error: failed to discover keystone version '\
+                    'using auth_url: %s' % auth_url
+        raise ValueError(error_msg)
+    else:
+        # use the first one in the list
+        if len(versions) > 0:
+            version = versions[0]['id']
+        else:
+            error_msg = 'Error: Unable to discover a keystone plugin '\
+                        'for the specified --os-auth-url.\n'\
+                        'Please provide a valid auth url'
+            raise ValueError(error_msg)
+    try:
+        # the input auth_url may not have the version info in the
+        # url. get the correct auth_url from the versions
+        auth_url = versions[0]['links'][0]['href']
+    except:
+        raise ValueError('Error: Unable to discover the correct auth url')
+    return version, auth_url
+
+
+def create_keystone_auth_session(args):
+    """
+    Creates an authenticated keystone session using
+    the supplied arguments.
+    """
+    version, auth_url = _discover_keystone_info(args.os_auth_url)
+    project_name = args.os_project_name or args.os_tenant_name
+    project_id = args.os_project_id or args.os_tenant_id
+
+    # FIXME(tsv): we are depending on the keystone version interface here.
+    # If keystone changes it, this code will need to be changed accordingly
+    if version == 'v2.0':
+        # create a V2 Password plugin
+        from keystoneclient.auth.identity import v2
+        auth_plugin = v2.Password(auth_url=auth_url,
+                                  username=args.os_username,
+                                  password=args.os_password,
+                                  tenant_name=project_name,
+                                  tenant_id=project_id)
+    elif version == 'v3.0':
+        # create a V3 Password plugin
+        from keystoneclient.auth.identity import v3
+        auth_plugin = v3.Password(auth_url=auth_url,
+                                  username=args.os_username,
+                                  user_id=args.os_user_id,
+                                  user_domain_name=args.os_user_domain_name,
+                                  user_domain_id=args.os_user_domain_id,
+                                  password=args.os_password,
+                                  project_id=project_id,
+                                  project_name=project_name,
+                                  project_domain_id=args.os_project_domain_id,
+                                  project_domain_name=args.
+                                  os_project_domain_name)
+    else:
+        raise ValueError('Error: unsupported keystone version!')
+    return ks_session.Session(auth=auth_plugin, verify=not args.insecure)
+
 
 class AuthException(Exception):
+
     """Raised when authorization fails."""
     pass
 
 
 @six.add_metaclass(abc.ABCMeta)
 class AuthPluginBase(object):
+
     """Base class for Auth plugins."""
 
     @abc.abstractproperty
@@ -49,6 +139,7 @@ class AuthPluginBase(object):
 
 
 class KeystoneAuthV2(AuthPluginBase):
+
     def __init__(self, auth_url='', username='', password='',
                  tenant_name='', tenant_id='', insecure=False, keystone=None):
         if not keystone:
@@ -58,7 +149,7 @@ class KeystoneAuthV2(AuthPluginBase):
                                  ' and tenant_id or tenant_name.')
 
         self._barbican_url = None
-        #TODO(dmend): make these configurable
+        # TODO(dmend): make these configurable
         self._service_type = 'keystore'
         self._endpoint_type = 'publicURL'
 
@@ -95,6 +186,7 @@ class KeystoneAuthV2(AuthPluginBase):
 
 
 class RackspaceAuthV2(AuthPluginBase):
+
     def __init__(self, auth_url='', username='', api_key='', password=''):
         if not all([auth_url, username, api_key or password]):
             raise ValueError('Please provide auth_url, username, api_key or '
@@ -141,7 +233,7 @@ class RackspaceAuthV2(AuthPluginBase):
             LOG.error(msg)
             raise AuthException(msg)
         else:
-            #TODO(dmend): get barbican_url from catalog
+            # TODO(dmend): get barbican_url from catalog
             self._auth_token = data['access']['token']['id']
             self.tenant_id = data['access']['token']['tenant']['id']
 

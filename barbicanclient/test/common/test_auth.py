@@ -38,8 +38,7 @@ class WhenTestingKeystoneAuthentication(testtools.TestCase):
                                                  password=self.password,
                                                  tenant_name=self.tenant_name,
                                                  tenant_id=self.tenant_id,
-                                                 keystone=
-                                                 self.keystone_client)
+                                                 keystone=self.keystone_client)
 
     def test_endpoint_username_password_tenant_are_required(self):
         with testtools.ExpectedException(ValueError):

@@ -25,6 +25,7 @@ from barbicanclient import client
 
 
 class Barbican:
+
     def __init__(self):
         self.parser = self._get_main_parser()
         self.subparsers = self.parser.add_subparsers(
@@ -59,10 +60,22 @@ class Barbican:
                             metavar='<auth-user-name>',
                             default=client.env('OS_USERNAME'),
                             help='Defaults to env[OS_USERNAME].')
+        parser.add_argument('--os-user-id',
+                            metavar='<auth-user-id>',
+                            default=client.env('OS_USER_ID'),
+                            help='Defaults to env[OS_USER_ID].')
         parser.add_argument('--os-password', '-P',
                             metavar='<auth-password>',
                             default=client.env('OS_PASSWORD'),
                             help='Defaults to env[OS_PASSWORD].')
+        parser.add_argument('--os-user-domain-id',
+                            metavar='<auth-user-domain-id>',
+                            default=client.env('OS_USER_DOMAIN_ID'),
+                            help='Defaults to env[OS_USER_DOMAIN_ID].')
+        parser.add_argument('--os-user-domain-name',
+                            metavar='<auth-user-domain-name>',
+                            default=client.env('OS_USER_DOMAIN_NAME'),
+                            help='Defaults to env[OS_USER_DOMAIN_NAME].')
         parser.add_argument('--os-tenant-name', '-T',
                             metavar='<auth-tenant-name>',
                             default=client.env('OS_TENANT_NAME'),
@@ -71,6 +84,28 @@ class Barbican:
                             metavar='<tenant-id>',
                             default=client.env('OS_TENANT_ID'),
                             help='Defaults to env[OS_TENANT_ID].')
+        parser.add_argument('--os-project-id',
+                            metavar='<auth-project-id>',
+                            default=client.env('OS_PROJECT__ID'),
+                            help='Another way to specify tenant ID. '
+                                 'This option is mutually exclusive with '
+                                 ' --os-tenant-id. '
+                            'Defaults to env[OS_PROJECT_ID].')
+        parser.add_argument('--os-project-name',
+                            metavar='<auth-project-name>',
+                            default=client.env('OS_PROJECT_NAME'),
+                            help='Another way to specify tenant name. '
+                                 'This option is mutually exclusive with '
+                                 ' --os-tenant-name. '
+                                 'Defaults to env[OS_PROJECT_NAME].')
+        parser.add_argument('--os-project-domain-id',
+                            metavar='<auth-project-domain-id>',
+                            default=client.env('OS_PROJECT_DOMAIN_ID'),
+                            help='Defaults to env[OS_PROJECT_DOMAIN_ID].')
+        parser.add_argument('--os-project-domain-name',
+                            metavar='<auth-project-domain-name>',
+                            default=client.env('OS_PROJECT_DOMAIN_NAME'),
+                            help='Defaults to env[OS_PROJECT_DOMAIN_NAME].')
         parser.add_argument('--endpoint', '-E',
                             metavar='<barbican-url>',
                             default=client.env('BARBICAN_ENDPOINT'),
@@ -315,21 +350,24 @@ class Barbican:
     def execute(self, **kwargs):
         args = self.parser.parse_args(kwargs.get('argv'))
         if args.no_auth:
+            if not all([args.endpoint, args.os_tenant_id or
+                        args.os_project_id]):
+                self.parser.exit(
+                    status=1,
+                    message='ERROR: please specify --endpoint and '
+                    '--os-project-id(or --os-tenant-id)\n')
             self.client = client.Client(endpoint=args.endpoint,
-                                        tenant_id=args.os_tenant_id,
+                                        tenant_id=args.os_tenant_id or
+                                        args.os_project_id,
                                         insecure=args.insecure)
-        elif all([args.os_auth_url, args.os_username, args.os_password,
-                  args.os_tenant_name]):
-            self._keystone = auth.KeystoneAuthV2(
-                auth_url=args.os_auth_url,
-                username=args.os_username,
-                password=args.os_password,
-                tenant_name=args.os_tenant_name,
-                insecure=args.insecure
-            )
-            self.client = client.Client(auth_plugin=self._keystone,
+        elif all([args.os_auth_url, args.os_user_id or args.os_username,
+                  args.os_password, args.os_tenant_name or args.os_tenant_id or
+                  args.os_project_name or args.os_project_id]):
+            ks_session = auth.create_keystone_auth_session(args)
+            self.client = client.Client(session=ks_session,
                                         endpoint=args.endpoint,
-                                        tenant_id=args.os_tenant_id,
+                                        tenant_id=args.os_tenant_id or
+                                        args.os_project_id,
                                         insecure=args.insecure)
         else:
             self.parser.exit(
