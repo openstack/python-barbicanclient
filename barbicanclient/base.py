@@ -23,7 +23,8 @@ class BaseEntityManager(object):
         self.entity = entity
 
     def _remove_empty_keys(self, dictionary):
-        for k in dictionary.keys():
+        copied_dict = dictionary.copy()
+        for k in copied_dict.keys():
             if dictionary[k] is None:
                 dictionary.pop(k)
 

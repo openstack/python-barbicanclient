@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-import urlparse
 import re
+
+import six
 
 from barbicanclient import base
 from barbicanclient.openstack.common.timeutils import parse_isotime
@@ -129,7 +130,7 @@ class SecretManager(base.BaseEntityManager):
         if not secret_ref:
             raise ValueError('secret_ref is required.')
         try:
-            url = urlparse.urlparse(secret_ref)
+            url = six.moves.urllib.parse.urlparse(secret_ref)
             parts = url.path.rstrip('/').split('/')
             reuuid = re.compile(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-'
                                 '[0-9a-f]{4}-[0-9a-f]{12}', re.I)

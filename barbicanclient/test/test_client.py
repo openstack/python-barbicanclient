@@ -64,7 +64,7 @@ class WhenTestingClientInit(testtools.TestCase):
 
     def _mock_response(self, content=None, status_code=200):
         resp = requests.Response()
-        resp._content = content or '{"title": {"generic mocked response"}}'
+        resp._content = content or b'{"title": "generic mocked response"}'
         resp.status_code = status_code
         return resp
 

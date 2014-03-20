@@ -126,7 +126,6 @@ class RackspaceAuthV2(AuthPluginBase):
             payload = self._authenticate_with_password()
 
         r = requests.post(auth_url, data=json.dumps(payload), headers=headers)
-
         try:
             r.raise_for_status()
         except requests.HTTPError:

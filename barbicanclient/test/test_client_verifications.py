@@ -109,7 +109,7 @@ class WhenTestingVerifications(test_client.BaseEntityResource):
     def test_should_get_list(self):
         verify_resp = self.verify.get_dict(self.entity_href)
         self.api.get.return_value = {"verifications":
-                                     [verify_resp for v in xrange(3)]}
+                                     [verify_resp for v in range(3)]}
 
         verifies = self.manager.list(limit=10, offset=5)
         self.assertTrue(len(verifies) == 3)

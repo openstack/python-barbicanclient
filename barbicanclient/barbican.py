@@ -233,7 +233,7 @@ class Barbican:
                                                args.bit_length,
                                                args.mode,
                                                args.expiration)
-            print secret
+            print(secret)
         else:
             self.parser.exit(status=1, message='ERROR: store is only supported'
                                                ' for secrets\n')
@@ -246,7 +246,7 @@ class Barbican:
                                               args.bit_length,
                                               args.mode,
                                               args.expiration)
-            print order
+            print(order)
         else:
             self.parser.exit(status=1, message='ERROR: create is only '
                                                'supported for orders\n')
@@ -266,14 +266,14 @@ class Barbican:
     def get(self, args):
         if args.command == 'secret':
             if args.decrypt:
-                print self.client.secrets.decrypt(args.URI,
-                                                  args.payload_content_type)
+                print(self.client.secrets.decrypt(args.URI,
+                                                  args.payload_content_type))
             else:
-                print self.client.secrets.get(args.URI)
+                print(self.client.secrets.get(args.URI))
         elif args.command == 'verification':
-            print self.client.verifications.get(args.URI)
+            print(self.client.verifications.get(args.URI))
         elif args.command == 'order':
-            print self.client.orders.get(args.URI)
+            print(self.client.orders.get(args.URI))
         else:
             self.parser.exit(status=1, message='ERROR: get is only '
                                                'supported for secrets, '
@@ -296,9 +296,9 @@ class Barbican:
                                                'supported for secrets, '
                                                'orders or verifications\n')
         for obj in ls:
-            print obj
-        print '{0}s displayed: {1} - offset: {2}'.format(args.command, len(ls),
-                                                         args.offset)
+            print(obj)
+        print('{0}s displayed: {1} - offset: {2}'.format(args.command, len(ls),
+                                                         args.offset))
 
     def verify(self, args):
         if args.command == 'verification':
@@ -307,7 +307,7 @@ class Barbican:
                         resource_ref=args.ref,
                         resource_action=args.action,
                         impersonation_allowed=args.impersonation)
-            print verify
+            print(verify)
         else:
             self.parser.exit(status=1, message='ERROR: verify is only '
                                                'supported for verifications\n')

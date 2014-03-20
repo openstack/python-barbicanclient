@@ -79,7 +79,7 @@ class WhenTestingRackspaceAuthentication(testtools.TestCase):
                     }
                 }
             }
-        })
+        }).encode("ascii")
 
         patcher = mock.patch('barbicanclient.common.auth.requests.post')
         self._mock_post = patcher.start()
@@ -99,6 +99,7 @@ class WhenTestingRackspaceAuthentication(testtools.TestCase):
                                  api_key=self._api_key)
 
     def test_tokens_is_appended_to_auth_url(self):
+        self._response.status_code = 200
         identity = auth.RackspaceAuthV2(self._auth_url,
                                         self._username,
                                         api_key=self._api_key)
@@ -108,6 +109,7 @@ class WhenTestingRackspaceAuthentication(testtools.TestCase):
             headers=mock.ANY)
 
     def test_authenticate_with_api_key(self):
+        self._response.status_code = 200
         with mock.patch(
             'barbicanclient.common.auth.RackspaceAuthV2.'
             '_authenticate_with_api_key'
@@ -119,6 +121,7 @@ class WhenTestingRackspaceAuthentication(testtools.TestCase):
             mock_authenticate.assert_called_once_with()
 
     def test_authenticate_with_password(self):
+        self._response.status_code = 200
         with mock.patch(
             'barbicanclient.common.auth.RackspaceAuthV2.'
             '_authenticate_with_password'
@@ -137,19 +140,22 @@ class WhenTestingRackspaceAuthentication(testtools.TestCase):
                                  api_key=self._api_key)
 
     def test_error_raised_for_bad_response_from_server(self):
-        self._response._content = 'Not JSON'
+        self._response._content = b'Not JSON'
+        self._response.status_code = 200
         with testtools.ExpectedException(auth.AuthException):
             auth.RackspaceAuthV2(self._auth_url,
                                  self._username,
                                  api_key=self._api_key)
 
     def test_auth_token_is_set(self):
+        self._response.status_code = 200
         identity = auth.RackspaceAuthV2(self._auth_url,
                                         self._username,
                                         api_key=self._api_key)
         self.assertEqual(identity.auth_token, self._auth_token)
 
     def test_tenant_id_is_set(self):
+        self._response.status_code = 200
         identity = auth.RackspaceAuthV2(self._auth_url,
                                         self._username,
                                         api_key=self._api_key)

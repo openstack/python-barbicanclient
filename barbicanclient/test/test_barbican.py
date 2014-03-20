@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import cStringIO
 import os
 import sys
+
+import six
 import testtools
 
 import barbicanclient.barbican
@@ -28,7 +29,7 @@ class TestBarbican(testtools.TestCase):
         clean_env = {}
         _old_env, os.environ = os.environ, clean_env.copy()
         try:
-            sys.stdout = cStringIO.StringIO()
+            sys.stdout = six.StringIO()
             _barbican = barbicanclient.barbican.Barbican()
             _barbican.execute(argv=argstr.split())
         except SystemExit:
