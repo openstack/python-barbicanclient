@@ -24,9 +24,9 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
-nosetests.xml
-coverage.xml
+.testrepository
 flake8.log
+cover
 
 # pyenv
 .python-version

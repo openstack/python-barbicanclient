@@ -123,9 +123,7 @@ class WhenTestingOrders(test_client.BaseEntityResource):
         self.assertEqual(5, params['offset'])
 
     def test_should_fail_get_no_href(self):
-        with self.assertRaises(ValueError):
-            self.manager.get(None)
+        self.assertRaises(ValueError, self.manager.get, None)
 
     def test_should_fail_delete_no_href(self):
-        with self.assertRaises(ValueError):
-            self.manager.delete(None)
+        self.assertRaises(ValueError, self.manager.delete, None)

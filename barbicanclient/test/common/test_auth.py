@@ -16,14 +16,15 @@ import json
 
 import mock
 import requests
-import unittest2 as unittest
+import testtools
 
 from barbicanclient.common import auth
 
 
-class WhenTestingKeystoneAuthentication(unittest.TestCase):
+class WhenTestingKeystoneAuthentication(testtools.TestCase):
 
     def setUp(self):
+        super(WhenTestingKeystoneAuthentication, self).setUp()
         self.keystone_client = mock.MagicMock()
 
         self.auth_url = 'https://www.yada.com'
@@ -41,8 +42,8 @@ class WhenTestingKeystoneAuthentication(unittest.TestCase):
                                                  self.keystone_client)
 
     def test_endpoint_username_password_tenant_are_required(self):
-        with self.assertRaises(ValueError):
-            keystone = auth.KeystoneAuthV2()
+        with testtools.ExpectedException(ValueError):
+            auth.KeystoneAuthV2()
 
     def test_nothing_is_required_if_keystone_is_present(self):
         fake_keystone = mock.Mock(tenant_name='foo', tenant_id='bar')
@@ -56,9 +57,10 @@ class WhenTestingKeystoneAuthentication(unittest.TestCase):
         self.assertEquals(barbican_url, self.keystone_auth.barbican_url)
 
 
-class WhenTestingRackspaceAuthentication(unittest.TestCase):
+class WhenTestingRackspaceAuthentication(testtools.TestCase):
 
     def setUp(self):
+        super(WhenTestingRackspaceAuthentication, self).setUp()
         self._auth_url = 'https://auth.url.com'
         self._username = 'username'
         self._api_key = 'api_key'
@@ -85,16 +87,16 @@ class WhenTestingRackspaceAuthentication(unittest.TestCase):
         self.addCleanup(patcher.stop)
 
     def test_auth_url_username_and_api_key_are_required(self):
-        with self.assertRaises(ValueError):
-            identity = auth.RackspaceAuthV2()
-        with self.assertRaises(ValueError):
-            identity = auth.RackspaceAuthV2(self._auth_url)
-        with self.assertRaises(ValueError):
-            identity = auth.RackspaceAuthV2(self._auth_url,
-                                            self._username)
-        with self.assertRaises(ValueError):
-            identity = auth.RackspaceAuthV2(self._auth_url,
-                                            api_key=self._api_key)
+        with testtools.ExpectedException(ValueError):
+            auth.RackspaceAuthV2()
+        with testtools.ExpectedException(ValueError):
+            auth.RackspaceAuthV2(self._auth_url)
+        with testtools.ExpectedException(ValueError):
+            auth.RackspaceAuthV2(self._auth_url,
+                                 self._username)
+        with testtools.ExpectedException(ValueError):
+            auth.RackspaceAuthV2(self._auth_url,
+                                 api_key=self._api_key)
 
     def test_tokens_is_appended_to_auth_url(self):
         identity = auth.RackspaceAuthV2(self._auth_url,
@@ -129,17 +131,17 @@ class WhenTestingRackspaceAuthentication(unittest.TestCase):
 
     def test_auth_exception_thrown_for_bad_status(self):
         self._response.status_code = 400
-        with self.assertRaises(auth.AuthException):
-            identity = auth.RackspaceAuthV2(self._auth_url,
-                                            self._username,
-                                            api_key=self._api_key)
+        with testtools.ExpectedException(auth.AuthException):
+            auth.RackspaceAuthV2(self._auth_url,
+                                 self._username,
+                                 api_key=self._api_key)
 
     def test_error_raised_for_bad_response_from_server(self):
         self._response._content = 'Not JSON'
-        with self.assertRaises(auth.AuthException):
-            identity = auth.RackspaceAuthV2(self._auth_url,
-                                            self._username,
-                                            api_key=self._api_key)
+        with testtools.ExpectedException(auth.AuthException):
+            auth.RackspaceAuthV2(self._auth_url,
+                                 self._username,
+                                 api_key=self._api_key)
 
     def test_auth_token_is_set(self):
         identity = auth.RackspaceAuthV2(self._auth_url,

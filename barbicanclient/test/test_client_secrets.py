@@ -163,27 +163,24 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(5, params['offset'])
 
     def test_should_fail_get_invalid_secret(self):
-        with self.assertRaises(ValueError):
-            self.manager.get('12345')
+        self.assertRaises(ValueError, self.manager.get, '12345')
 
     def test_should_fail_get_no_href(self):
-        with self.assertRaises(ValueError):
-            self.manager.get(None)
+        self.assertRaises(ValueError, self.manager.get, None)
 
     def test_should_fail_decrypt_no_content_types(self):
         self.api.get.return_value = self.secret.get_dict(self.entity_href)
 
-        with self.assertRaises(ValueError):
-            self.manager.decrypt(secret_ref=self.entity_href)
+        self.assertRaises(ValueError, self.manager.decrypt,
+                          **{"secret_ref": self.entity_href})
 
     def test_should_fail_decrypt_no_default_content_type(self):
         content_types_dict = {'no-default': 'application/octet-stream'}
         self.api.get.return_value = self.secret.get_dict(self.entity_href,
                                                          content_types_dict)
 
-        with self.assertRaises(ValueError):
-            self.manager.decrypt(secret_ref=self.entity_href)
+        self.assertRaises(ValueError, self.manager.decrypt,
+                          **{"secret_ref": self.entity_href})
 
     def test_should_fail_delete_no_href(self):
-        with self.assertRaises(ValueError):
-            self.manager.delete(None)
+        self.assertRaises(ValueError, self.manager.get, None)

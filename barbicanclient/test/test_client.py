@@ -15,7 +15,7 @@
 
 import mock
 import requests
-import unittest2 as unittest
+import testtools
 
 from barbicanclient import client
 from barbicanclient.openstack.common import timeutils
@@ -47,8 +47,9 @@ class FakeResp(object):
         return self.content
 
 
-class WhenTestingClientInit(unittest.TestCase):
+class WhenTestingClientInit(testtools.TestCase):
     def setUp(self):
+        super(WhenTestingClientInit, self).setUp()
         self.auth_endpoint = 'https://localhost:5000/v2.0/'
         self.auth_token = 'fake_auth_token'
         self.user = 'user'
@@ -79,12 +80,12 @@ class WhenTestingClientInit(unittest.TestCase):
                          self.auth_token)
 
     def test_error_thrown_when_no_auth_and_no_endpoint(self):
-        with self.assertRaises(ValueError):
-            c = client.Client(tenant_id=self.tenant_id)
+        self.assertRaises(ValueError, client.Client,
+                          **{"tenant_id": self.tenant_id})
 
     def test_error_thrown_when_no_auth_and_no_tenant_id(self):
-        with self.assertRaises(ValueError):
-            c = client.Client(endpoint=self.endpoint)
+        self.assertRaises(ValueError, client.Client,
+                          **{"endpoint": self.endpoint})
 
     def test_client_strips_trailing_slash_from_endpoint(self):
         c = client.Client(endpoint=self.endpoint, tenant_id=self.tenant_id)
@@ -97,24 +98,22 @@ class WhenTestingClientInit(unittest.TestCase):
     def test_should_raise_for_unauthorized_response(self):
         resp = self._mock_response(status_code=401)
         c = client.Client(auth_plugin=self.fake_auth)
-        with self.assertRaises(client.HTTPAuthError):
-            c._check_status_code(resp)
+        self.assertRaises(client.HTTPAuthError, c._check_status_code, resp)
 
     def test_should_raise_for_server_error(self):
         resp = self._mock_response(status_code=500)
         c = client.Client(auth_plugin=self.fake_auth)
-        with self.assertRaises(client.HTTPServerError):
-            c._check_status_code(resp)
+        self.assertRaises(client.HTTPServerError, c._check_status_code, resp)
 
     def test_should_raise_for_client_errors(self):
         resp = self._mock_response(status_code=400)
         c = client.Client(auth_plugin=self.fake_auth)
-        with self.assertRaises(client.HTTPClientError):
-            c._check_status_code(resp)
+        self.assertRaises(client.HTTPClientError, c._check_status_code, resp)
 
 
-class WhenTestingClientWithSession(unittest.TestCase):
+class WhenTestingClientWithSession(testtools.TestCase):
     def setUp(self):
+        super(WhenTestingClientWithSession, self).setUp()
         self.endpoint = 'https://localhost:9311/v1/'
         self.tenant_id = '1234567'
 
@@ -195,8 +194,9 @@ class WhenTestingClientWithSession(unittest.TestCase):
         self.assertEqual(self.entity_href, url)
 
 
-class BaseEntityResource(unittest.TestCase):
+class BaseEntityResource(testtools.TestCase):
     def _setUp(self, entity):
+        super(BaseEntityResource, self).setUp()
         self.endpoint = 'https://localhost:9311/v1/'
         self.tenant_id = '1234567'
 

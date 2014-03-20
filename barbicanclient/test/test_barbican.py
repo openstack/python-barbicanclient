@@ -16,20 +16,12 @@
 import cStringIO
 import os
 import sys
-import unittest2 as unittest
+import testtools
 
 import barbicanclient.barbican
 
 
-def suite():
-    suite = unittest.TestSuite()
-
-    suite.addTest(TestBarbican())
-
-    return suite
-
-
-class TestBarbican(unittest.TestCase):
+class TestBarbican(testtools.TestCase):
     def barbican(self, argstr):
         """Source: Keystone client's shell method in test_shell.py"""
         orig = sys.stdout
@@ -49,12 +41,6 @@ class TestBarbican(unittest.TestCase):
             os.environ = _old_env
         return out
 
-    def setUp(self):
-        pass
-
     def test_help(self):
         args = "-h"
         self.assertIn('usage: ', self.barbican(args))
-
-if __name__ == '__main__':
-    unittest.main()
