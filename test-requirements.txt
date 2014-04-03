@@ -4,4 +4,3 @@ hacking>=0.7.0
 mock>=1.0.1
 testrepository>=0.0.17
 testtools>=0.9.32,<0.9.35
-tox>=1.6.0
