@@ -19,6 +19,7 @@ import logging
 from keystoneclient.v2_0 import client as ksclient
 from keystoneclient import exceptions
 import requests
+import six
 
 
 LOG = logging.getLogger(__name__)
@@ -29,10 +30,9 @@ class AuthException(Exception):
     pass
 
 
+@six.add_metaclass(abc.ABCMeta)
 class AuthPluginBase(object):
     """Base class for Auth plugins."""
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractproperty
     def auth_token(self):
