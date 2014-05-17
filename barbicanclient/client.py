@@ -64,7 +64,7 @@ class Client(object):
             Required when not using auth_plugin.  When not provided,
             the client will try to get this from the auth_plugin.
         """
-        LOG.debug(_("Creating Client object"))
+        LOG.debug("Creating Client object")
 
         self._session = session or requests.Session()
         self.verify = not insecure

@@ -83,7 +83,7 @@ class OrderManager(base.BaseEntityManager):
             format
         :returns: Order href for the created order
         """
-        LOG.debug(_("Creating order"))
+        LOG.debug("Creating order")
 
         order_dict = {'secret': {}}
         order_dict['secret']['name'] = name
@@ -95,7 +95,7 @@ class OrderManager(base.BaseEntityManager):
         order_dict['secret']['expiration'] = expiration
         self._remove_empty_keys(order_dict['secret'])
 
-        LOG.debug(_("Request body: {0}").format(order_dict['secret']))
+        LOG.debug("Request body: {0}".format(order_dict['secret']))
 
         resp = self.api.post(self.entity, order_dict)
         return resp['order_ref']
@@ -106,7 +106,7 @@ class OrderManager(base.BaseEntityManager):
 
         :param order_ref: The href for the order
         """
-        LOG.debug(_("Getting order - Order href: {0}").format(order_ref))
+        LOG.debug("Getting order - Order href: {0}".format(order_ref))
         if not order_ref:
             raise ValueError('order_ref is required.')
         resp = self.api.get(order_ref)
