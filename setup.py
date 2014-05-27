@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- encoding: utf-8 -*-
 # Copyright (c) 2013 OpenStack, LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
