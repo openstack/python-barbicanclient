@@ -94,7 +94,7 @@ class VerificationManager(base.BaseEntityManager):
         :                             with resource can be impersonated
         :returns: Verification href for the created verification
         """
-        LOG.debug(_("Creating verification"))
+        LOG.debug("Creating verification")
 
         verif_dict = {'resource_type': resource_type,
                       'resource_ref': resource_ref,
@@ -102,7 +102,7 @@ class VerificationManager(base.BaseEntityManager):
                       'impersonation_allowed': impersonation_allowed}
         self._remove_empty_keys(verif_dict)
 
-        LOG.debug(_("Request body: {0}").format(verif_dict))
+        LOG.debug("Request body: {0}".format(verif_dict))
 
         resp = self.api.post(self.entity, verif_dict)
         return resp['verification_ref']
@@ -113,8 +113,8 @@ class VerificationManager(base.BaseEntityManager):
 
         :param verification_ref: The href for the verification instance
         """
-        LOG.debug(_("Getting verification - "
-                    "Verification href: {0}").format(verification_ref))
+        LOG.debug("Getting verification - "
+                  "Verification href: {0}".format(verification_ref))
         if not verification_ref:
             raise ValueError('verif_ref is required.')
         resp = self.api.get(verification_ref)
