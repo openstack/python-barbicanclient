@@ -25,20 +25,20 @@ def parse_args():
     )
     parser.add_argument(
         '--username',
-        help='The keystone username used for for authentication'
+        help='The keystone username used for authentication'
     )
     parser.add_argument(
         '--password',
-        help='The keystone password used for for authentication'
+        help='The keystone password used for authentication'
     )
     parser.add_argument(
         '--tenant',
-        help='The keystone tenant used for for authentication'
+        help='The keystone tenant used for authentication'
     )
     parser.add_argument(
         '--keystone',
         default=IDENTITY,
-        help='The keystone endpoint used for for authentication'
+        help='The keystone endpoint used for authentication'
     )
     parser.add_argument(
         '--endpoint',
