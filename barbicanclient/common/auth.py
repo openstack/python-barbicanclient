@@ -27,15 +27,13 @@ import six
 
 LOG = logging.getLogger(__name__)
 
-"""
-This class is for backward compatibility only and is an
-adapter for using barbican style auth_plugin in place of
-the recommended keystone auth_plugin.
-"""
-
 
 class KeystoneAuthPluginWrapper(BaseAuthPlugin):
-
+    """
+    This class is for backward compatibility only and is an
+    adapter for using barbican style auth_plugin in place of
+    the recommended keystone auth_plugin.
+    """
     def __init__(self, barbican_auth_plugin):
         self.barbican_auth_plugin = barbican_auth_plugin
 
