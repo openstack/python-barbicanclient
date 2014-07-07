@@ -62,7 +62,7 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
         args = ""
         exit_code, out = self.barbican(args)
         self.assertEqual(2, exit_code)
-        self.assertIn('error: the following', out)
+        self.assertIn('usage:', out)
 
     def test_should_show_usage_with_help_flag(self):
         args = "-h"
