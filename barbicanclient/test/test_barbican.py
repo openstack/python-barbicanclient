@@ -31,37 +31,29 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
 
     def setUp(self):
         self._setUp('barbican')
+        self.global_file = six.StringIO()
 
     def barbican(self, argstr):
         """Source: Keystone client's shell method in test_shell.py"""
-        orig = sys.stdout
-        orig_err = sys.stderr
         clean_env = {}
         _old_env, os.environ = os.environ, clean_env.copy()
-        exit_code = 0
+        exit_code = 1
         try:
-            sys.stdout = six.StringIO()
-            sys.stderr = sys.stdout
-            _barbican = barbicanclient.barbican.Barbican()
-            _barbican.execute(argv=argstr.split())
-        except SystemExit:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            exit_code = exc_value.code
+            stdout = self.global_file
+            _barbican = barbicanclient.barbican.Barbican(stdout=stdout,
+                                                         stderr=stdout)
+            exit_code = _barbican.run(argv=argstr.split())
+        except Exception as exception:
+            exit_message = exception.message
         finally:
-            if exit_code == 0:
-                out = sys.stdout.getvalue()
-            else:
-                out = sys.stderr.getvalue()
-            sys.stdout.close()
-            sys.stdout = orig
-            sys.stderr = orig_err
+            out = stdout.getvalue()
             os.environ = _old_env
         return exit_code, out
 
     def test_should_show_usage_error_with_no_args(self):
         args = ""
         exit_code, out = self.barbican(args)
-        self.assertEqual(2, exit_code)
+        self.assertEqual(1, exit_code)
         self.assertIn('usage:', out)
 
     def test_should_show_usage_with_help_flag(self):
@@ -73,9 +65,9 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
     def test_should_error_if_noauth_and_authurl_both_specified(self):
         args = "--no-auth --os-auth-url http://localhost:5000/v3"
         exit_code, out = self.barbican(args)
-        self.assertEqual(2, exit_code)
+        self.assertEqual(1, exit_code)
         self.assertIn(
-            'error: argument --os-auth-url/-A: not allowed with '
+            'ERROR: argument --os-auth-url/-A: not allowed with '
             'argument --no-auth/-N', out)
 
     def _expect_error_with_invalid_noauth_args(self, args):
@@ -175,7 +167,7 @@ class TestBarbicanWithKeystoneClient(testtools.TestCase):
                 barbican_url,
                 v2_token['access']['token']['tenant']['id']),
             status=200)
-        self.barbican.execute(argv=argv)
+        self.barbican.run(argv=argv)
 
     @httpretty.activate
     def test_v3_auth(self):
@@ -202,4 +194,4 @@ class TestBarbicanWithKeystoneClient(testtools.TestCase):
                 barbican_url,
                 v3_token['token']['project']['id']),
             status=200)
-        self.barbican.execute(argv=argv)
+        self.barbican.run(argv=argv)
