@@ -66,12 +66,11 @@ class CreateOrder(show.ShowOne, OrderFormatter):
         return parser
 
     def take_action(self, args):
-        entity = self.app.client.orders.create(args.name,
-                                               args.payload_content_type,
-                                               args.algorithm,
-                                               args.bit_length,
-                                               args.mode,
-                                               args.expiration)
+        entity = self.app.client.orders.Order(
+            name=args.name, payload_content_type=args.payload_content_type,
+            algorithm=args.algorithm, bit_length=args.bit_length,
+            mode=args.mode, expiration=args.expiration)
+        entity.submit()
         return self._get_formatted_entity(entity)
 
 
@@ -96,7 +95,7 @@ class GetOrder(show.ShowOne, OrderFormatter):
         return parser
 
     def take_action(self, args):
-        entity = self.app.client.orders.get(args.URI)
+        entity = self.app.client.orders.Order(order_ref=args.URI)
         return self._get_formatted_entity(entity)
 
 

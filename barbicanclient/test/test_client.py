@@ -18,14 +18,11 @@ import httpretty
 import requests
 import testtools
 import json
-import uuid
 
 from barbicanclient import client
 from barbicanclient.test import keystone_client_fixtures
-from barbicanclient.openstack.common import timeutils
 from barbicanclient.openstack.common import jsonutils
 
-from keystoneclient import session as ks_session
 from keystoneclient.auth.identity import v2
 from keystoneclient.auth.identity import v3
 
