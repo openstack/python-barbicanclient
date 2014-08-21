@@ -108,7 +108,7 @@ class WhenTestingClientInit(testtools.TestCase):
     def test_can_be_used_without_auth_plugin(self):
         c = client.Client(auth_plugin=None, endpoint=self.endpoint,
                           tenant_id=self.tenant_id)
-        expected = '%s%s' % (self.endpoint, self.tenant_id)
+        expected = self.endpoint.rstrip('/')
         self.assertEqual(expected, c.base_url)
 
     def test_auth_token_header_is_set_when_using_auth_plugin(self):
@@ -132,9 +132,9 @@ class WhenTestingClientInit(testtools.TestCase):
         c = client.Client(auth_plugin=self.fake_auth)
         self.assertTrue(c.base_url.startswith(self.endpoint))
 
-    def test_base_url_ends_with_tenant_id(self):
+    def test_base_url_has_no_tenant_id(self):
         c = client.Client(auth_plugin=self.fake_auth)
-        self.assertTrue(c.base_url.endswith(self.tenant_id))
+        self.assertNotIn(self.tenant_id, c.base_url)
 
     def test_should_raise_for_unauthorized_response(self):
         resp = self._mock_response(status_code=401)
@@ -160,7 +160,7 @@ class WhenTestingClientWithSession(testtools.TestCase):
         self.tenant_id = '1234567'
 
         self.entity = 'dummy-entity'
-        base = self.endpoint + self.tenant_id + "/"
+        base = self.endpoint
         self.entity_base = base + self.entity + "/"
         self.entity_href = self.entity_base + \
             'abcd1234-eabc-5678-9abc-abcdef012345'
@@ -252,18 +252,19 @@ class WhenTestingClientWithKeystoneV2(WhenTestingClientWithSession):
         # emulate Keystone v2 token request
         v2_token = keystone_client_fixtures.generate_v2_project_scoped_token()
         httpretty.register_uri(httpretty.POST,
-                               '%s/tokens' % (keystone_client_fixtures.V2_URL),
+                               '{0}/tokens'.format(
+                                   keystone_client_fixtures.V2_URL),
                                body=json.dumps(v2_token))
         auth_plugin = KeystonePasswordPlugins.get_v2_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        list_secrets_url = '%s/secrets' % (c.base_url)
+        list_secrets_url = '{0}/secrets'.format(c.base_url)
         httpretty.register_uri(
             httpretty.GET,
             list_secrets_url,
             status=200,
-            body='{"name": "%s", "secret_ref": "%s"}' %
-                 (self.entity_name, self.entity_href))
+            body='{{"name": "{0}", "secret_ref": "{1}"}}'.format(
+                 self.entity_name, self.entity_href))
         resp = c.get(list_secrets_url)
         self.assertEqual(self.entity_name, resp['name'])
         self.assertEqual(self.entity_href, resp['secret_ref'])
@@ -277,18 +278,19 @@ class WhenTestingClientWithKeystoneV2(WhenTestingClientWithSession):
         # emulate Keystone v2 token request
         v2_token = keystone_client_fixtures.generate_v2_project_scoped_token()
         httpretty.register_uri(httpretty.POST,
-                               '%s/tokens' % (keystone_client_fixtures.V2_URL),
+                               '{0}/tokens'.format(
+                                   keystone_client_fixtures.V2_URL),
                                body=json.dumps(v2_token))
         auth_plugin = KeystonePasswordPlugins.get_v2_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        post_secret_url = '%s/secrets/' % (c.base_url)
+        post_secret_url = '{0}/secrets/'.format(c.base_url)
         httpretty.register_uri(
             httpretty.POST,
             post_secret_url,
             status=200,
-            body='{"name": "%s", "secret_ref": "%s"}'
-                 % (self.entity_name, self.entity_href))
+            body='{{"name": "{0}", "secret_ref": "{1}"}}'.format(
+                 self.entity_name, self.entity_href))
         resp = c.post('secrets', '{"name":"test"}')
         self.assertEqual(self.entity_name, resp['name'])
         self.assertEqual(self.entity_href, resp['secret_ref'])
@@ -302,12 +304,13 @@ class WhenTestingClientWithKeystoneV2(WhenTestingClientWithSession):
         # emulate Keystone v2 token request
         v2_token = keystone_client_fixtures.generate_v2_project_scoped_token()
         httpretty.register_uri(httpretty.POST,
-                               '%s/tokens' % (keystone_client_fixtures.V2_URL),
+                               '{0}/tokens'.format(
+                                   keystone_client_fixtures.V2_URL),
                                body=json.dumps(v2_token))
         auth_plugin = KeystonePasswordPlugins.get_v2_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        get_secret_url = '%s/secrets/s1' % (c.base_url)
+        get_secret_url = '{0}/secrets/s1'.format(c.base_url)
         httpretty.register_uri(
             httpretty.GET,
             get_secret_url,
@@ -325,12 +328,13 @@ class WhenTestingClientWithKeystoneV2(WhenTestingClientWithSession):
         # emulate Keystone v2 token request
         v2_token = keystone_client_fixtures.generate_v2_project_scoped_token()
         httpretty.register_uri(httpretty.POST,
-                               '%s/tokens' % (keystone_client_fixtures.V2_URL),
+                               '{0}/tokens'.format(
+                                   keystone_client_fixtures.V2_URL),
                                body=json.dumps(v2_token))
         auth_plugin = KeystonePasswordPlugins.get_v2_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        delete_secret_url = '%s/secrets/s1' % (c.base_url)
+        delete_secret_url = '{0}/secrets/s1'.format(c.base_url)
         httpretty.register_uri(
             httpretty.DELETE,
             delete_secret_url,
@@ -353,19 +357,19 @@ class WhenTestingClientWithKeystoneV3(WhenTestingClientWithSession):
         id, v3_token = keystone_client_fixtures.\
             generate_v3_project_scoped_token()
         httpretty.register_uri(httpretty.POST,
-                               '%s/auth/tokens' % (
+                               '{0}/auth/tokens'.format(
                                    keystone_client_fixtures.V3_URL),
                                body=json.dumps(v3_token), x_subject_token=id)
         auth_plugin = KeystonePasswordPlugins.get_v3_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        list_secrets_url = '%s/secrets' % (c.base_url)
+        list_secrets_url = '{0}/secrets'.format(c.base_url)
         httpretty.register_uri(
             httpretty.GET,
             list_secrets_url,
             status=200,
-            body='{"name": "%s", "secret_ref": "%s"}'
-                 % (self.entity_name, self.entity_href))
+            body='{{"name": "{0}", "secret_ref": "{1}"}}'.format(
+                 self.entity_name, self.entity_href))
         resp = c.get(list_secrets_url)
         self.assertEqual(self.entity_name, resp['name'])
         self.assertEqual(self.entity_href, resp['secret_ref'])
@@ -380,21 +384,21 @@ class WhenTestingClientWithKeystoneV3(WhenTestingClientWithSession):
         id, v3_token = keystone_client_fixtures.\
             generate_v3_project_scoped_token()
         httpretty.register_uri(httpretty.POST,
-                               '%s/auth/tokens' % (
+                               '{0}/auth/tokens'.format(
                                    keystone_client_fixtures.V3_URL),
                                body=json.dumps(v3_token),
                                x_subject_token=id)
         auth_plugin = KeystonePasswordPlugins.get_v3_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        post_secret_url = '%s/secrets/' % (c.base_url)
+        post_secret_url = '{0}/secrets/'.format(c.base_url)
         httpretty.register_uri(
             httpretty.POST,
             post_secret_url,
             status=200,
             x_subject_token=id,
-            body='{"name": "%s", "secret_ref": "%s"}'
-                 % (self.entity_name, self.entity_href))
+            body='{{"name": "{0}", "secret_ref": "{1}"}}'.format(
+                 self.entity_name, self.entity_href))
         resp = c.post('secrets', '{"name":"test"}')
         self.assertEqual(self.entity_name, resp['name'])
         self.assertEqual(self.entity_href, resp['secret_ref'])
@@ -409,14 +413,14 @@ class WhenTestingClientWithKeystoneV3(WhenTestingClientWithSession):
         id, v3_token = keystone_client_fixtures.\
             generate_v3_project_scoped_token()
         httpretty.register_uri(httpretty.POST,
-                               '%s/auth/tokens' % (
+                               '{0}/auth/tokens'.format(
                                    keystone_client_fixtures.V3_URL),
                                body=json.dumps(v3_token),
                                x_subject_token=id)
         auth_plugin = KeystonePasswordPlugins.get_v3_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        get_secret_url = '%s/secrets/s1' % (c.base_url)
+        get_secret_url = '{0}/secrets/s1'.format(c.base_url)
         httpretty.register_uri(
             httpretty.GET,
             get_secret_url,
@@ -435,14 +439,14 @@ class WhenTestingClientWithKeystoneV3(WhenTestingClientWithSession):
         id, v3_token = keystone_client_fixtures.\
             generate_v3_project_scoped_token()
         httpretty.register_uri(httpretty.POST,
-                               '%s/auth/tokens' % (
+                               '{0}/auth/tokens'.format(
                                    keystone_client_fixtures.V3_URL),
                                body=json.dumps(v3_token),
                                x_subject_token=id)
         auth_plugin = KeystonePasswordPlugins.get_v3_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        delete_secret_url = '%s/secrets/s1' % (c.base_url)
+        delete_secret_url = '{0}/secrets/s1'.format(c.base_url)
         httpretty.register_uri(
             httpretty.DELETE,
             delete_secret_url,

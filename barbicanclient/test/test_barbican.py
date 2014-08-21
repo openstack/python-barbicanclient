@@ -102,14 +102,13 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
     @httpretty.activate
     def test_should_succeed_if_noauth_with_valid_args_specified(self):
         list_secrets_content = '{"secrets": [], "total": 0}'
-        list_secrets_url = '%s%s/secrets' % (
-            self.endpoint, self.tenant_id)
+        list_secrets_url = '{0}secrets'.format(self.endpoint)
         httpretty.register_uri(
             httpretty.GET, list_secrets_url,
             body=list_secrets_content)
         self._expect_success_code(
-            "--no-auth --endpoint %s --os-tenant-id %s secret list"
-            % (self.endpoint, self.tenant_id))
+            "--no-auth --endpoint {0} --os-tenant-id {1} secret list".
+            format(self.endpoint, self.tenant_id))
 
     def test_should_error_if_required_keystone_auth_arguments_are_missing(
             self):
@@ -142,56 +141,53 @@ class TestBarbicanWithKeystoneClient(testtools.TestCase):
             argv.append(v)
         return argv
 
+    def _delete_secret(self, auth_url):
+        self.kwargs['auth_url'] = auth_url
+        argv = self._to_argv(**self.kwargs)
+        barbican_url = keystone_client_fixtures.BARBICAN_ENDPOINT
+        argv.append('--endpoint')
+        argv.append(barbican_url)
+        argv.append('secret')
+        argv.append('delete')
+        mySecretRef = '{0}/secrets/mysecretid'.format(barbican_url)
+        argv.append(mySecretRef)
+        # emulate delete secret
+        httpretty.register_uri(
+            httpretty.DELETE,
+            mySecretRef,
+            status=204)
+
+        try:
+            self.barbican.run(argv=argv)
+        except:
+            self.fail('failed to delete secret')
+
     @httpretty.activate
     def test_v2_auth(self):
-        self.kwargs['auth_url'] = keystone_client_fixtures.V2_URL
-        argv = self._to_argv(**self.kwargs)
-        argv.append('secret')
-        argv.append('list')
-        argv.append('-h')
-        argv.append('mysecretid')
         # emulate Keystone version discovery
         httpretty.register_uri(httpretty.GET,
-                               self.kwargs['auth_url'],
+                               keystone_client_fixtures.V2_URL,
                                body=keystone_client_fixtures.V2_VERSION_ENTRY)
         # emulate Keystone v2 token request
         v2_token = keystone_client_fixtures.generate_v2_project_scoped_token()
         httpretty.register_uri(httpretty.POST,
-                               '%s/tokens' % (self.kwargs['auth_url']),
+                               '{0}/tokens'.format(
+                                   keystone_client_fixtures.V2_URL),
                                body=json.dumps(v2_token))
-        # emulate get secrets
-        barbican_url = keystone_client_fixtures.BARBICAN_ENDPOINT
-        httpretty.register_uri(
-            httpretty.DELETE,
-            '%s/%s/secrets/mysecretid' % (
-                barbican_url,
-                v2_token['access']['token']['tenant']['id']),
-            status=200)
-        self.barbican.run(argv=argv)
+        self._delete_secret(keystone_client_fixtures.V2_URL)
 
     @httpretty.activate
     def test_v3_auth(self):
-        argv = self._to_argv(**self.kwargs)
-        argv.append('secret')
-        argv.append('list')
-        argv.append('-h')
-        argv.append('mysecretid')
         # emulate Keystone version discovery
         httpretty.register_uri(httpretty.GET,
-                               self.kwargs['auth_url'],
+                               keystone_client_fixtures.V3_URL,
                                body=keystone_client_fixtures.V3_VERSION_ENTRY)
         # emulate Keystone v3 token request
         id, v3_token = \
             keystone_client_fixtures.generate_v3_project_scoped_token()
         httpretty.register_uri(httpretty.POST,
-                               '%s/auth/tokens' % (self.kwargs['auth_url']),
-                               body=json.dumps(v3_token))
-        # emulate delete secret
-        barbican_url = keystone_client_fixtures.BARBICAN_ENDPOINT
-        httpretty.register_uri(
-            httpretty.DELETE,
-            '%s/%s/secrets/mysecretid' % (
-                barbican_url,
-                v3_token['token']['project']['id']),
-            status=200)
-        self.barbican.run(argv=argv)
+                               '{0}/auth/tokens'.format(
+                                   keystone_client_fixtures.V3_URL),
+                               body=json.dumps(v3_token),
+                               adding_headers={'x-subject-token': '1234'})
+        self._delete_secret(keystone_client_fixtures.V3_URL)
