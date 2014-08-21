@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
 import httpretty
+import json
+import mock
 import requests
 import testtools
-import json
 
 from barbicanclient import client
 from barbicanclient.test import keystone_client_fixtures
@@ -453,16 +453,47 @@ class WhenTestingClientWithKeystoneV3(WhenTestingClientWithSession):
 
 class BaseEntityResource(testtools.TestCase):
 
+    # TODO: The compatibility of unittest between versions is horrible
+    # Reported as https://bugs.launchpad.net/testtools/+bug/1373139
+    if hasattr(testtools.TestCase, 'assertItemsEqual'):
+        # If this function is available, do nothing (PY27)
+        pass
+    elif hasattr(testtools.TestCase, 'assertCountEqual'):
+        # If this function is available, alias it (PY32+)
+        assertItemsEqual = testtools.TestCase.assertCountEqual
+    else:
+        # If neither is available, make our own version (PY26, PY30-31)
+        def assertItemsEqual(self, expected_seq, actual_seq, msg=None):
+            first_seq, second_seq = list(expected_seq), list(actual_seq)
+            differences = []
+            for item in first_seq:
+                if item not in second_seq:
+                    differences.append(item)
+
+            for item in second_seq:
+                if item not in first_seq:
+                    differences.append(item)
+
+            if differences:
+                if not msg:
+                    msg = "Items differ: {0}".format(differences)
+                self.fail(msg)
+            if len(first_seq) != len(second_seq):
+                if not msg:
+                    msg = "Size of collection differs: {0} != {1}".format(
+                        len(first_seq), len(second_seq)
+                    )
+                self.fail(msg)
+
     def _setUp(self, entity):
         super(BaseEntityResource, self).setUp()
         self.endpoint = 'https://localhost:9311/v1/'
         self.tenant_id = '1234567'
 
         self.entity = entity
-        base = self.endpoint + self.tenant_id + "/"
-        self.entity_base = base + self.entity + "/"
+        self.entity_base = self.endpoint + self.entity + "/"
         self.entity_href = self.entity_base + \
             'abcd1234-eabc-5678-9abc-abcdef012345'
 
         self.api = mock.MagicMock()
-        self.api.base_url = base[:-1]
+        self.api.base_url = self.endpoint[:-1]

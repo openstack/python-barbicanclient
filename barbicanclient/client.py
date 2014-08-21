@@ -17,11 +17,11 @@ import logging
 import os
 
 from keystoneclient.auth.base import BaseAuthPlugin
-from keystoneclient import exceptions
 from keystoneclient import session as ks_session
 
 from barbicanclient.common.auth import KeystoneAuthPluginWrapper
 from barbicanclient.openstack.common.gettextutils import _
+from barbicanclient import containers
 from barbicanclient import orders
 from barbicanclient import secrets
 
@@ -100,6 +100,7 @@ class Client(object):
         self.base_url = '{0}'.format(self._barbican_url)
         self.secrets = secrets.SecretManager(self)
         self.orders = orders.OrderManager(self)
+        self.containers = containers.ContainerManager(self)
 
     def _wrap_session_with_keystone_if_required(self, session, insecure):
         # if session is not a keystone session, wrap it
@@ -157,7 +158,7 @@ class Client(object):
             return auth_plugin.tenant_id
 
     def _prepare_auth(self, headers):
-        if headers and not self._session.auth:
+        if isinstance(headers, dict) and not self._session.auth:
             headers['X-Project-Id'] = self._tenant_id
 
     def get(self, href, params=None):
@@ -173,10 +174,10 @@ class Client(object):
         self._check_status_code(resp)
         return resp.content
 
-    def delete(self, href):
+    def delete(self, href, json=None):
         headers = {}
         self._prepare_auth(headers)
-        resp = self._session.delete(href, headers=headers)
+        resp = self._session.delete(href, headers=headers, json=json)
         self._check_status_code(resp)
 
     def post(self, path, data):

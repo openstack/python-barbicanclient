@@ -17,8 +17,6 @@
 Command-line interface to the Barbican API.
 """
 
-import argparse
-import logging
 import sys
 
 from cliff import app
@@ -30,7 +28,7 @@ from barbicanclient import version
 
 
 class Barbican(app.App):
-    """Barbican comand line interface."""
+    """Barbican command line interface."""
 
     def __init__(self, **kwargs):
         super(Barbican, self).__init__(

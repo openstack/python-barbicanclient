@@ -1,0 +1,653 @@
+# Copyright (c) 2014 Rackspace, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import functools
+import logging
+import six
+
+from barbicanclient import base
+from barbicanclient import secrets
+from barbicanclient.openstack.common.timeutils import parse_isotime
+
+
+LOG = logging.getLogger(__name__)
+
+
+def _immutable_after_save(func):
+    @functools.wraps(func)
+    def wrapper(self, *args):
+        if hasattr(self, '_container_ref') and self._container_ref:
+            raise base.ImmutableException()
+        return func(self, *args)
+    return wrapper
+
+
+class Container(object):
+    """
+    Containers are used to keep track of the data stored in Barbican.
+    """
+    entity = 'containers'
+    _type = 'generic'
+
+    def __init__(self, api, name=None, secrets=None, consumers=None,
+                 container_ref=None, created=None, updated=None, status=None,
+                 secret_refs=None):
+        self._api = api
+        self._name = name
+        self._secret_refs = secret_refs
+        self._cached_secrets = dict()
+        self._initialize_secrets(secrets)
+        self._consumers = consumers if consumers else list()
+        self._container_ref = container_ref
+        self._created = parse_isotime(created) if created else None
+        self._updated = parse_isotime(updated) if updated else None
+        self._status = status
+
+    def _initialize_secrets(self, secrets):
+        try:
+            self._fill_secrets_from_secret_refs()
+        except Exception:
+            raise ValueError("One or more of the provided secret_refs could "
+                             "not be retrieved!")
+        if secrets:
+            try:
+                for name, secret in six.iteritems(secrets):
+                    self.add(name, secret)
+            except Exception:
+                raise ValueError("One or more of the provided secrets are not "
+                                 "valid Secret objects!")
+
+    def _fill_secrets_from_secret_refs(self):
+        if self._secret_refs:
+            self._cached_secrets = dict(
+                (name.lower(), self._api.secrets.Secret(secret_ref=secret_ref))
+                for name, secret_ref in six.iteritems(self._secret_refs)
+            )
+
+    @property
+    def container_ref(self):
+        return self._container_ref
+
+    @property
+    def name(self):
+        if self._container_ref and not self._name:
+            self._reload()
+        return self._name
+
+    @property
+    def created(self):
+        return self._created
+
+    @property
+    def updated(self):
+        return self._updated
+
+    @property
+    def status(self):
+        if self._container_ref and not self._status:
+            self._reload()
+        return self._status
+
+    @property
+    def secret_refs(self):
+        if self._cached_secrets:
+            self._secret_refs = dict(
+                (name, secret.secret_ref)
+                for name, secret in six.iteritems(self._cached_secrets)
+            )
+
+        return self._secret_refs
+
+    @property
+    def secrets(self, cache=True):
+        if not self._cached_secrets or not cache:
+            self._fill_secrets_from_secret_refs()
+        return self._cached_secrets
+
+    @property
+    def consumers(self):
+        return self._consumers
+
+    @name.setter
+    @_immutable_after_save
+    def name(self, value):
+        self._name = value
+
+    @_immutable_after_save
+    def add(self, name, secret):
+        if not isinstance(secret, secrets.Secret):
+            raise ValueError("Must provide a valid Secret object")
+        if name.lower() in self.secrets:
+            raise KeyError("A secret with this name already exists!")
+        self._cached_secrets[name.lower()] = secret
+
+    @_immutable_after_save
+    def remove(self, name):
+        self._cached_secrets.pop(name.lower(), None)
+        if self._secret_refs:
+            self._secret_refs.pop(name.lower(), None)
+
+    @_immutable_after_save
+    def store(self):
+        secret_refs = self._get_secrets_and_store_them_if_necessary()
+
+        container_dict = base.filter_empty_keys({
+            'name': self.name,
+            'type': self._type,
+            'secret_refs': secret_refs
+        })
+
+        LOG.debug("Request body: {0}".format(container_dict))
+
+        # Save, store container_ref and return
+        response = self._api.post(self.entity, container_dict)
+        if response:
+            self._container_ref = response['container_ref']
+        return self.container_ref
+
+    def delete(self):
+        if self._container_ref:
+            self._api.delete(self._container_ref)
+            self._container_ref = None
+            self._status = None
+            self._created = None
+            self._updated = None
+        else:
+            raise LookupError("Secret is not yet stored.")
+
+    def _get_secrets_and_store_them_if_necessary(self):
+        # Save all secrets if they are not yet saved
+        LOG.debug("Storing secrets: {0}".format(self.secrets))
+        secret_refs = []
+        for name, secret in six.iteritems(self.secrets):
+            if secret and not secret.secret_ref:
+                secret.store()
+            secret_refs.append({'name': name, 'secret_ref': secret.secret_ref})
+        return secret_refs
+
+    def _reload(self):
+        if not self._container_ref:
+            raise AttributeError("container_ref not set, cannot reload data.")
+        LOG.debug('Getting container - Container href: {0}'
+                  .format(self._container_ref))
+        base.validate_ref(self._container_ref, 'Container')
+        try:
+            response = self._api.get(self._container_ref)
+        except AttributeError:
+            raise LookupError('Container {0} could not be found.'
+                              .format(self._container_ref))
+        self._name = response.get('name')
+        self._consumers = response.get('consumers', [])
+        created = response.get('created')
+        updated = response.get('updated')
+        self._created = parse_isotime(created) if created else None
+        self._updated = parse_isotime(updated) if updated else None
+        self._status = response.get('status')
+
+    def _get_named_secret(self, name):
+        return self.secrets.get(name)
+
+    def __str__(self):
+        sec = ['"{0}":\n{1}'.format(s.get('name'),
+                                    base.indent_object_string(s.get('secret'),
+                                                              4))
+               for s in six.iteritems(self.secrets)]
+        return ("Container:\n"
+                "   href: {0}\n"
+                "   name: {1}\n"
+                "   created: {2}\n"
+                "   status: {3}\n"
+                "   type: {4}\n"
+                "   secrets:\n"
+                "{5}\n"
+                "   consumers: {6}\n"
+                .format(self.container_ref, self.name, self.created,
+                        self.status, self._type,
+                        base.indent_object_string('\n'.join(sec)),
+                        self.consumers)
+                )
+
+    def __repr__(self):
+        return 'Container(name="{0}")'.format(self.name)
+
+
+class RSAContainer(Container):
+    _required_secrets = ["public_key", "private_key"]
+    _optional_secrets = ["private_key_passphrase"]
+    _type = 'rsa'
+
+    def __init__(self, api, name=None, public_key=None, private_key=None,
+                 private_key_passphrase=None, consumers=[], container_ref=None,
+                 created=None, updated=None, status=None, public_key_ref=None,
+                 private_key_ref=None, private_key_passphrase_ref=None):
+        secret_refs = {}
+        if public_key_ref:
+            secret_refs['public_key'] = public_key_ref
+        if private_key_ref:
+            secret_refs['private_key'] = private_key_ref
+        if private_key_passphrase_ref:
+            secret_refs['private_key_passphrase'] = private_key_passphrase_ref
+        super(RSAContainer, self).__init__(
+            api=api,
+            name=name,
+            consumers=consumers,
+            container_ref=container_ref,
+            created=created,
+            updated=updated,
+            status=status,
+            secret_refs=secret_refs
+        )
+        if public_key:
+            self.public_key = public_key
+        if private_key:
+            self.private_key = private_key
+        if private_key_passphrase:
+            self.private_key_passphrase = private_key_passphrase
+
+    @property
+    def public_key(self):
+        return self._get_named_secret("public_key")
+
+    @property
+    def private_key(self):
+        return self._get_named_secret("private_key")
+
+    @property
+    def private_key_passphrase(self):
+        return self._get_named_secret("private_key_passphrase")
+
+    @public_key.setter
+    @_immutable_after_save
+    def public_key(self, value):
+        super(RSAContainer, self).remove("public_key")
+        super(RSAContainer, self).add("public_key", value)
+
+    @private_key.setter
+    @_immutable_after_save
+    def private_key(self, value):
+        super(RSAContainer, self).remove("private_key")
+        super(RSAContainer, self).add("private_key", value)
+
+    @private_key_passphrase.setter
+    @_immutable_after_save
+    def private_key_passphrase(self, value):
+        super(RSAContainer, self).remove("private_key_passphrase")
+        super(RSAContainer, self).add("private_key_passphrase", value)
+
+    def add(self, name, sec):
+        raise NotImplementedError("`add()` is not implemented for "
+                                  "Typed Containers")
+
+    def __repr__(self):
+        return 'RSAContainer(name="{0}")'.format(self.name)
+
+    def __str__(self):
+        return ("RSAContainer:\n"
+                "    href: {0}\n"
+                "    name: {1}\n"
+                "    created: {2}\n"
+                "    status: {3}\n"
+                "    public_key:\n"
+                "{4}\n"
+                "    private_key:\n"
+                "{5}\n"
+                "    private_key_passphrase:\n"
+                "{6}\n"
+                "    consumers: {7}\n"
+                .format(self.container_ref, self.name, self.created,
+                        self.status,
+                        base.indent_object_string(self.public_key),
+                        base.indent_object_string(self.private_key),
+                        base.indent_object_string(self.private_key_passphrase),
+                        self.consumers)
+                )
+
+
+class CertificateContainer(Container):
+    _required_secrets = ["certificate", "private_key"]
+    _optional_secrets = ["private_key_passphrase", "intermediates"]
+    _type = 'certificate'
+
+    def __init__(self, api, name=None, certificate=None, intermediates=None,
+                 private_key=None, private_key_passphrase=None, consumers=[],
+                 container_ref=None, created=None, updated=None, status=None,
+                 certificate_ref=None, intermediates_ref=None,
+                 private_key_ref=None, private_key_passphrase_ref=None):
+        secret_refs = {}
+        if certificate_ref:
+            secret_refs['certificate'] = certificate_ref
+        if intermediates_ref:
+            secret_refs['intermediates'] = intermediates_ref
+        if private_key_ref:
+            secret_refs['private_key'] = private_key_ref
+        if private_key_passphrase_ref:
+            secret_refs['private_key_passphrase'] = private_key_passphrase_ref
+        super(CertificateContainer, self).__init__(
+            api=api,
+            name=name,
+            consumers=consumers,
+            container_ref=container_ref,
+            created=created,
+            updated=updated,
+            status=status,
+            secret_refs=secret_refs
+        )
+        if certificate:
+            self.certificate = certificate
+        if intermediates:
+            self.intermediates = intermediates
+        if private_key:
+            self.private_key = private_key
+        if private_key_passphrase:
+            self.private_key_passphrase = private_key_passphrase
+
+    @property
+    def certificate(self):
+        return self._get_named_secret("certificate")
+
+    @property
+    def private_key(self):
+        return self._get_named_secret("private_key")
+
+    @property
+    def private_key_passphrase(self):
+        return self._get_named_secret("private_key_passphrase")
+
+    @property
+    def intermediates(self):
+        return self._get_named_secret("intermediates")
+
+    @certificate.setter
+    @_immutable_after_save
+    def certificate(self, value):
+        super(CertificateContainer, self).remove("certificate")
+        super(CertificateContainer, self).add("certificate", value)
+
+    @private_key.setter
+    @_immutable_after_save
+    def private_key(self, value):
+        super(CertificateContainer, self).remove("private_key")
+        super(CertificateContainer, self).add("private_key", value)
+
+    @private_key_passphrase.setter
+    @_immutable_after_save
+    def private_key_passphrase(self, value):
+        super(CertificateContainer, self).remove("private_key_passphrase")
+        super(CertificateContainer, self).add("private_key_passphrase", value)
+
+    @intermediates.setter
+    @_immutable_after_save
+    def intermediates(self, value):
+        super(CertificateContainer, self).remove("intermediates")
+        super(CertificateContainer, self).add("intermediates", value)
+
+    def add(self, name, sec):
+        raise NotImplementedError("`add()` is not implemented for "
+                                  "Typed Containers")
+
+    def __repr__(self):
+        return 'CertificateContainer(name="{0}")'.format(self.name)
+
+    def __str__(self):
+        return ("CertificateContainer:\n"
+                "    href: {0}\n"
+                "    name: {1}\n"
+                "    created: {2}\n"
+                "    status: {3}\n"
+                "    certificate:\n"
+                "{4}\n"
+                "    private_key:\n"
+                "{5}\n"
+                "    private_key_passphrase:\n"
+                "{6}\n"
+                "    intermediates:\n"
+                "{7}\n"
+                "    consumers: {8}\n"
+                .format(self.container_ref, self.name, self.created,
+                        self.status,
+                        base.indent_object_string(self.certificate),
+                        base.indent_object_string(self.private_key),
+                        base.indent_object_string(self.private_key_passphrase),
+                        base.indent_object_string(self.intermediates),
+                        self.consumers)
+                )
+
+
+class ContainerManager(base.BaseEntityManager):
+
+    container_map = {
+        'generic': Container,
+        'rsa': RSAContainer,
+        'certificate': CertificateContainer
+    }
+
+    def __init__(self, api):
+        super(ContainerManager, self).__init__(api, 'containers')
+
+    def get(self, container_ref):
+        """Get a Container
+
+        :param container_ref: Full HATEOAS reference to a Container
+        :returns: Container object or a subclass of the appropriate type
+        """
+        LOG.debug('Getting container - Container href: {0}'
+                  .format(container_ref))
+        base.validate_ref(container_ref, 'Container')
+        try:
+            response = self.api.get(container_ref)
+        except AttributeError:
+            raise LookupError('Container {0} could not be found.'
+                              .format(container_ref))
+        return self._generate_typed_container(response)
+
+    def _generate_typed_container(self, response):
+        resp_type = response.get('type', '').lower()
+        container_type = self.container_map.get(resp_type)
+        if not container_type:
+            raise TypeError('Unknown container type "{0}".'
+                            .format(resp_type))
+
+        name = response.get('name')
+        consumers = response.get('consumers', [])
+        container_ref = response.get('container_ref')
+        created = response.get('created')
+        updated = response.get('updated')
+        status = response.get('status')
+        secret_refs = self._translate_secret_refs_from_json(
+            response.get('secret_refs')
+        )
+
+        if container_type is RSAContainer:
+            public_key_ref = secret_refs.get('public_key')
+            private_key_ref = secret_refs.get('private_key')
+            private_key_pass_ref = secret_refs.get('private_key_passphrase')
+            return RSAContainer(
+                api=self.api,
+                name=name,
+                consumers=consumers,
+                container_ref=container_ref,
+                created=created,
+                updated=updated,
+                status=status,
+                public_key_ref=public_key_ref,
+                private_key_ref=private_key_ref,
+                private_key_passphrase_ref=private_key_pass_ref,
+            )
+        elif container_type is CertificateContainer:
+            certificate_ref = secret_refs.get('certificate')
+            intermediates_ref = secret_refs.get('intermediates')
+            private_key_ref = secret_refs.get('private_key')
+            private_key_pass_ref = secret_refs.get('private_key_passphrase')
+            return CertificateContainer(
+                api=self.api,
+                name=name,
+                consumers=consumers,
+                container_ref=container_ref,
+                created=created,
+                updated=updated,
+                status=status,
+                certificate_ref=certificate_ref,
+                intermediates_ref=intermediates_ref,
+                private_key_ref=private_key_ref,
+                private_key_passphrase_ref=private_key_pass_ref,
+            )
+        return container_type(
+            api=self.api,
+            name=name,
+            secret_refs=secret_refs,
+            consumers=consumers,
+            container_ref=container_ref,
+            created=created,
+            updated=updated,
+            status=status
+        )
+
+    @staticmethod
+    def _translate_secret_refs_from_json(json_refs):
+        return dict(
+            (ref_pack.get('name'), ref_pack.get('secret_ref'))
+            for ref_pack in json_refs
+        )
+
+    def create(self, name=None, secrets=None):
+        """
+        Container creation method
+
+        :param name: A friendly name for the Container
+        :param secrets: Secrets to populate when creating a Container
+        :returns: Container
+        """
+        return Container(
+            api=self.api,
+            name=name,
+            secrets=secrets
+        )
+
+    def create_rsa(self, name=None, public_key=None, private_key=None,
+                   private_key_passphrase=None):
+        """
+        RSAContainer creation method
+
+        :param name: A friendly name for the RSAContainer
+        :param public_key: Secret object containing a Public Key
+        :param private_key: Secret object containing a Private Key
+        :param private_key_passphrase: Secret object containing a passphrase
+        :returns: RSAContainer
+        """
+        return RSAContainer(
+            api=self.api,
+            name=name,
+            public_key=public_key,
+            private_key=private_key,
+            private_key_passphrase=private_key_passphrase
+        )
+
+    def create_certificate(self, name=None, certificate=None,
+                           intermediates=None, private_key=None,
+                           private_key_passphrase=None):
+        """
+        CertificateContainer creation method
+
+        :param name: A friendly name for the CertificateContainer
+        :param certificate: Secret object containing a Certificate
+        :param intermediates: Secret object containing Intermediate Certs
+        :param private_key: Secret object containing a Private Key
+        :param private_key_passphrase: Secret object containing a passphrase
+        :returns: CertificateContainer
+        """
+        return CertificateContainer(
+            api=self.api,
+            name=name,
+            certificate=certificate,
+            intermediates=intermediates,
+            private_key=private_key,
+            private_key_passphrase=private_key_passphrase
+        )
+
+    def delete(self, container_ref):
+        """
+        Deletes a container
+
+        :param container_ref: Full HATEOAS reference to a Container
+        """
+        if not container_ref:
+            raise ValueError('container_ref is required.')
+        try:
+            self.api.delete(container_ref)
+        except AttributeError:
+            raise LookupError('Container {0} could not be deleted. '
+                              'Does it still exist?'.format(container_ref))
+
+    def list(self, limit=10, offset=0, name=None, type=None):
+        """
+        List all containers for the tenant
+
+        :param limit: Max number of containers returned
+        :param offset: Offset containers to begin list
+        :param name: Name filter for the list
+        :param type: Type filter for the list
+        :returns: list of Container metadata objects
+        """
+        LOG.debug('Listing containers - offset {0} limit {1} name {2} type {3}'
+                  .format(offset, limit, name, type))
+        href = '{0}/{1}'.format(self.api.base_url, self.entity)
+        params = {'limit': limit, 'offset': offset}
+        if name:
+            params['name'] = name
+        if type:
+            params['type'] = type
+
+        response = self.api.get(href, params)
+
+        return [self._generate_typed_container(container)
+                for container in response.get('containers', [])]
+
+    def register_consumer(self, container_ref, name, url):
+        """
+        Add a consumer to the container
+
+        :param container_ref: Full HATEOAS reference to a Container
+        :param name: Name of the consuming service
+        :param url: URL of the consuming resource
+        :returns: A container object per the get() method
+        """
+        LOG.debug('Creating consumer registration for container '
+                  '{0} as {1}: {2}'.format(container_ref, name, url))
+        href = '{0}/{1}/consumers'.format(self.entity,
+                                          container_ref.split('/')[-1])
+        consumer_dict = dict()
+        consumer_dict['name'] = name
+        consumer_dict['URL'] = url
+
+        response = self.api.post(href, consumer_dict)
+        return self._generate_typed_container(response)
+
+    def remove_consumer(self, container_ref, name, url):
+        """
+        Remove a consumer from the container
+
+        :param container_ref: Full HATEOAS reference to a Container
+        :param name: Name of the previously consuming service
+        :param url: URL of the previously consuming resource
+        """
+        LOG.debug('Deleting consumer registration for container '
+                  '{0} as {1}: {2}'.format(container_ref, name, url))
+        href = '{0}/{1}/{2}/consumers'.format(self.api.base_url, self.entity,
+                                              container_ref.split('/')[-1])
+        consumer_dict = {
+            'name': name,
+            'URL': url
+        }
+
+        self.api.delete(href, json=consumer_dict)
