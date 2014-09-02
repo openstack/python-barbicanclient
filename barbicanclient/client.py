@@ -24,7 +24,6 @@ from barbicanclient.common.auth import KeystoneAuthPluginWrapper
 from barbicanclient.openstack.common.gettextutils import _
 from barbicanclient import orders
 from barbicanclient import secrets
-from barbicanclient import verifications
 
 
 LOG = logging.getLogger(__name__)
@@ -101,7 +100,6 @@ class Client(object):
         self.base_url = '{0}'.format(self._barbican_url)
         self.secrets = secrets.SecretManager(self)
         self.orders = orders.OrderManager(self)
-        self.verifications = verifications.VerificationManager(self)
 
     def _wrap_session_with_keystone_if_required(self, session, insecure):
         # if session is not a keystone session, wrap it

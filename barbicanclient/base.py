@@ -13,20 +13,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Base utilites to build API operation managers.
+Base utilities to build API operation managers.
 """
+import six
+import uuid
+
+
+def filter_empty_keys(dictionary):
+    return dict(((k, v) for k, v in dictionary.items() if v))
+
+
+def validate_ref(ref, entity):
+    try:
+        # Split out the UUID from the ref URL
+        url = six.moves.urllib.parse.urlparse(ref)
+        parts = url.path.rstrip('/').split('/')
+        # Attempt to load the UUID with uuid, which will raise if invalid
+        uuid.UUID(parts[-1])
+    except:
+        raise ValueError('{0} incorrectly specified.'.format(entity))
+
+
+class ImmutableException(Exception):
+    def __init__(self, attribute=None):
+        message = "This object is immutable!"
+        super(ImmutableException, self).__init__(message)
 
 
 class BaseEntityManager(object):
     def __init__(self, api, entity):
         self.api = api
         self.entity = entity
-
-    def _remove_empty_keys(self, dictionary):
-        copied_dict = dictionary.copy()
-        for k in copied_dict.keys():
-            if dictionary[k] is None:
-                dictionary.pop(k)
 
     def total(self):
         """

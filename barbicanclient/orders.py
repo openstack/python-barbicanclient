@@ -12,48 +12,205 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 import logging
 
 from barbicanclient import base
-from barbicanclient.openstack.common.gettextutils import _
-from barbicanclient.openstack.common import timeutils
+from barbicanclient.openstack.common.timeutils import parse_isotime
 
 
 LOG = logging.getLogger(__name__)
 
 
+def immutable_after_save(func):
+    @functools.wraps(func)
+    def wrapper(self, *args):
+        if self._order_ref:
+            raise base.ImmutableException()
+        return func(self, *args)
+    return wrapper
+
+
 class Order(object):
+    """
+    Orders are used to request the generation of a Secret in Barbican.
+    """
+    entity = 'orders'
 
-    def __init__(self, order_dict):
-        """
-        Builds an order object from a dictionary.
-        """
-        self.order_ref = order_dict['order_ref']
-
-        self.error_status_code = order_dict.get('error_status_code', None)
-        self.error_reason = order_dict.get('error_reason', None)
-        self.status = order_dict.get('status')
-        self.created = timeutils.parse_isotime(order_dict['created'])
-        if order_dict.get('updated') is not None:
-            self.updated = timeutils.parse_isotime(order_dict['updated'])
+    def __init__(self, api, name=None, algorithm=None, bit_length=None,
+                 mode=None, payload_content_type='application/octet-stream',
+                 order_ref=None, secret_ref=None, status=None,
+                 created=None, updated=None, expiration=None,
+                 error_status_code=None, error_reason=None, secret=None,
+                 meta=None, type=None):
+        self._api = api
+        self._order_ref = order_ref
+        self._type = type
+        self._meta = meta
+        if order_ref:
+            self._error_status_code = error_status_code
+            self._error_reason = error_reason
+            self._status = status
+            self._created = created
+            self._updated = updated
+            if self._created:
+                self._created = parse_isotime(self._created)
+            if self._updated:
+                self._updated = parse_isotime(self._updated)
+            self._secret_ref = secret_ref
+            self._secret = secret
         else:
-            self.updated = None
-        self.secret_ref = order_dict.get('secret_ref')
+            self._error_status_code = None
+            self._error_reason = None
+            self._status = None
+            self._created = None
+            self._updated = None
+            self._secret_ref = None
+            self._secret = base.filter_empty_keys({
+                'name': name,
+                'algorithm': algorithm,
+                'bit_length': bit_length,
+                'mode': mode,
+                'payload_content_type': payload_content_type,
+                'expiration': expiration
+            })
+        if self._secret.get("expiration"):
+            self._secret['expiration'] = parse_isotime(
+                self._secret.get('expiration'))
+
+    @property
+    def name(self):
+        return self._secret.get('name')
+
+    @property
+    def expiration(self):
+        return self._secret.get('expiration')
+
+    @property
+    def algorithm(self):
+        return self._secret.get('algorithm')
+
+    @property
+    def bit_length(self):
+        return self._secret.get('bit_length')
+
+    @property
+    def mode(self):
+        return self._secret.get('mode')
+
+    @property
+    def payload_content_type(self):
+        return self._secret.get('payload_content_type')
+
+    @property
+    def order_ref(self):
+        return self._order_ref
+
+    @property
+    def secret_ref(self):
+        return self._secret_ref
+
+    @property
+    def created(self):
+        return self._created
+
+    @property
+    def updated(self):
+        return self._updated
+
+    @property
+    def status(self):
+        return self._status
+
+    @property
+    def error_status_code(self):
+        return self._error_status_code
+
+    @property
+    def error_reason(self):
+        return self._error_reason
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def meta(self):
+        return self._meta
+
+    @name.setter
+    @immutable_after_save
+    def name(self, value):
+        self._secret['name'] = value
+
+    @expiration.setter
+    @immutable_after_save
+    def expiration(self, value):
+        self._secret['expiration'] = value
+
+    @algorithm.setter
+    @immutable_after_save
+    def algorithm(self, value):
+        self._secret['algorithm'] = value
+
+    @bit_length.setter
+    @immutable_after_save
+    def bit_length(self, value):
+        self._secret['bit_length'] = value
+
+    @mode.setter
+    @immutable_after_save
+    def mode(self, value):
+        self._secret['mode'] = value
+
+    @payload_content_type.setter
+    @immutable_after_save
+    def payload_content_type(self, value):
+        self._secret['payload_content_type'] = value
+
+    @type.setter
+    @immutable_after_save
+    def type(self, value):
+        self._type = value
+
+    @meta.setter
+    @immutable_after_save
+    def meta(self, value):
+        self._meta = value
+
+    @immutable_after_save
+    def submit(self):
+        order_dict = dict({
+            'secret': self._secret
+        })
+        LOG.debug("Request body: {0}".format(order_dict.get('secret')))
+        response = self._api.post(self.entity, order_dict)
+        if response:
+            self._order_ref = response.get('order_ref')
+        return self._order_ref
+
+    def delete(self):
+        if self._order_ref:
+            self._api.delete(self._order_ref)
+            self._order_ref = None
+        else:
+            raise LookupError("Order is not yet stored.")
 
     def __str__(self):
-        strg = ("Order - order href: {0}\n"
-                "        secret href: {1}\n"
-                "        created: {2}\n"
-                "        status: {3}\n"
-                ).format(self.order_ref, self.secret_ref,
-                         self.created, self.status)
+        str_rep = ("Order:\n"
+                   "    order href: {0}\n"
+                   "    secret href: {1}\n"
+                   "    created: {2}\n"
+                   "    status: {3}\n"
+                   ).format(self.order_ref, self.secret_ref,
+                            self.created, self.status)
 
         if self.error_status_code:
-            strg = ''.join([strg, ("        error_status_code: {0}\n"
-                                   "        error_reason: {1}\n"
-                                   ).format(self.error_status_code,
-                                            self.error_reason)])
-        return strg
+            str_rep = ''.join([str_rep, ("    error_status_code: {0}\n"
+                                         "    error_reason: {1}\n"
+                                         ).format(self.error_status_code,
+                                                  self.error_reason)])
+        return str_rep
 
     def __repr__(self):
         return 'Order(order_ref={0})'.format(self.order_ref)
@@ -64,53 +221,31 @@ class OrderManager(base.BaseEntityManager):
     def __init__(self, api):
         super(OrderManager, self).__init__(api, 'orders')
 
-    def create(self,
-               name=None,
-               payload_content_type='application/octet-stream',
-               algorithm=None,
-               bit_length=None,
-               mode=None,
-               expiration=None):
+    def Order(self, order_ref=None, name=None, payload_content_type=None,
+              algorithm=None, bit_length=None, mode=None, expiration=None):
         """
-        Creates a new Order in Barbican
+        Factory method that either retrieves an Order from Barbican if
+        given an order_ref, or creates a new Order if not, and returns
+        the Order object.
 
+        :param order_ref: If provided, will do an Order GET in Barbican
         :param name: A friendly name for the secret
         :param payload_content_type: The format/type of the secret data
-        :param algorithm: The algorithm the secret associated with
-        :param bit_length: The bit length of the secret
-        :param mode: The algorithm mode (e.g. CBC or CTR mode)
-        :param expiration: The expiration time of the secret in ISO 8601
-            format
-        :returns: Order href for the created order
+        :param algorithm: The algorithm associated with this secret key
+        :param bit_length: The bit length of this secret key
+        :param mode: The algorithm mode used with this secret key
+        :param expiration: The expiration time of the secret in ISO 8601 format
+        :returns: Secret object
         """
-        LOG.debug("Creating order")
-
-        order_dict = {'secret': {}}
-        order_dict['secret']['name'] = name
-        order_dict['secret'][
-            'payload_content_type'] = payload_content_type
-        order_dict['secret']['algorithm'] = algorithm
-        order_dict['secret']['bit_length'] = bit_length
-        order_dict['secret']['mode'] = mode
-        order_dict['secret']['expiration'] = expiration
-        self._remove_empty_keys(order_dict['secret'])
-
-        LOG.debug("Request body: {0}".format(order_dict['secret']))
-
-        resp = self.api.post(self.entity, order_dict)
-        return resp['order_ref']
-
-    def get(self, order_ref):
-        """
-        Returns an Order object
-
-        :param order_ref: The href for the order
-        """
-        LOG.debug("Getting order - Order href: {0}".format(order_ref))
-        if not order_ref:
-            raise ValueError('order_ref is required.')
-        resp = self.api.get(order_ref)
-        return Order(resp)
+        if order_ref:
+            LOG.debug("Getting order - Order href: {0}".format(order_ref))
+            base.validate_ref(order_ref, 'Order')
+            response = self.api.get(order_ref)
+            return Order(api=self.api, **response)
+        return Order(api=self.api, name=name,
+                     payload_content_type=payload_content_type,
+                     algorithm=algorithm, bit_length=bit_length, mode=mode,
+                     expiration=expiration)
 
     def delete(self, order_ref):
         """
@@ -134,6 +269,6 @@ class OrderManager(base.BaseEntityManager):
                                                                  limit))
         href = '{0}/{1}'.format(self.api.base_url, self.entity)
         params = {'limit': limit, 'offset': offset}
-        resp = self.api.get(href, params)
+        response = self.api.get(href, params)
 
-        return [Order(o) for o in resp['orders']]
+        return [Order(api=self.api, **o) for o in response.get('orders', [])]

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from barbicanclient import orders
+from barbicanclient import orders, base
 from barbicanclient.openstack.common import timeutils
 from barbicanclient.test import test_client
 from barbicanclient.test import test_client_secrets as test_secrets
@@ -47,25 +47,26 @@ class WhenTestingOrders(test_client.BaseEntityResource):
         self.manager = orders.OrderManager(self.api)
 
     def test_should_entity_str(self):
-        order_obj = orders.Order(self.order.get_dict(self.entity_href))
-        order_obj.error_status_code = '500'
-        order_obj.error_reason = 'Something is broken'
-        self.assertIn('status: ' + self.order.status,
-                      str(order_obj))
+        order = self.order.get_dict(self.entity_href)
+        order_obj = orders.Order(api=None, error_status_code='500',
+                                 error_reason='Something is broken', **order)
+        self.assertIn('status: ' + self.order.status, str(order_obj))
         self.assertIn('error_status_code: 500', str(order_obj))
 
     def test_should_entity_repr(self):
-        order_obj = orders.Order(self.order.get_dict(self.entity_href))
-        self.assertIn('order_ref=' + self.entity_href,
-                      repr(order_obj))
+        order = self.order.get_dict(self.entity_href)
+        order_obj = orders.Order(api=None, **order)
+        self.assertIn('order_ref=' + self.entity_href, repr(order_obj))
 
-    def test_should_create(self):
+    def test_should_submit_via_constructor(self):
         self.api.post.return_value = {'order_ref': self.entity_href}
 
-        order_href = self.manager\
-            .create(name=self.order.secret.name,
-                    algorithm=self.order.secret.algorithm,
-                    payload_content_type=self.order.secret.content)
+        order = self.manager.Order(
+            name=self.order.secret.name,
+            algorithm=self.order.secret.algorithm,
+            payload_content_type=self.order.secret.content
+        )
+        order_href = order.submit()
 
         self.assertEqual(self.entity_href, order_href)
 
@@ -82,10 +83,73 @@ class WhenTestingOrders(test_client.BaseEntityResource):
         self.assertEqual(self.order.secret.payload_content_type,
                          order_req['secret']['payload_content_type'])
 
+    def test_should_submit_via_attributes(self):
+        self.api.post.return_value = {'order_ref': self.entity_href}
+
+        order = self.manager.Order()
+        order.name = self.order.secret.name
+        order.algorithm = self.order.secret.algorithm
+        order.payload_content_type = self.order.secret.content
+        order_href = order.submit()
+
+        self.assertEqual(self.entity_href, order_href)
+
+        # Verify the correct URL was used to make the call.
+        args, kwargs = self.api.post.call_args
+        entity_resp = args[0]
+        self.assertEqual(self.entity, entity_resp)
+
+        # Verify that correct information was sent in the call.
+        order_req = args[1]
+        self.assertEqual(self.order.secret.name, order_req['secret']['name'])
+        self.assertEqual(self.order.secret.algorithm,
+                         order_req['secret']['algorithm'])
+        self.assertEqual(self.order.secret.payload_content_type,
+                         order_req['secret']['payload_content_type'])
+
+    def test_should_be_immutable_after_submit(self):
+        self.api.post.return_value = {'order_ref': self.entity_href}
+
+        order = self.manager.Order(
+            name=self.order.secret.name,
+            algorithm=self.order.secret.algorithm,
+            payload_content_type=self.order.secret.content
+        )
+        order_href = order.submit()
+
+        self.assertEqual(self.entity_href, order_href)
+
+        # Verify that attributes are immutable after store.
+        attributes = [
+            "name", "expiration", "algorithm", "bit_length", "mode",
+            "payload_content_type"
+        ]
+        for attr in attributes:
+            try:
+                setattr(order, attr, "test")
+                self.fail("didn't raise an ImmutableException exception")
+            except base.ImmutableException:
+                pass
+
+    def test_should_not_be_able_to_set_generated_attributes(self):
+        order = self.manager.Order()
+
+        # Verify that generated attributes cannot be set.
+        attributes = [
+            "order_ref", "secret_ref", "created", "updated", "status",
+            "error_status_code", "error_reason"
+        ]
+        for attr in attributes:
+            try:
+                setattr(order, attr, "test")
+                self.fail("didn't raise an AttributeError exception")
+            except AttributeError:
+                pass
+
     def test_should_get(self):
         self.api.get.return_value = self.order.get_dict(self.entity_href)
 
-        order = self.manager.get(order_ref=self.entity_href)
+        order = self.manager.Order(order_ref=self.entity_href)
         self.assertIsInstance(order, orders.Order)
         self.assertEqual(self.entity_href, order.order_ref)
 
@@ -121,9 +185,6 @@ class WhenTestingOrders(test_client.BaseEntityResource):
         params = args[1]
         self.assertEqual(10, params['limit'])
         self.assertEqual(5, params['offset'])
-
-    def test_should_fail_get_no_href(self):
-        self.assertRaises(ValueError, self.manager.get, None)
 
     def test_should_fail_delete_no_href(self):
         self.assertRaises(ValueError, self.manager.delete, None)
