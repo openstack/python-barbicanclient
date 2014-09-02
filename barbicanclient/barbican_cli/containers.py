@@ -16,39 +16,10 @@ Command-line interface sub-commands related to containers.
 from cliff import command
 from cliff import lister
 from cliff import show
-import six
 
-from barbicanclient.barbican_cli.formatter import EntityFormatter
-from barbicanclient.containers import RSAContainer, CertificateContainer
-
-
-class ContainerFormatter(EntityFormatter):
-
-    columns = ("Container href",
-               "Name",
-               "Created",
-               "Status",
-               "Type",
-               "Secrets",
-               "Consumers",
-               )
-
-    def _get_formatted_data(self, entity):
-        formatted_secrets = '\n'.join(
-            (s.secret_ref for n, s in six.iteritems(entity.secrets))
-        )
-        formatted_consumers = '\n'.join(
-            (str(c) for c in entity.consumers)
-        )
-        data = (entity.container_ref,
-                entity.name,
-                entity.created,
-                entity.status,
-                entity._type,
-                formatted_secrets,
-                formatted_consumers,
-                )
-        return data
+from barbicanclient.containers import CertificateContainer
+from barbicanclient.containers import Container
+from barbicanclient.containers import RSAContainer
 
 
 class DeleteContainer(command.Command):
@@ -63,7 +34,7 @@ class DeleteContainer(command.Command):
         self.app.client.containers.delete(args.URI)
 
 
-class GetContainer(show.ShowOne, ContainerFormatter):
+class GetContainer(show.ShowOne):
     """Retrieve a container by providing its URI."""
 
     def get_parser(self, prog_name):
@@ -73,10 +44,10 @@ class GetContainer(show.ShowOne, ContainerFormatter):
 
     def take_action(self, args):
         entity = self.app.client.containers.get(args.URI)
-        return self._get_formatted_entity(entity)
+        return entity._get_formatted_entity()
 
 
-class ListContainer(lister.Lister, ContainerFormatter):
+class ListContainer(lister.Lister):
     """List containers."""
 
     def get_parser(self, prog_name):
@@ -101,10 +72,10 @@ class ListContainer(lister.Lister, ContainerFormatter):
     def take_action(self, args):
         obj_list = self.app.client.containers.list(args.limit, args.offset,
                                                    args.name, args.type)
-        return self._list_objects(obj_list)
+        return Container._list_objects(obj_list)
 
 
-class CreateContainer(show.ShowOne, ContainerFormatter):
+class CreateContainer(show.ShowOne):
     """Store a container in Barbican."""
 
     def get_parser(self, prog_name):
@@ -155,7 +126,7 @@ class CreateContainer(show.ShowOne, ContainerFormatter):
             entity = container_type(api=self.app.client, name=args.name,
                                     secret_refs=secret_refs)
         entity.store()
-        return self._get_formatted_entity(entity)
+        return entity._get_formatted_entity()
 
     @staticmethod
     def _parse_secrets(secrets):

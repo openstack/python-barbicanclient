@@ -17,6 +17,7 @@ import logging
 import six
 
 from barbicanclient import base
+from barbicanclient import formatter
 from barbicanclient.openstack.common.timeutils import parse_isotime
 
 
@@ -32,7 +33,34 @@ def immutable_after_save(func):
     return wrapper
 
 
-class Secret(object):
+class SecretFormatter(formatter.EntityFormatter):
+
+    columns = ("Secret href",
+               "Name",
+               "Created",
+               "Status",
+               "Content types",
+               "Algorithm",
+               "Bit length",
+               "Mode",
+               "Expiration",
+               )
+
+    def _get_formatted_data(self):
+        data = (self.secret_ref,
+                self.name,
+                self.created,
+                self.status,
+                self.content_types,
+                self.algorithm,
+                self.bit_length,
+                self.mode,
+                self.expiration,
+                )
+        return data
+
+
+class Secret(SecretFormatter):
     """
     Secrets are used to keep track of the data stored in Barbican.
     """
@@ -210,22 +238,6 @@ class Secret(object):
             self._secret_ref = None
         else:
             raise LookupError("Secret is not yet stored.")
-
-    def __str__(self):
-        return ("Secret:\n"
-                "    href: {0}\n"
-                "    name: {1}\n"
-                "    created: {2}\n"
-                "    status: {3}\n"
-                "    content types: {4}\n"
-                "    algorithm: {5}\n"
-                "    bit length: {6}\n"
-                "    mode: {7}\n"
-                "    expiration: {8}\n"
-                .format(self.secret_ref, self.name, self.created,
-                        self.status, self.content_types, self.algorithm,
-                        self.bit_length, self.mode, self.expiration)
-                )
 
     def __repr__(self):
         return 'Secret(name="{0}")'.format(self.name)

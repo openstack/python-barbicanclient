@@ -16,6 +16,7 @@ import functools
 import logging
 
 from barbicanclient import base
+from barbicanclient import formatter
 from barbicanclient.openstack.common.timeutils import parse_isotime
 
 
@@ -31,7 +32,28 @@ def immutable_after_save(func):
     return wrapper
 
 
-class Order(object):
+class OrderFormatter(formatter.EntityFormatter):
+
+    columns = ("Order href",
+               "Secret href",
+               "Created",
+               "Status",
+               "Error code",
+               "Error message"
+               )
+
+    def _get_formatted_data(self):
+        data = (self.order_ref,
+                self.secret_ref,
+                self.created,
+                self.status,
+                self.error_status_code,
+                self.error_reason
+                )
+        return data
+
+
+class Order(OrderFormatter):
     """
     Orders are used to request the generation of a Secret in Barbican.
     """
@@ -195,22 +217,6 @@ class Order(object):
             self._order_ref = None
         else:
             raise LookupError("Order is not yet stored.")
-
-    def __str__(self):
-        str_rep = ("Order:\n"
-                   "    order href: {0}\n"
-                   "    secret href: {1}\n"
-                   "    created: {2}\n"
-                   "    status: {3}\n"
-                   ).format(self.order_ref, self.secret_ref,
-                            self.created, self.status)
-
-        if self.error_status_code:
-            str_rep = ''.join([str_rep, ("    error_status_code: {0}\n"
-                                         "    error_reason: {1}\n"
-                                         ).format(self.error_status_code,
-                                                  self.error_reason)])
-        return str_rep
 
     def __repr__(self):
         return 'Order(order_ref={0})'.format(self.order_ref)

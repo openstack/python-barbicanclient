@@ -17,6 +17,7 @@ import logging
 import six
 
 from barbicanclient import base
+from barbicanclient import formatter
 from barbicanclient import secrets
 from barbicanclient.openstack.common.timeutils import parse_isotime
 
@@ -33,7 +34,39 @@ def _immutable_after_save(func):
     return wrapper
 
 
-class Container(object):
+class ContainerFormatter(formatter.EntityFormatter):
+
+    columns = ("Container href",
+               "Name",
+               "Created",
+               "Status",
+               "Type",
+               "Secrets",
+               "Consumers",
+               )
+
+    def _get_formatted_data(self):
+        formatted_secrets = None
+        formatted_consumers = None
+        if self.secrets:
+            formatted_secrets = '\n'.join((
+                '='.join((name, secret_ref))
+                for name, secret_ref in six.iteritems(self.secret_refs)
+            ))
+        if self.consumers:
+            formatted_consumers = '\n'.join((str(c) for c in self.consumers))
+        data = (self.container_ref,
+                self.name,
+                self.created,
+                self.status,
+                self._type,
+                formatted_secrets,
+                formatted_consumers,
+                )
+        return data
+
+
+class Container(ContainerFormatter):
     """
     Containers are used to keep track of the data stored in Barbican.
     """
@@ -198,31 +231,54 @@ class Container(object):
     def _get_named_secret(self, name):
         return self.secrets.get(name)
 
-    def __str__(self):
-        sec = ['"{0}":\n{1}'.format(s.get('name'),
-                                    base.indent_object_string(s.get('secret'),
-                                                              4))
-               for s in six.iteritems(self.secrets)]
-        return ("Container:\n"
-                "   href: {0}\n"
-                "   name: {1}\n"
-                "   created: {2}\n"
-                "   status: {3}\n"
-                "   type: {4}\n"
-                "   secrets:\n"
-                "{5}\n"
-                "   consumers: {6}\n"
-                .format(self.container_ref, self.name, self.created,
-                        self.status, self._type,
-                        base.indent_object_string('\n'.join(sec)),
-                        self.consumers)
-                )
-
     def __repr__(self):
         return 'Container(name="{0}")'.format(self.name)
 
 
-class RSAContainer(Container):
+class RSAContainerFormatter(formatter.EntityFormatter):
+    _get_generic_data = ContainerFormatter._get_formatted_data
+
+    def _get_generic_columns(self):
+        return ContainerFormatter.columns
+
+    columns = ("Container href",
+               "Name",
+               "Created",
+               "Status",
+               "Type",
+               "Public Key",
+               "Private Key",
+               "PK Passphrase",
+               "Consumers",
+               )
+
+    def _get_formatted_data(self):
+        formatted_public_key = None
+        formatted_private_key = None
+        formatted_pkp = None
+        formatted_consumers = None
+        if self.public_key:
+            formatted_public_key = self.public_key.secret_ref
+        if self.private_key:
+            formatted_private_key = self.private_key.secret_ref
+        if self.private_key_passphrase:
+            formatted_pkp = self.private_key_passphrase.secret_ref
+        if self.consumers:
+            formatted_consumers = '\n'.join((str(c) for c in self.consumers))
+        data = (self.container_ref,
+                self.name,
+                self.created,
+                self.status,
+                self._type,
+                formatted_public_key,
+                formatted_private_key,
+                formatted_pkp,
+                formatted_consumers,
+                )
+        return data
+
+
+class RSAContainer(RSAContainerFormatter, Container):
     _required_secrets = ["public_key", "private_key"]
     _optional_secrets = ["private_key_passphrase"]
     _type = 'rsa'
@@ -292,29 +348,56 @@ class RSAContainer(Container):
     def __repr__(self):
         return 'RSAContainer(name="{0}")'.format(self.name)
 
-    def __str__(self):
-        return ("RSAContainer:\n"
-                "    href: {0}\n"
-                "    name: {1}\n"
-                "    created: {2}\n"
-                "    status: {3}\n"
-                "    public_key:\n"
-                "{4}\n"
-                "    private_key:\n"
-                "{5}\n"
-                "    private_key_passphrase:\n"
-                "{6}\n"
-                "    consumers: {7}\n"
-                .format(self.container_ref, self.name, self.created,
-                        self.status,
-                        base.indent_object_string(self.public_key),
-                        base.indent_object_string(self.private_key),
-                        base.indent_object_string(self.private_key_passphrase),
-                        self.consumers)
+
+class CertificateContainerFormatter(formatter.EntityFormatter):
+    _get_generic_data = ContainerFormatter._get_formatted_data
+
+    def _get_generic_columns(self):
+        return ContainerFormatter.columns
+
+    columns = ("Container href",
+               "Name",
+               "Created",
+               "Status",
+               "Type",
+               "Certificate",
+               "Intermediates",
+               "Private Key",
+               "PK Passphrase",
+               "Consumers",
+               )
+
+    def _get_formatted_data(self):
+        formatted_certificate = None
+        formatted_private_key = None
+        formatted_pkp = None
+        formatted_intermediates = None
+        formatted_consumers = None
+        if self.certificate:
+            formatted_certificate = self.certificate.secret_ref
+        if self.intermediates:
+            formatted_intermediates = self.intermediates.secret_ref
+        if self.private_key:
+            formatted_private_key = self.private_key.secret_ref
+        if self.private_key_passphrase:
+            formatted_pkp = self.private_key_passphrase.secret_ref
+        if self.consumers:
+            formatted_consumers = '\n'.join((str(c) for c in self.consumers))
+        data = (self.container_ref,
+                self.name,
+                self.created,
+                self.status,
+                self._type,
+                formatted_certificate,
+                formatted_intermediates,
+                formatted_private_key,
+                formatted_pkp,
+                formatted_consumers,
                 )
+        return data
 
 
-class CertificateContainer(Container):
+class CertificateContainer(CertificateContainerFormatter, Container):
     _required_secrets = ["certificate", "private_key"]
     _optional_secrets = ["private_key_passphrase", "intermediates"]
     _type = 'certificate'
@@ -398,30 +481,6 @@ class CertificateContainer(Container):
 
     def __repr__(self):
         return 'CertificateContainer(name="{0}")'.format(self.name)
-
-    def __str__(self):
-        return ("CertificateContainer:\n"
-                "    href: {0}\n"
-                "    name: {1}\n"
-                "    created: {2}\n"
-                "    status: {3}\n"
-                "    certificate:\n"
-                "{4}\n"
-                "    private_key:\n"
-                "{5}\n"
-                "    private_key_passphrase:\n"
-                "{6}\n"
-                "    intermediates:\n"
-                "{7}\n"
-                "    consumers: {8}\n"
-                .format(self.container_ref, self.name, self.created,
-                        self.status,
-                        base.indent_object_string(self.certificate),
-                        base.indent_object_string(self.private_key),
-                        base.indent_object_string(self.private_key_passphrase),
-                        base.indent_object_string(self.intermediates),
-                        self.consumers)
-                )
 
 
 class ContainerManager(base.BaseEntityManager):

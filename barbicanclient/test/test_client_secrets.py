@@ -52,7 +52,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
     def test_should_entity_str(self):
         secret_obj = self.manager.Secret(name=self.secret.name)
-        self.assertIn('name: ' + self.secret.name, str(secret_obj))
+        self.assertIn(self.secret.name, str(secret_obj))
 
     def test_should_entity_repr(self):
         secret_obj = self.manager.Secret(name=self.secret.name)

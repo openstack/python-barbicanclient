@@ -100,16 +100,19 @@ class WhenTestingContainers(test_client.BaseEntityResource):
 
     def test_should_generic_container_str(self):
         container_obj = self.manager.create(name=self.container.name)
-        self.assertIn('name: ' + self.container.name, str(container_obj))
+        self.assertIn(self.container.name, str(container_obj))
+        self.assertIn(' generic ', str(container_obj))
 
     def test_should_certificate_container_str(self):
         container_obj = self.manager.create_certificate(
             name=self.container.name)
-        self.assertIn('name: ' + self.container.name, str(container_obj))
+        self.assertIn(self.container.name, str(container_obj))
+        self.assertIn(' certificate ', str(container_obj))
 
     def test_should_rsa_container_str(self):
         container_obj = self.manager.create_rsa(name=self.container.name)
-        self.assertIn('name: ' + self.container.name, str(container_obj))
+        self.assertIn(self.container.name, str(container_obj))
+        self.assertIn(' rsa ', str(container_obj))
 
     def test_should_generic_container_repr(self):
         container_obj = self.manager.create(name=self.container.name)

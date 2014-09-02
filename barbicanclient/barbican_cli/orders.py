@@ -13,32 +13,14 @@
 """
 Command-line interface sub-commands related to orders.
 """
-
 from cliff import command
 from cliff import lister
 from cliff import show
 
-from barbicanclient.barbican_cli.formatter import EntityFormatter
+from barbicanclient import orders
 
 
-class OrderFormatter(EntityFormatter):
-
-    columns = ("Order href",
-               "Secret href",
-               "Created",
-               "Status",
-               )
-
-    def _get_formatted_data(self, entity):
-        data = (entity.order_ref,
-                entity.secret_ref,
-                entity.created,
-                entity.status,
-                )
-        return data
-
-
-class CreateOrder(show.ShowOne, OrderFormatter):
+class CreateOrder(show.ShowOne):
     """Create a new order."""
 
     def get_parser(self, prog_name):
@@ -71,7 +53,7 @@ class CreateOrder(show.ShowOne, OrderFormatter):
             algorithm=args.algorithm, bit_length=args.bit_length,
             mode=args.mode, expiration=args.expiration)
         entity.submit()
-        return self._get_formatted_entity(entity)
+        return entity._get_formatted_entity()
 
 
 class DeleteOrder(command.Command):
@@ -86,7 +68,7 @@ class DeleteOrder(command.Command):
         self.app.client.orders.delete(args.URI)
 
 
-class GetOrder(show.ShowOne, OrderFormatter):
+class GetOrder(show.ShowOne):
     """Retrieve an order by providing its URI."""
 
     def get_parser(self, prog_name):
@@ -96,10 +78,10 @@ class GetOrder(show.ShowOne, OrderFormatter):
 
     def take_action(self, args):
         entity = self.app.client.orders.Order(order_ref=args.URI)
-        return self._get_formatted_entity(entity)
+        return entity._get_formatted_entity()
 
 
-class ListOrder(lister.Lister, OrderFormatter):
+class ListOrder(lister.Lister):
     """List orders."""
 
     def get_parser(self, prog_name):
@@ -117,4 +99,4 @@ class ListOrder(lister.Lister, OrderFormatter):
 
     def take_action(self, args):
         obj_list = self.app.client.orders.list(args.limit, args.offset)
-        return self._list_objects(obj_list)
+        return orders.OrderFormatter._list_objects(obj_list)

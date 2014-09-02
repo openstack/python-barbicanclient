@@ -48,10 +48,13 @@ class WhenTestingOrders(test_client.BaseEntityResource):
 
     def test_should_entity_str(self):
         order = self.order.get_dict(self.entity_href)
-        order_obj = orders.Order(api=None, error_status_code='500',
-                                 error_reason='Something is broken', **order)
-        self.assertIn('status: ' + self.order.status, str(order_obj))
-        self.assertIn('error_status_code: 500', str(order_obj))
+        error_code = 500
+        error_reason = 'Something is broken'
+        order_obj = orders.Order(api=None, error_status_code=error_code,
+                                 error_reason=error_reason, **order)
+        self.assertIn(self.order.status, str(order_obj))
+        self.assertIn(str(error_code), str(order_obj))
+        self.assertIn(error_reason, str(order_obj))
 
     def test_should_entity_repr(self):
         order = self.order.get_dict(self.entity_href)

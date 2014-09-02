@@ -34,13 +34,6 @@ def validate_ref(ref, entity):
         raise ValueError('{0} incorrectly specified.'.format(entity))
 
 
-def indent_object_string(string, spaces=8):
-    return '\n'.join(
-        ['{0}{1}'.format(' ' * spaces, line)
-         for line in str(string).split('\n') if line]
-    )
-
-
 class ImmutableException(Exception):
     def __init__(self, attribute=None):
         message = "This object is immutable!"

@@ -13,39 +13,11 @@
 """
 Command-line interface sub-commands related to secrets.
 """
-
 from cliff import command
 from cliff import lister
 from cliff import show
 
-from barbicanclient.barbican_cli.formatter import EntityFormatter
-
-
-class SecretFormatter(EntityFormatter):
-
-    columns = ("Secret href",
-               "Name",
-               "Created",
-               "Status",
-               "Content types",
-               "Algorithm",
-               "Bit length",
-               "Mode",
-               "Expiration",
-               )
-
-    def _get_formatted_data(self, entity):
-        data = (entity.secret_ref,
-                entity.name,
-                entity.created,
-                entity.status,
-                entity.content_types,
-                entity.algorithm,
-                entity.bit_length,
-                entity.mode,
-                entity.expiration,
-                )
-        return data
+from barbicanclient import secrets
 
 
 class DeleteSecret(command.Command):
@@ -60,7 +32,7 @@ class DeleteSecret(command.Command):
         self.app.client.secrets.delete(args.URI)
 
 
-class GetSecret(show.ShowOne, SecretFormatter):
+class GetSecret(show.ShowOne):
     """Retrieve a secret by providing its URI."""
 
     def get_parser(self, prog_name):
@@ -86,10 +58,10 @@ class GetSecret(show.ShowOne, SecretFormatter):
                     (entity,))
         else:
             entity = self.app.client.secrets.Secret(secret_ref=args.URI)
-            return self._get_formatted_entity(entity)
+            return entity._get_formatted_entity()
 
 
-class ListSecret(lister.Lister, SecretFormatter):
+class ListSecret(lister.Lister):
     """List secrets."""
 
     def get_parser(self, prog_name):
@@ -123,10 +95,10 @@ class ListSecret(lister.Lister, SecretFormatter):
                                                 args.name, args.mode,
                                                 args.algorithm,
                                                 args.bit_length)
-        return self._list_objects(obj_list)
+        return secrets.SecretFormatter._list_objects(obj_list)
 
 
-class StoreSecret(show.ShowOne, SecretFormatter):
+class StoreSecret(show.ShowOne):
     """Store a secret in Barbican."""
 
     def get_parser(self, prog_name):
@@ -168,4 +140,4 @@ class StoreSecret(show.ShowOne, SecretFormatter):
             algorithm=args.algorithm, bit_length=args.bit_length,
             mode=args.mode, expiration=args.expiration)
         entity.store()
-        return self._get_formatted_entity(entity)
+        return entity._get_formatted_entity()
