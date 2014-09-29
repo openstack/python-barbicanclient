@@ -106,7 +106,7 @@ class WhenTestingClientInit(testtools.TestCase):
         c = client.Client(auth_plugin=None, endpoint=self.endpoint,
                           tenant_id=self.tenant_id)
         expected = self.endpoint.rstrip('/')
-        self.assertEqual(expected, c.base_url)
+        self.assertEqual(expected, c._base_url)
 
     def test_auth_token_header_is_set_when_using_auth_plugin(self):
         c = client.Client(auth_plugin=self.fake_auth)
@@ -127,11 +127,11 @@ class WhenTestingClientInit(testtools.TestCase):
 
     def test_base_url_starts_with_endpoint_url(self):
         c = client.Client(auth_plugin=self.fake_auth)
-        self.assertTrue(c.base_url.startswith(self.endpoint))
+        self.assertTrue(c._base_url.startswith(self.endpoint))
 
     def test_base_url_has_no_tenant_id(self):
         c = client.Client(auth_plugin=self.fake_auth)
-        self.assertNotIn(self.tenant_id, c.base_url)
+        self.assertNotIn(self.tenant_id, c._base_url)
 
     def test_should_raise_for_unauthorized_response(self):
         resp = self._mock_response(status_code=401)
@@ -176,7 +176,7 @@ class WhenTestingClientWithSession(testtools.TestCase):
         self.session.request.return_value.json.return_value = {
             'entity_ref': self.entity_href}
 
-        resp_dict = self.client.post(self.entity, self.entity_dict)
+        resp_dict = self.client._post(self.entity, self.entity_dict)
 
         self.assertEqual(self.entity_href, resp_dict['entity_ref'])
 
@@ -193,7 +193,7 @@ class WhenTestingClientWithSession(testtools.TestCase):
         self.session.request.return_value = mock.MagicMock(status_code=200)
         self.session.request.return_value.json.return_value = {
             'name': self.entity_name}
-        resp_dict = self.client.get(self.entity_href)
+        resp_dict = self.client._get(self.entity_href)
 
         self.assertEqual(self.entity_name, resp_dict['name'])
 
@@ -211,7 +211,7 @@ class WhenTestingClientWithSession(testtools.TestCase):
                                                            content='content')
 
         headers = {'Accept': 'application/octet-stream'}
-        content = self.client.get_raw(self.entity_href, headers)
+        content = self.client._get_raw(self.entity_href, headers)
 
         self.assertEqual('content', content)
 
@@ -227,7 +227,7 @@ class WhenTestingClientWithSession(testtools.TestCase):
     def test_should_delete(self):
         self.session.request.return_value = mock.MagicMock(status_code=200)
 
-        self.client.delete(self.entity_href)
+        self.client._delete(self.entity_href)
 
         # Verify the correct URL was used to make the call.
         args, kwargs = self.session.request.call_args
@@ -255,14 +255,14 @@ class WhenTestingClientWithKeystoneV2(WhenTestingClientWithSession):
         auth_plugin = KeystonePasswordPlugins.get_v2_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        list_secrets_url = '{0}/secrets'.format(c.base_url)
+        list_secrets_url = '{0}/secrets'.format(c._base_url)
         httpretty.register_uri(
             httpretty.GET,
             list_secrets_url,
             status=200,
             body='{{"name": "{0}", "secret_ref": "{1}"}}'.format(
                  self.entity_name, self.entity_href))
-        resp = c.get(list_secrets_url)
+        resp = c._get(list_secrets_url)
         self.assertEqual(self.entity_name, resp['name'])
         self.assertEqual(self.entity_href, resp['secret_ref'])
 
@@ -281,14 +281,14 @@ class WhenTestingClientWithKeystoneV2(WhenTestingClientWithSession):
         auth_plugin = KeystonePasswordPlugins.get_v2_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        post_secret_url = '{0}/secrets/'.format(c.base_url)
+        post_secret_url = '{0}/secrets/'.format(c._base_url)
         httpretty.register_uri(
             httpretty.POST,
             post_secret_url,
             status=200,
             body='{{"name": "{0}", "secret_ref": "{1}"}}'.format(
                  self.entity_name, self.entity_href))
-        resp = c.post('secrets', '{"name":"test"}')
+        resp = c._post('secrets', '{"name":"test"}')
         self.assertEqual(self.entity_name, resp['name'])
         self.assertEqual(self.entity_href, resp['secret_ref'])
 
@@ -307,13 +307,13 @@ class WhenTestingClientWithKeystoneV2(WhenTestingClientWithSession):
         auth_plugin = KeystonePasswordPlugins.get_v2_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        get_secret_url = '{0}/secrets/s1'.format(c.base_url)
+        get_secret_url = '{0}/secrets/s1'.format(c._base_url)
         httpretty.register_uri(
             httpretty.GET,
             get_secret_url,
             status=200, body='content')
         headers = {"Content-Type": "application/json"}
-        resp = c.get_raw(get_secret_url, headers)
+        resp = c._get_raw(get_secret_url, headers)
         self.assertEqual(b'content', resp)
 
     @httpretty.activate
@@ -331,12 +331,12 @@ class WhenTestingClientWithKeystoneV2(WhenTestingClientWithSession):
         auth_plugin = KeystonePasswordPlugins.get_v2_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        delete_secret_url = '{0}/secrets/s1'.format(c.base_url)
+        delete_secret_url = '{0}/secrets/s1'.format(c._base_url)
         httpretty.register_uri(
             httpretty.DELETE,
             delete_secret_url,
             status=201)
-        c.delete(delete_secret_url)
+        c._delete(delete_secret_url)
 
 
 class WhenTestingClientWithKeystoneV3(WhenTestingClientWithSession):
@@ -360,14 +360,14 @@ class WhenTestingClientWithKeystoneV3(WhenTestingClientWithSession):
         auth_plugin = KeystonePasswordPlugins.get_v3_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        list_secrets_url = '{0}/secrets'.format(c.base_url)
+        list_secrets_url = '{0}/secrets'.format(c._base_url)
         httpretty.register_uri(
             httpretty.GET,
             list_secrets_url,
             status=200,
             body='{{"name": "{0}", "secret_ref": "{1}"}}'.format(
                  self.entity_name, self.entity_href))
-        resp = c.get(list_secrets_url)
+        resp = c._get(list_secrets_url)
         self.assertEqual(self.entity_name, resp['name'])
         self.assertEqual(self.entity_href, resp['secret_ref'])
 
@@ -388,7 +388,7 @@ class WhenTestingClientWithKeystoneV3(WhenTestingClientWithSession):
         auth_plugin = KeystonePasswordPlugins.get_v3_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        post_secret_url = '{0}/secrets/'.format(c.base_url)
+        post_secret_url = '{0}/secrets/'.format(c._base_url)
         httpretty.register_uri(
             httpretty.POST,
             post_secret_url,
@@ -396,7 +396,7 @@ class WhenTestingClientWithKeystoneV3(WhenTestingClientWithSession):
             x_subject_token=id,
             body='{{"name": "{0}", "secret_ref": "{1}"}}'.format(
                  self.entity_name, self.entity_href))
-        resp = c.post('secrets', '{"name":"test"}')
+        resp = c._post('secrets', '{"name":"test"}')
         self.assertEqual(self.entity_name, resp['name'])
         self.assertEqual(self.entity_href, resp['secret_ref'])
 
@@ -417,13 +417,13 @@ class WhenTestingClientWithKeystoneV3(WhenTestingClientWithSession):
         auth_plugin = KeystonePasswordPlugins.get_v3_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        get_secret_url = '{0}/secrets/s1'.format(c.base_url)
+        get_secret_url = '{0}/secrets/s1'.format(c._base_url)
         httpretty.register_uri(
             httpretty.GET,
             get_secret_url,
             status=200, body='content')
         headers = {"Content-Type": "application/json"}
-        resp = c.get_raw(get_secret_url, headers)
+        resp = c._get_raw(get_secret_url, headers)
         self.assertEqual(b'content', resp)
 
     @httpretty.activate
@@ -443,12 +443,12 @@ class WhenTestingClientWithKeystoneV3(WhenTestingClientWithSession):
         auth_plugin = KeystonePasswordPlugins.get_v3_plugin()
         c = client.Client(auth_plugin=auth_plugin)
         # emulate list secrets
-        delete_secret_url = '{0}/secrets/s1'.format(c.base_url)
+        delete_secret_url = '{0}/secrets/s1'.format(c._base_url)
         httpretty.register_uri(
             httpretty.DELETE,
             delete_secret_url,
             status=201)
-        c.delete(delete_secret_url)
+        c._delete(delete_secret_url)
 
 
 class BaseEntityResource(testtools.TestCase):
@@ -496,4 +496,4 @@ class BaseEntityResource(testtools.TestCase):
             'abcd1234-eabc-5678-9abc-abcdef012345'
 
         self.api = mock.MagicMock()
-        self.api.base_url = self.endpoint[:-1]
+        self.api._base_url = self.endpoint[:-1]

@@ -42,15 +42,15 @@ class ImmutableException(Exception):
 
 class BaseEntityManager(object):
     def __init__(self, api, entity):
-        self.api = api
-        self.entity = entity
+        self._api = api
+        self._entity = entity
 
     def total(self):
         """
         Returns the total number of entities stored in Barbican.
         """
-        href = '{0}/{1}'.format(self.api.base_url, self.entity)
+        href = '{0}/{1}'.format(self._api._base_url, self._entity)
         params = {'limit': 0, 'offset': 0}
-        resp = self.api.get(href, params)
+        resp = self._api._get(href, params)
 
         return resp['total']

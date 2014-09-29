@@ -57,7 +57,7 @@ class GetSecret(show.ShowOne):
             return (('Secret',),
                     (entity,))
         else:
-            entity = self.app.client.secrets.Secret(secret_ref=args.URI)
+            entity = self.app.client.secrets.get(secret_ref=args.URI)
             return entity._get_formatted_entity()
 
 
@@ -95,7 +95,7 @@ class ListSecret(lister.Lister):
                                                 args.name, args.mode,
                                                 args.algorithm,
                                                 args.bit_length)
-        return secrets.SecretFormatter._list_objects(obj_list)
+        return secrets.Secret._list_objects(obj_list)
 
 
 class StoreSecret(show.ShowOne):
@@ -133,7 +133,7 @@ class StoreSecret(show.ShowOne):
         return parser
 
     def take_action(self, args):
-        entity = self.app.client.secrets.Secret(
+        entity = self.app.client.secrets.create(
             name=args.name, payload=args.payload,
             payload_content_type=args.payload_content_type,
             payload_content_encoding=args.payload_content_encoding,

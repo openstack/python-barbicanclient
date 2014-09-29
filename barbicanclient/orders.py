@@ -58,7 +58,7 @@ class Order(OrderFormatter):
     """
     Orders are used to request the generation of a Secret in Barbican.
     """
-    entity = 'orders'
+    _entity = 'orders'
 
     def __init__(self, api, name=None, algorithm=None, bit_length=None,
                  mode=None, payload_content_type='application/octet-stream',
@@ -207,14 +207,14 @@ class Order(OrderFormatter):
             'secret': self._secret
         })
         LOG.debug("Request body: {0}".format(order_dict.get('secret')))
-        response = self._api.post(self.entity, order_dict)
+        response = self._api._post(self._entity, order_dict)
         if response:
             self._order_ref = response.get('order_ref')
         return self._order_ref
 
     def delete(self):
         if self._order_ref:
-            self._api.delete(self._order_ref)
+            self._api._delete(self._order_ref)
             self._order_ref = None
         else:
             raise LookupError("Order is not yet stored.")
@@ -228,45 +228,49 @@ class OrderManager(base.BaseEntityManager):
     def __init__(self, api):
         super(OrderManager, self).__init__(api, 'orders')
 
-    def Order(self, order_ref=None, name=None, payload_content_type=None,
-              algorithm=None, bit_length=None, mode=None, expiration=None):
+    def get(self, order_ref):
         """
-        Factory method that either retrieves an Order from Barbican if
-        given an order_ref, or creates a new Order if not, and returns
-        the Order object.
+        Get an Order
 
-        :param order_ref: If provided, will do an Order GET in Barbican
+        :param order_ref: Full HATEOAS reference to an Order
+        :returns: Order
+        """
+        LOG.debug("Getting order - Order href: {0}".format(order_ref))
+        base.validate_ref(order_ref, 'Order')
+        response = self._api._get(order_ref)
+        return Order(api=self._api, **response)
+
+    def create(self, name=None, payload_content_type=None,
+               algorithm=None, bit_length=None, mode=None, expiration=None):
+        """
+        Create an Order
+
         :param name: A friendly name for the secret
         :param payload_content_type: The format/type of the secret data
         :param algorithm: The algorithm associated with this secret key
         :param bit_length: The bit length of this secret key
         :param mode: The algorithm mode used with this secret key
         :param expiration: The expiration time of the secret in ISO 8601 format
-        :returns: Secret object
+        :returns: Order
         """
-        if order_ref:
-            LOG.debug("Getting order - Order href: {0}".format(order_ref))
-            base.validate_ref(order_ref, 'Order')
-            response = self.api.get(order_ref)
-            return Order(api=self.api, **response)
-        return Order(api=self.api, name=name,
+        return Order(api=self._api, name=name,
                      payload_content_type=payload_content_type,
                      algorithm=algorithm, bit_length=bit_length, mode=mode,
                      expiration=expiration)
 
     def delete(self, order_ref):
         """
-        Deletes an order
+        Delete an Order
 
         :param order_ref: The href for the order
         """
         if not order_ref:
             raise ValueError('order_ref is required.')
-        self.api.delete(order_ref)
+        self._api._delete(order_ref)
 
     def list(self, limit=10, offset=0):
         """
-        Lists all orders for the tenant
+        List all Orders for the tenant
 
         :param limit: Max number of orders returned
         :param offset: Offset orders to begin list
@@ -274,8 +278,8 @@ class OrderManager(base.BaseEntityManager):
         """
         LOG.debug('Listing orders - offset {0} limit {1}'.format(offset,
                                                                  limit))
-        href = '{0}/{1}'.format(self.api.base_url, self.entity)
+        href = '{0}/{1}'.format(self._api._base_url, self._entity)
         params = {'limit': limit, 'offset': offset}
-        response = self.api.get(href, params)
+        response = self._api._get(href, params)
 
-        return [Order(api=self.api, **o) for o in response.get('orders', [])]
+        return [Order(api=self._api, **o) for o in response.get('orders', [])]

@@ -93,7 +93,7 @@ class CreateContainer(show.ShowOne):
         return parser
 
     def take_action(self, args):
-        container_type = self.app.client.containers.container_map.get(
+        container_type = self.app.client.containers._container_map.get(
             args.type)
         if not container_type:
             raise ValueError('Invalid container type specified.')

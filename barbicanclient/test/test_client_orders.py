@@ -63,9 +63,9 @@ class WhenTestingOrders(test_client.BaseEntityResource):
         self.assertIn('order_ref=' + self.entity_href, repr(order_obj))
 
     def test_should_submit_via_constructor(self):
-        self.api.post.return_value = {'order_ref': self.entity_href}
+        self.api._post.return_value = {'order_ref': self.entity_href}
 
-        order = self.manager.Order(
+        order = self.manager.create(
             name=self.order.secret.name,
             algorithm=self.order.secret.algorithm,
             payload_content_type=self.order.secret.content
@@ -75,7 +75,7 @@ class WhenTestingOrders(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, order_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.post.call_args
+        args, kwargs = self.api._post.call_args
         entity_resp = args[0]
         self.assertEqual(self.entity, entity_resp)
 
@@ -88,9 +88,9 @@ class WhenTestingOrders(test_client.BaseEntityResource):
                          order_req['secret']['payload_content_type'])
 
     def test_should_submit_via_attributes(self):
-        self.api.post.return_value = {'order_ref': self.entity_href}
+        self.api._post.return_value = {'order_ref': self.entity_href}
 
-        order = self.manager.Order()
+        order = self.manager.create()
         order.name = self.order.secret.name
         order.algorithm = self.order.secret.algorithm
         order.payload_content_type = self.order.secret.content
@@ -99,7 +99,7 @@ class WhenTestingOrders(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, order_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.post.call_args
+        args, kwargs = self.api._post.call_args
         entity_resp = args[0]
         self.assertEqual(self.entity, entity_resp)
 
@@ -112,9 +112,9 @@ class WhenTestingOrders(test_client.BaseEntityResource):
                          order_req['secret']['payload_content_type'])
 
     def test_should_be_immutable_after_submit(self):
-        self.api.post.return_value = {'order_ref': self.entity_href}
+        self.api._post.return_value = {'order_ref': self.entity_href}
 
-        order = self.manager.Order(
+        order = self.manager.create(
             name=self.order.secret.name,
             algorithm=self.order.secret.algorithm,
             payload_content_type=self.order.secret.content
@@ -136,7 +136,7 @@ class WhenTestingOrders(test_client.BaseEntityResource):
                 pass
 
     def test_should_not_be_able_to_set_generated_attributes(self):
-        order = self.manager.Order()
+        order = self.manager.create()
 
         # Verify that generated attributes cannot be set.
         attributes = [
@@ -151,14 +151,14 @@ class WhenTestingOrders(test_client.BaseEntityResource):
                 pass
 
     def test_should_get(self):
-        self.api.get.return_value = self.order.get_dict(self.entity_href)
+        self.api._get.return_value = self.order.get_dict(self.entity_href)
 
-        order = self.manager.Order(order_ref=self.entity_href)
+        order = self.manager.get(order_ref=self.entity_href)
         self.assertIsInstance(order, orders.Order)
         self.assertEqual(self.entity_href, order.order_ref)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.get.call_args
+        args, kwargs = self.api._get.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
 
@@ -166,14 +166,14 @@ class WhenTestingOrders(test_client.BaseEntityResource):
         self.manager.delete(order_ref=self.entity_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.delete.call_args
+        args, kwargs = self.api._delete.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
 
     def test_should_get_list(self):
         order_resp = self.order.get_dict(self.entity_href)
-        self.api.get.return_value = {"orders":
-                                     [order_resp for v in range(3)]}
+        self.api._get.return_value = {"orders":
+                                      [order_resp for v in range(3)]}
 
         orders_list = self.manager.list(limit=10, offset=5)
         self.assertTrue(len(orders_list) == 3)
@@ -181,7 +181,7 @@ class WhenTestingOrders(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, orders_list[0].order_ref)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.get.call_args
+        args, kwargs = self.api._get.call_args
         url = args[0]
         self.assertEqual(self.entity_base[:-1], url)
 
@@ -192,3 +192,8 @@ class WhenTestingOrders(test_client.BaseEntityResource):
 
     def test_should_fail_delete_no_href(self):
         self.assertRaises(ValueError, self.manager.delete, None)
+
+    def test_should_get_total(self):
+        self.api._get.return_value = {'total': 1}
+        total = self.manager.total()
+        self.assertEqual(total, 1)

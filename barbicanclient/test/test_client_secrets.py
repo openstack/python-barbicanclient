@@ -52,24 +52,24 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.manager = secrets.SecretManager(self.api)
 
     def test_should_entity_str(self):
-        secret_obj = self.manager.Secret(name=self.secret.name)
+        secret_obj = self.manager.create(name=self.secret.name)
         self.assertIn(self.secret.name, str(secret_obj))
 
     def test_should_entity_repr(self):
-        secret_obj = self.manager.Secret(name=self.secret.name)
+        secret_obj = self.manager.create(name=self.secret.name)
         self.assertIn('name="{0}"'.format(self.secret.name), repr(secret_obj))
 
     def test_should_store_via_constructor(self):
-        self.api.post.return_value = {'secret_ref': self.entity_href}
+        self.api._post.return_value = {'secret_ref': self.entity_href}
 
-        secret = self.manager.Secret(name=self.secret.name,
+        secret = self.manager.create(name=self.secret.name,
                                      payload=self.secret.payload,
                                      payload_content_type=self.secret.content)
         secret_href = secret.store()
         self.assertEqual(self.entity_href, secret_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.post.call_args
+        args, kwargs = self.api._post.call_args
         entity_resp = args[0]
         self.assertEqual(self.entity, entity_resp)
 
@@ -81,9 +81,9 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
                          secret_req['payload_content_type'])
 
     def test_should_store_via_attributes(self):
-        self.api.post.return_value = {'secret_ref': self.entity_href}
+        self.api._post.return_value = {'secret_ref': self.entity_href}
 
-        secret = self.manager.Secret()
+        secret = self.manager.create()
         secret.name = self.secret.name
         secret.payload = self.secret.payload
         secret.payload_content_type = self.secret.content
@@ -91,7 +91,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, secret_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.post.call_args
+        args, kwargs = self.api._post.call_args
         entity_resp = args[0]
         self.assertEqual(self.entity, entity_resp)
 
@@ -103,9 +103,9 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
                          secret_req['payload_content_type'])
 
     def test_should_be_immutable_after_submit(self):
-        self.api.post.return_value = {'secret_ref': self.entity_href}
+        self.api._post.return_value = {'secret_ref': self.entity_href}
 
-        secret = self.manager.Secret(name=self.secret.name,
+        secret = self.manager.create(name=self.secret.name,
                                      payload=self.secret.payload,
                                      payload_content_type=self.secret.content)
         secret_href = secret.store()
@@ -125,7 +125,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
                 pass
 
     def test_should_not_be_able_to_set_generated_attributes(self):
-        secret = self.manager.Secret()
+        secret = self.manager.create()
 
         # Verify that generated attributes cannot be set.
         attributes = [
@@ -139,24 +139,24 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
                 pass
 
     def test_should_get(self):
-        self.api.get.return_value = self.secret.get_dict(self.entity_href)
+        self.api._get.return_value = self.secret.get_dict(self.entity_href)
 
-        secret = self.manager.Secret(secret_ref=self.entity_href)
+        secret = self.manager.get(secret_ref=self.entity_href)
         self.assertIsInstance(secret, secrets.Secret)
         self.assertEqual(self.entity_href, secret.secret_ref)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.get.call_args
+        args, kwargs = self.api._get.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
 
     def test_should_decrypt_with_content_type(self):
-        self.api.get.return_value = self.secret.get_dict(self.entity_href)
+        self.api._get.return_value = self.secret.get_dict(self.entity_href)
 
         decrypted = 'decrypted text here'
-        self.api.get_raw.return_value = decrypted
+        self.api._get_raw.return_value = decrypted
 
-        secret = self.manager.Secret(
+        secret = self.manager.get(
             secret_ref=self.entity_href,
             payload_content_type='application/octet-stream'
         )
@@ -164,7 +164,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(decrypted, secret_payload)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.get_raw.call_args
+        args, kwargs = self.api._get_raw.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
 
@@ -174,22 +174,22 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
     def test_should_decrypt_without_content_type(self):
         content_types_dict = {'default': 'application/octet-stream'}
-        self.api.get.return_value = self.secret.get_dict(self.entity_href,
-                                                         content_types_dict)
+        self.api._get.return_value = self.secret.get_dict(self.entity_href,
+                                                          content_types_dict)
         decrypted = 'decrypted text here'
-        self.api.get_raw.return_value = decrypted
+        self.api._get_raw.return_value = decrypted
 
-        secret = self.manager.Secret(secret_ref=self.entity_href)
+        secret = self.manager.get(secret_ref=self.entity_href)
         secret_payload = secret.payload
         self.assertEqual(decrypted, secret_payload)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.get.call_args
+        args, kwargs = self.api._get.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.get_raw.call_args
+        args, kwargs = self.api._get_raw.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
 
@@ -201,14 +201,14 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.manager.delete(secret_ref=self.entity_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.delete.call_args
+        args, kwargs = self.api._delete.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
 
     def test_should_get_list(self):
         secret_resp = self.secret.get_dict(self.entity_href)
-        self.api.get.return_value = {"secrets":
-                                     [secret_resp for v in range(3)]}
+        self.api._get.return_value = {"secrets":
+                                      [secret_resp for v in range(3)]}
 
         secrets_list = self.manager.list(limit=10, offset=5)
         self.assertTrue(len(secrets_list) == 3)
@@ -216,7 +216,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, secrets_list[0].secret_ref)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.get.call_args
+        args, kwargs = self.api._get.call_args
         url = args[0]
         self.assertEqual(self.entity_base[:-1], url)
 
@@ -226,12 +226,12 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(5, params['offset'])
 
     def test_should_fail_get_invalid_secret(self):
-        self.assertRaises(ValueError, self.manager.Secret,
+        self.assertRaises(ValueError, self.manager.get,
                           **{'secret_ref': '12345'})
 
     def test_should_fail_decrypt_no_content_types(self):
-        self.api.get.return_value = self.secret.get_dict(self.entity_href)
-        secret = self.manager.Secret(secret_ref=self.entity_href)
+        self.api._get.return_value = self.secret.get_dict(self.entity_href)
+        secret = self.manager.get(secret_ref=self.entity_href)
         try:
             secret.payload
             self.fail("didn't raise a ValueError exception")
@@ -240,9 +240,9 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
     def test_should_fail_decrypt_no_default_content_type(self):
         content_types_dict = {'no-default': 'application/octet-stream'}
-        self.api.get.return_value = self.secret.get_dict(self.entity_href,
-                                                         content_types_dict)
-        secret = self.manager.Secret(secret_ref=self.entity_href)
+        self.api._get.return_value = self.secret.get_dict(self.entity_href,
+                                                          content_types_dict)
+        secret = self.manager.get(secret_ref=self.entity_href)
         try:
             secret.payload
             self.fail("didn't raise a ValueError exception")
@@ -251,3 +251,8 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
     def test_should_fail_delete_no_href(self):
         self.assertRaises(ValueError, self.manager.delete, None)
+
+    def test_should_get_total(self):
+        self.api._get.return_value = {'total': 1}
+        total = self.manager.total()
+        self.assertEqual(total, 1)

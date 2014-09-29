@@ -131,7 +131,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                       repr(container_obj))
 
     def test_should_store_generic_via_constructor(self):
-        self.api.post.return_value = {'container_ref': self.entity_href}
+        self.api._post.return_value = {'container_ref': self.entity_href}
 
         container = self.manager.create(
             name=self.container.name,
@@ -141,7 +141,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, container_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.post.call_args
+        args, kwargs = self.api._post.call_args
         entity_resp = args[0]
         self.assertEqual(self.entity, entity_resp)
 
@@ -153,7 +153,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                          container_req['secret_refs'])
 
     def test_should_store_generic_via_attributes(self):
-        self.api.post.return_value = {'container_ref': self.entity_href}
+        self.api._post.return_value = {'container_ref': self.entity_href}
 
         container = self.manager.create()
         container.name = self.container.name
@@ -163,7 +163,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, container_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.post.call_args
+        args, kwargs = self.api._post.call_args
         entity_resp = args[0]
         self.assertEqual(self.entity, entity_resp)
 
@@ -175,7 +175,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                               container_req['secret_refs'])
 
     def test_should_store_certificate_via_attributes(self):
-        self.api.post.return_value = {'container_ref': self.entity_href}
+        self.api._post.return_value = {'container_ref': self.entity_href}
 
         container = self.manager.create_certificate()
         container.name = self.container.name
@@ -188,7 +188,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, container_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.post.call_args
+        args, kwargs = self.api._post.call_args
         entity_resp = args[0]
         self.assertEqual(self.entity, entity_resp)
 
@@ -200,7 +200,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                               container_req['secret_refs'])
 
     def test_should_store_certificate_via_constructor(self):
-        self.api.post.return_value = {'container_ref': self.entity_href}
+        self.api._post.return_value = {'container_ref': self.entity_href}
 
         container = self.manager.create_certificate(
             name=self.container.name,
@@ -213,7 +213,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, container_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.post.call_args
+        args, kwargs = self.api._post.call_args
         entity_resp = args[0]
         self.assertEqual(self.entity, entity_resp)
 
@@ -225,7 +225,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                               container_req['secret_refs'])
 
     def test_should_store_rsa_via_attributes(self):
-        self.api.post.return_value = {'container_ref': self.entity_href}
+        self.api._post.return_value = {'container_ref': self.entity_href}
 
         container = self.manager.create_rsa()
         container.name = self.container.name
@@ -237,7 +237,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, container_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.post.call_args
+        args, kwargs = self.api._post.call_args
         entity_resp = args[0]
         self.assertEqual(self.entity, entity_resp)
 
@@ -249,7 +249,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                               container_req['secret_refs'])
 
     def test_should_store_rsa_via_constructor(self):
-        self.api.post.return_value = {'container_ref': self.entity_href}
+        self.api._post.return_value = {'container_ref': self.entity_href}
 
         container = self.manager.create_rsa(
             name=self.container.name,
@@ -262,7 +262,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, container_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.post.call_args
+        args, kwargs = self.api._post.call_args
         entity_resp = args[0]
         self.assertEqual(self.entity, entity_resp)
 
@@ -274,7 +274,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                               container_req['secret_refs'])
 
     def test_should_get_secret_refs_when_created_using_secret_objects(self):
-        self.api.post.return_value = {'container_ref': self.entity_href}
+        self.api._post.return_value = {'container_ref': self.entity_href}
 
         container = self.manager.create(
             name=self.container.name,
@@ -285,8 +285,8 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                          self.container.generic_secret_refs)
 
     def test_should_reload_attributes_after_store(self):
-        self.api.post.return_value = {'container_ref': self.entity_href}
-        self.api.get.return_value = self.container.get_dict(self.entity_href)
+        self.api._post.return_value = {'container_ref': self.entity_href}
+        self.api._get.return_value = self.container.get_dict(self.entity_href)
 
         container = self.manager.create(
             name=self.container.name,
@@ -321,7 +321,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         container.add(self.container.secret.name, self.container.secret)
 
     def test_should_be_immutable_after_store(self):
-        self.api.post.return_value = {'container_ref': self.entity_href}
+        self.api._post.return_value = {'container_ref': self.entity_href}
 
         container = self.manager.create(
             name=self.container.name,
@@ -359,28 +359,29 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                 pass
 
     def test_should_get_generic_container(self):
-        self.api.get.return_value = self.container.get_dict(self.entity_href)
+        self.api._get.return_value = self.container.get_dict(self.entity_href)
 
         container = self.manager.get(container_ref=self.entity_href)
         self.assertIsInstance(container, containers.Container)
         self.assertEqual(self.entity_href, container.container_ref)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.get.call_args
+        args, kwargs = self.api._get.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
         self.assertIsNotNone(container.secrets)
 
     def test_should_get_certificate_container(self):
-        self.api.get.return_value = self.container.get_dict(self.entity_href,
-                                                            type='certificate')
+        self.api._get.return_value = self.container.get_dict(
+            self.entity_href, type='certificate'
+        )
 
         container = self.manager.get(container_ref=self.entity_href)
         self.assertIsInstance(container, containers.Container)
         self.assertEqual(self.entity_href, container.container_ref)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.get.call_args
+        args, kwargs = self.api._get.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
 
@@ -392,15 +393,15 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.assertIsNotNone(container.intermediates)
 
     def test_should_get_rsa_container(self):
-        self.api.get.return_value = self.container.get_dict(self.entity_href,
-                                                            type='rsa')
+        self.api._get.return_value = self.container.get_dict(self.entity_href,
+                                                             type='rsa')
 
         container = self.manager.get(container_ref=self.entity_href)
         self.assertIsInstance(container, containers.Container)
         self.assertEqual(self.entity_href, container.container_ref)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.get.call_args
+        args, kwargs = self.api._get.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
 
@@ -414,12 +415,12 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.manager.delete(container_ref=self.entity_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.delete.call_args
+        args, kwargs = self.api._delete.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
 
     def test_should_delete_from_object(self):
-        self.api.get.return_value = self.container.get_dict(self.entity_href)
+        self.api._get.return_value = self.container.get_dict(self.entity_href)
 
         container = self.manager.get(container_ref=self.entity_href)
         self.assertIsNotNone(container.container_ref)
@@ -427,7 +428,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         container.delete()
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.delete.call_args
+        args, kwargs = self.api._delete.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
 
@@ -435,7 +436,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.assertIsNone(container.container_ref)
 
     def test_should_store_after_delete_from_object(self):
-        self.api.get.return_value = self.container.get_dict(self.entity_href)
+        self.api._get.return_value = self.container.get_dict(self.entity_href)
 
         container = self.manager.get(container_ref=self.entity_href)
         self.assertIsNotNone(container.container_ref)
@@ -443,7 +444,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         container.delete()
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.delete.call_args
+        args, kwargs = self.api._delete.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
 
@@ -457,8 +458,8 @@ class WhenTestingContainers(test_client.BaseEntityResource):
 
     def test_should_get_list(self):
         container_resp = self.container.get_dict(self.entity_href)
-        self.api.get.return_value = {"containers":
-                                     [container_resp for v in range(3)]}
+        self.api._get.return_value = {"containers":
+                                      [container_resp for v in range(3)]}
 
         containers_list = self.manager.list(limit=10, offset=5)
         self.assertTrue(len(containers_list) == 3)
@@ -466,7 +467,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, containers_list[0].container_ref)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api.get.call_args
+        args, kwargs = self.api._get.call_args
         url = args[0]
         self.assertEqual(self.entity_base[:-1], url)
 
@@ -483,7 +484,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.assertRaises(ValueError, self.manager.delete, None)
 
     def test_should_register_consumer(self):
-        self.api.post.return_value = self.container.get_dict(
+        self.api._post.return_value = self.container.get_dict(
             self.entity_href, consumers=[self.container.consumer]
         )
         container = self.manager.register_consumer(
@@ -493,7 +494,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.assertIsInstance(container, containers.Container)
         self.assertEqual(self.entity_href, container.container_ref)
 
-        args, kwargs = self.api.post.call_args
+        args, kwargs = self.api._post.call_args
         url, body = args[0], args[1]
 
         self.assertEqual(self.consumers_post_resource, url)
@@ -506,9 +507,14 @@ class WhenTestingContainers(test_client.BaseEntityResource):
             self.container.consumer.get('URL')
         )
 
-        args, kwargs = self.api.delete.call_args
+        args, kwargs = self.api._delete.call_args
         url = args[0]
         body = kwargs['json']
 
         self.assertEqual(self.consumers_delete_resource, url)
         self.assertEqual(self.container.consumer, body)
+
+    def test_should_get_total(self):
+        self.api._get.return_value = {'total': 1}
+        total = self.manager.total()
+        self.assertEqual(total, 1)

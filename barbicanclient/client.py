@@ -97,7 +97,7 @@ class Client(object):
             self._barbican_url = self._get_normalized_endpoint(endpoint)
             self._tenant_id = tenant_id
 
-        self.base_url = '{0}'.format(self._barbican_url)
+        self._base_url = '{0}'.format(self._barbican_url)
         self.secrets = secrets.SecretManager(self)
         self.orders = orders.OrderManager(self)
         self.containers = containers.ContainerManager(self)
@@ -161,27 +161,27 @@ class Client(object):
         if isinstance(headers, dict) and not self._session.auth:
             headers['X-Project-Id'] = self._tenant_id
 
-    def get(self, href, params=None):
+    def _get(self, href, params=None):
         headers = {'Accept': 'application/json'}
         self._prepare_auth(headers)
         resp = self._session.get(href, params=params, headers=headers)
         self._check_status_code(resp)
         return resp.json()
 
-    def get_raw(self, href, headers):
+    def _get_raw(self, href, headers):
         self._prepare_auth(headers)
         resp = self._session.get(href, headers=headers)
         self._check_status_code(resp)
         return resp.content
 
-    def delete(self, href, json=None):
+    def _delete(self, href, json=None):
         headers = {}
         self._prepare_auth(headers)
         resp = self._session.delete(href, headers=headers, json=json)
         self._check_status_code(resp)
 
-    def post(self, path, data):
-        url = '{0}/{1}/'.format(self.base_url, path)
+    def _post(self, path, data):
+        url = '{0}/{1}/'.format(self._base_url, path)
         headers = {'content-type': 'application/json'}
         self._prepare_auth(headers)
         resp = self._session.post(url, data=json.dumps(data), headers=headers)
