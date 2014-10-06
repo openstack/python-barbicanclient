@@ -15,9 +15,10 @@
 import functools
 import logging
 
+from oslo.utils.timeutils import parse_isotime
+
 from barbicanclient import base
 from barbicanclient import formatter
-from barbicanclient.openstack.common.timeutils import parse_isotime
 
 
 LOG = logging.getLogger(__name__)

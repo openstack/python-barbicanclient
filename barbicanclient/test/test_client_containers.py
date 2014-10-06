@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import mock
+from oslo.utils import timeutils
 
 from barbicanclient.test import test_client
 from barbicanclient import base, containers, secrets
-from barbicanclient.openstack.common import timeutils
 
 
 class ContainerData(object):

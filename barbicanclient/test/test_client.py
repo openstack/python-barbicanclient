@@ -16,12 +16,12 @@
 import httpretty
 import json
 import mock
+from oslo.serialization import jsonutils
 import requests
 import testtools
 
 from barbicanclient import client
 from barbicanclient.test import keystone_client_fixtures
-from barbicanclient.openstack.common import jsonutils
 
 from keystoneclient.auth.identity import v2
 from keystoneclient.auth.identity import v3

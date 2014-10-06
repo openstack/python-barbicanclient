@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo.utils import timeutils
+
 from barbicanclient import orders, base
-from barbicanclient.openstack.common import timeutils
 from barbicanclient.test import test_client
 from barbicanclient.test import test_client_secrets as test_secrets
 

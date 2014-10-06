@@ -20,8 +20,8 @@ from keystoneclient.auth.base import BaseAuthPlugin
 from keystoneclient import session as ks_session
 
 from barbicanclient.common.auth import KeystoneAuthPluginWrapper
-from barbicanclient.openstack.common.gettextutils import _
 from barbicanclient import containers
+from barbicanclient._i18n import _
 from barbicanclient import orders
 from barbicanclient import secrets
 

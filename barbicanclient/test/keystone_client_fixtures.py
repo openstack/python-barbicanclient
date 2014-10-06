@@ -13,7 +13,7 @@
 import copy
 import uuid
 
-from barbicanclient.openstack.common import jsonutils
+from oslo.serialization import jsonutils
 
 
 # these are copied from python-keystoneclient tests
