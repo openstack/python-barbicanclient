@@ -21,10 +21,14 @@ import sys
 
 from cliff import app
 from cliff import commandmanager
+from keystoneclient.auth import identity
+from keystoneclient import session
 
-from barbicanclient.common import auth
 from barbicanclient import client
 from barbicanclient import version
+
+
+_DEFAULT_IDENTITY_API_VERSION = '3.0'
 
 
 class Barbican(app.App):
@@ -46,6 +50,12 @@ class Barbican(app.App):
             description, version, argparse_kwargs)
         parser.add_argument('--no-auth', '-N', action='store_true',
                             help='Do not use authentication.')
+        parser.add_argument('--os-identity-api-version',
+                            metavar='<identity-api-version>',
+                            default=client.env('OS_IDENTITY_API_VERSION'),
+                            help='Specify Identity API version to use. '
+                            'Defaults to env[OS_IDENTITY_API_VERSION]'
+                            ' or 3.0.')
         parser.add_argument('--os-auth-url', '-A',
                             metavar='<auth-url>',
                             default=client.env('OS_AUTH_URL'),
@@ -104,14 +114,7 @@ class Barbican(app.App):
                             metavar='<barbican-url>',
                             default=client.env('BARBICAN_ENDPOINT'),
                             help='Defaults to env[BARBICAN_ENDPOINT].')
-        parser.add_argument('--insecure',
-                            default=False,
-                            action="store_true",
-                            help='Explicitly allow barbicanclient to perform '
-                                 '"insecure" TLS (https) requests. The '
-                                 'server\'s certificate will not be verified '
-                                 'against any certificate authorities. This '
-                                 'option should be used with caution.')
+        session.Session.register_cli_options(parser)
         return parser
 
     def _assert_no_auth_and_auth_url_mutually_exclusive(self, no_auth,
@@ -136,18 +139,46 @@ class Barbican(app.App):
                     'ERROR: please specify --endpoint and '
                     '--os-project-id(or --os-tenant-id)')
             self.client = client.Client(endpoint=args.endpoint,
-                                        tenant_id=args.os_tenant_id or
+                                        project_id=args.os_tenant_id or
                                         args.os_project_id,
-                                        insecure=args.insecure)
+                                        verify=not args.insecure)
         elif all([args.os_auth_url, args.os_user_id or args.os_username,
                   args.os_password, args.os_tenant_name or args.os_tenant_id or
                   args.os_project_name or args.os_project_id]):
-            ks_session = auth.create_keystone_auth_session(args)
+            kwargs = dict()
+            kwargs['auth_url'] = args.os_auth_url
+            kwargs['password'] = args.os_password
+            if args.os_user_id:
+                kwargs['user_id'] = args.os_user_id
+            if args.os_username:
+                kwargs['username'] = args.os_username
+
+            api_version = args.os_identity_api_version
+
+            if not api_version or api_version == _DEFAULT_IDENTITY_API_VERSION:
+                if args.os_project_id:
+                    kwargs['project_id'] = args.os_project_id
+                if args.os_project_name:
+                    kwargs['project_name'] = args.os_project_name
+                if args.os_user_domain_id:
+                    kwargs['user_domain_id'] = args.os_user_domain_id
+                if args.os_user_domain_name:
+                    kwargs['user_domain_name'] = args.os_user_domain_name
+                if args.os_project_domain_id:
+                    kwargs['project_domain_id'] = args.os_project_domain_id
+                if args.os_project_domain_name:
+                    kwargs['project_domain_name'] = args.os_project_domain_name
+                auth = identity.v3.Password(**kwargs)
+            else:
+                if args.os_tenant_id:
+                    kwargs['tenant_id'] = args.os_tenant_id
+                if args.os_tenant_name:
+                    kwargs['tenant_name'] = args.os_tenant_name
+                auth = identity.v2.Password(**kwargs)
+
+            ks_session = session.Session(auth=auth, verify=not args.insecure)
             self.client = client.Client(session=ks_session,
-                                        endpoint=args.endpoint,
-                                        tenant_id=args.os_tenant_id or
-                                        args.os_project_id,
-                                        insecure=args.insecure)
+                                        endpoint=args.endpoint)
         else:
             self.stderr.write(self.parser.format_usage())
             raise Exception('ERROR: please specify authentication credentials')

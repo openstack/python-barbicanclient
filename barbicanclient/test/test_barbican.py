@@ -102,13 +102,13 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
     @httpretty.activate
     def test_should_succeed_if_noauth_with_valid_args_specified(self):
         list_secrets_content = '{"secrets": [], "total": 0}'
-        list_secrets_url = '{0}secrets'.format(self.endpoint)
+        list_secrets_url = '{0}/v1/secrets'.format(self.endpoint)
         httpretty.register_uri(
             httpretty.GET, list_secrets_url,
             body=list_secrets_content)
         self._expect_success_code(
             "--no-auth --endpoint {0} --os-tenant-id {1} secret list".
-            format(self.endpoint, self.tenant_id))
+            format(self.endpoint, self.project_id))
 
     def test_should_error_if_required_keystone_auth_arguments_are_missing(
             self):

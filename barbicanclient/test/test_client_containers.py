@@ -92,7 +92,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.api.secrets.Secret.return_value = self.container.secret
         self.manager = containers.ContainerManager(self.api)
         self.consumers_post_resource = (
-            self.entity_href.replace(self.endpoint, '') + '/consumers'
+            self.entity_href.replace(self.endpoint + '/', '') + '/consumers'
         )
         self.consumers_delete_resource = (
             self.entity_href + '/consumers'
