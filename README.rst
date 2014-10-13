@@ -49,7 +49,8 @@ with keystone authentication:
     >>> secret.store()
     u'http://localhost:9311/v1/secrets/85b220fd-f414-483f-94e4-2f422480f655'
     >>> # The URI returned by store() uniquely identifies your secret in the Barbican service.
-    >>> # After a secret is stored, the URI is also avaiable by accessing the secret_ref attribute.
+    >>> # After a secret is stored, the URI is also available by accessing
+    >>> # the secret_ref attribute.
     >>> print(secret.secret_ref)
     http://localhost:9311/v1/secrets/091adb32-4050-4980-8558-90833c531413
     >>> # When we need to retrieve our secret at a later time, we can use the secret_ref
@@ -92,11 +93,12 @@ The command line client is self-documenting. Use the --help flag to access the u
       --log-file LOG_FILE   Specify a file to log output. Disabled by default.
       -q, --quiet           suppress output except warnings and errors
       -h, --help            show this help message and exit
-      --debug               show tracebacks on errors
+      --debug               show trace backs on errors
       --no-auth, -N         Do not use authentication.
       --os-identity-api-version <identity-api-version>
                             Specify Identity API version to use. Defaults to
                             env[OS_IDENTITY_API_VERSION] or 3.0.
+
       --os-auth-url <auth-url>, -A <auth-url>
                             Defaults to env[OS_AUTH_URL].
       --os-username <auth-user-name>, -U <auth-user-name>
@@ -156,4 +158,3 @@ The command line client is self-documenting. Use the --help flag to access the u
       secret get     Retrieve a secret by providing its URI.
       secret list    List secrets.
       secret store   Store a secret in Barbican.
-
