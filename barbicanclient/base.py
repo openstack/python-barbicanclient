@@ -15,8 +15,9 @@
 """
 Base utilities to build API operation managers.
 """
-import six
 import uuid
+
+import six
 
 
 def filter_empty_keys(dictionary):

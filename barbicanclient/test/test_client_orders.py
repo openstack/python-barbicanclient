@@ -12,116 +12,78 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 
+import mock
 from oslo.utils import timeutils
+import testtools
 
 from barbicanclient import orders, base
 from barbicanclient.test import test_client
 from barbicanclient.test import test_client_secrets as test_secrets
 
 
-class OrderData(object):
-    def __init__(self):
-        self.created = str(timeutils.utcnow())
-
-        self.secret = test_secrets.SecretData()
-        self.status = 'ACTIVE'
-        self.order_dict = {'created': self.created,
-                           'status': self.status,
-                           'secret': self.secret.get_dict()}
-
-    def get_dict(self, order_ref, secret_ref=None):
-        order = self.order_dict
-        order['order_ref'] = order_ref
-        if secret_ref:
-            order['secret_ref'] = secret_ref
-        return order
-
-
-class WhenTestingOrders(test_client.BaseEntityResource):
-
+class OrdersTestCase(testtools.TestCase):
     def setUp(self):
-        self._setUp('orders')
+        super(OrdersTestCase, self).setUp()
+        self.secret_ref = ("http://localhost:9311/v1/secrets/"
+                           "a2292306-6da0-4f60-bd8a-84fc8d692716")
+        self.order_ref = ("http://localhost:9311/v1/orders/"
+                          "d0460cc4-2876-4493-b7de-fc5c812883cc")
+        self.key_order_data = """{{
+            "status": "ACTIVE",
+            "secret_ref": "{0}",
+            "updated": "2014-10-21T17:15:50.871596",
+            "meta": {{
+                "name": "secretname",
+                "algorithm": "aes",
+                "payload_content_type": "application/octet-stream",
+                "mode": "cbc",
+                "bit_length": 256,
+                "expiration": "2015-02-28T19:14:44.180394"
+            }},
+            "created": "2014-10-21T17:15:50.824202",
+            "type": "key",
+            "order_ref": "{1}"
+        }}""".format(self.secret_ref, self.order_ref)
+        self.api = mock.MagicMock()
+        self.api._base_url = 'http://localhost:9311/v1'
+        self.manager = orders.OrderManager(api=self.api)
 
-        self.order = OrderData()
+    def _get_order_args(self, order_data):
+        order_args = json.loads(order_data)
+        order_args.update(order_args.pop('meta'))
+        order_args.pop('type')
+        return order_args
 
-        self.manager = orders.OrderManager(self.api)
 
-    def test_should_entity_str(self):
-        order = self.order.get_dict(self.entity_href)
+class WhenTestingKeyOrders(OrdersTestCase):
+
+    def test_should_include_errors_in_str(self):
+        order_args = self._get_order_args(self.key_order_data)
         error_code = 500
         error_reason = 'Something is broken'
-        order_obj = orders.Order(api=None, error_status_code=error_code,
-                                 error_reason=error_reason, **order)
-        self.assertIn(self.order.status, str(order_obj))
+        order_obj = orders.KeyOrder(api=None, error_status_code=error_code,
+                                    error_reason=error_reason, **order_args)
         self.assertIn(str(error_code), str(order_obj))
         self.assertIn(error_reason, str(order_obj))
 
-    def test_should_entity_repr(self):
-        order = self.order.get_dict(self.entity_href)
-        order_obj = orders.Order(api=None, **order)
-        self.assertIn('order_ref=' + self.entity_href, repr(order_obj))
-
-    def test_should_submit_via_constructor(self):
-        self.api._post.return_value = {'order_ref': self.entity_href}
-
-        order = self.manager.create(
-            name=self.order.secret.name,
-            algorithm=self.order.secret.algorithm,
-            payload_content_type=self.order.secret.content
-        )
-        order_href = order.submit()
-
-        self.assertEqual(self.entity_href, order_href)
-
-        # Verify the correct URL was used to make the call.
-        args, kwargs = self.api._post.call_args
-        entity_resp = args[0]
-        self.assertEqual(self.entity, entity_resp)
-
-        # Verify that correct information was sent in the call.
-        order_req = args[1]
-        self.assertEqual(self.order.secret.name, order_req['secret']['name'])
-        self.assertEqual(self.order.secret.algorithm,
-                         order_req['secret']['algorithm'])
-        self.assertEqual(self.order.secret.payload_content_type,
-                         order_req['secret']['payload_content_type'])
-
-    def test_should_submit_via_attributes(self):
-        self.api._post.return_value = {'order_ref': self.entity_href}
-
-        order = self.manager.create()
-        order.name = self.order.secret.name
-        order.algorithm = self.order.secret.algorithm
-        order.payload_content_type = self.order.secret.content
-        order_href = order.submit()
-
-        self.assertEqual(self.entity_href, order_href)
-
-        # Verify the correct URL was used to make the call.
-        args, kwargs = self.api._post.call_args
-        entity_resp = args[0]
-        self.assertEqual(self.entity, entity_resp)
-
-        # Verify that correct information was sent in the call.
-        order_req = args[1]
-        self.assertEqual(self.order.secret.name, order_req['secret']['name'])
-        self.assertEqual(self.order.secret.algorithm,
-                         order_req['secret']['algorithm'])
-        self.assertEqual(self.order.secret.payload_content_type,
-                         order_req['secret']['payload_content_type'])
+    def test_should_include_order_ref_in_repr(self):
+        order_args = self._get_order_args(self.key_order_data)
+        order_obj = orders.KeyOrder(api=None, **order_args)
+        self.assertIn('order_ref=' + self.order_ref, repr(order_obj))
 
     def test_should_be_immutable_after_submit(self):
-        self.api._post.return_value = {'order_ref': self.entity_href}
+        self.api._post.return_value = {'order_ref': self.order_ref}
 
-        order = self.manager.create(
-            name=self.order.secret.name,
-            algorithm=self.order.secret.algorithm,
-            payload_content_type=self.order.secret.content
+        order = self.manager.create_key(
+            name='name',
+            algorithm='algorithm',
+            payload_content_type='payload_content_type'
         )
         order_href = order.submit()
 
-        self.assertEqual(self.entity_href, order_href)
+        self.assertEqual(self.order_ref, order_href)
 
         # Verify that attributes are immutable after store.
         attributes = [
@@ -135,8 +97,57 @@ class WhenTestingOrders(test_client.BaseEntityResource):
             except base.ImmutableException:
                 pass
 
+    def test_should_submit_via_constructor(self):
+        self.api._post.return_value = {'order_ref': self.order_ref}
+
+        order = self.manager.create_key(
+            name='name',
+            algorithm='algorithm',
+            payload_content_type='payload_content_type'
+        )
+        order_href = order.submit()
+
+        self.assertEqual(self.order_ref, order_href)
+
+        # Verify the correct URL was used to make the call.
+        args, kwargs = self.api._post.call_args
+        entity_resp = args[0]
+        self.assertEqual('orders', entity_resp)
+
+        # Verify that correct information was sent in the call.
+        order_req = args[1]
+        self.assertEqual('name', order_req['meta']['name'])
+        self.assertEqual('algorithm',
+                         order_req['meta']['algorithm'])
+        self.assertEqual('payload_content_type',
+                         order_req['meta']['payload_content_type'])
+
+    def test_should_submit_via_attributes(self):
+        self.api._post.return_value = {'order_ref': self.order_ref}
+
+        order = self.manager.create_key()
+        order.name = 'name'
+        order.algorithm = 'algorithm'
+        order.payload_content_type = 'payload_content_type'
+        order_href = order.submit()
+
+        self.assertEqual(self.order_ref, order_href)
+
+        # Verify the correct URL was used to make the call.
+        args, kwargs = self.api._post.call_args
+        entity_resp = args[0]
+        self.assertEqual('orders', entity_resp)
+
+        # Verify that correct information was sent in the call.
+        order_req = args[1]
+        self.assertEqual('name', order_req['meta']['name'])
+        self.assertEqual('algorithm',
+                         order_req['meta']['algorithm'])
+        self.assertEqual('payload_content_type',
+                         order_req['meta']['payload_content_type'])
+
     def test_should_not_be_able_to_set_generated_attributes(self):
-        order = self.manager.create()
+        order = self.manager.create_key()
 
         # Verify that generated attributes cannot be set.
         attributes = [
@@ -150,45 +161,79 @@ class WhenTestingOrders(test_client.BaseEntityResource):
             except AttributeError:
                 pass
 
-    def test_should_get(self):
-        self.api._get.return_value = self.order.get_dict(self.entity_href)
 
-        order = self.manager.get(order_ref=self.entity_href)
-        self.assertIsInstance(order, orders.Order)
-        self.assertEqual(self.entity_href, order.order_ref)
+class WhenTestingAsymmetricOrders(OrdersTestCase):
+
+    def test_should_be_immutable_after_submit(self):
+        self.api._post.return_value = {'order_ref': self.order_ref}
+
+        order = self.manager.create_asymmetric(
+            name='name',
+            algorithm='algorithm',
+            payload_content_type='payload_content_type'
+        )
+        order_href = order.submit()
+
+        self.assertEqual(self.order_ref, order_href)
+
+        # Verify that attributes are immutable after store.
+        attributes = [
+            "name", "expiration", "algorithm", "bit_length", "pass_phrase",
+            "payload_content_type"
+        ]
+        for attr in attributes:
+            try:
+                setattr(order, attr, "test")
+                self.fail(
+                    "{0} didn't raise an ImmutableException exception".format(
+                        attr
+                    )
+                )
+            except base.ImmutableException:
+                pass
+
+
+class WhenTestingOrderManager(OrdersTestCase):
+
+    def test_should_get(self):
+        self.api._get.return_value = json.loads(self.key_order_data)
+
+        order = self.manager.get(order_ref=self.order_ref)
+        self.assertIsInstance(order, orders.KeyOrder)
+        self.assertEqual(self.order_ref, order.order_ref)
 
         # Verify the correct URL was used to make the call.
         args, kwargs = self.api._get.call_args
         url = args[0]
-        self.assertEqual(self.entity_href, url)
-
-    def test_should_delete(self):
-        self.manager.delete(order_ref=self.entity_href)
-
-        # Verify the correct URL was used to make the call.
-        args, kwargs = self.api._delete.call_args
-        url = args[0]
-        self.assertEqual(self.entity_href, url)
+        self.assertEqual(self.order_ref, url)
 
     def test_should_get_list(self):
-        order_resp = self.order.get_dict(self.entity_href)
-        self.api._get.return_value = {"orders":
-                                      [order_resp for v in range(3)]}
+        self.api._get.return_value = {
+            "orders": [json.loads(self.key_order_data) for _ in range(3)]
+        }
 
         orders_list = self.manager.list(limit=10, offset=5)
         self.assertTrue(len(orders_list) == 3)
-        self.assertIsInstance(orders_list[0], orders.Order)
-        self.assertEqual(self.entity_href, orders_list[0].order_ref)
+        self.assertIsInstance(orders_list[0], orders.KeyOrder)
+        self.assertEqual(self.order_ref, orders_list[0].order_ref)
 
         # Verify the correct URL was used to make the call.
         args, kwargs = self.api._get.call_args
         url = args[0]
-        self.assertEqual(self.entity_base[:-1], url)
+        self.assertEqual(self.api._base_url + '/orders', url)
 
         # Verify that correct information was sent in the call.
         params = args[1]
         self.assertEqual(10, params['limit'])
         self.assertEqual(5, params['offset'])
+
+    def test_should_delete(self):
+        self.manager.delete(order_ref=self.order_ref)
+
+        # Verify the correct URL was used to make the call.
+        args, kwargs = self.api._delete.call_args
+        url = args[0]
+        self.assertEqual(self.order_ref, url)
 
     def test_should_fail_delete_no_href(self):
         self.assertRaises(ValueError, self.manager.delete, None)

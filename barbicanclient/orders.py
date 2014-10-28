@@ -12,10 +12,12 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import abc
 import functools
 import logging
 
 from oslo.utils.timeutils import parse_isotime
+import six
 
 from barbicanclient import base
 from barbicanclient import formatter
@@ -33,7 +35,7 @@ def immutable_after_save(func):
     return wrapper
 
 
-class OrderFormatter(formatter.EntityFormatter):
+class KeyOrderFormatter(formatter.EntityFormatter):
 
     columns = ("Order href",
                "Secret href",
@@ -54,84 +56,114 @@ class OrderFormatter(formatter.EntityFormatter):
         return data
 
 
-class Order(OrderFormatter):
+class AsymmetricOrderFormatter(formatter.EntityFormatter):
+
+    columns = ("Order href",
+               "Container href",
+               "Created",
+               "Status",
+               "Error code",
+               "Error message"
+               )
+
+    def _get_formatted_data(self):
+        data = (self.order_ref,
+                self.container_ref,
+                self.created,
+                self.status,
+                self.error_status_code,
+                self.error_reason
+                )
+        return data
+
+
+@six.add_metaclass(abc.ABCMeta)
+class Order(object):
     """
-    Orders are used to request the generation of a Secret in Barbican.
+    Base order object to hold common functionality
+
+    This should be considered an abstract class that should not be
+    instantiated directly.
     """
     _entity = 'orders'
 
-    def __init__(self, api, name=None, algorithm=None, bit_length=None,
-                 mode=None, payload_content_type='application/octet-stream',
-                 order_ref=None, secret_ref=None, status=None,
-                 created=None, updated=None, expiration=None,
-                 error_status_code=None, error_reason=None, secret=None,
-                 meta=None, type=None):
+    def __init__(self, api, type, status=None, created=None, updated=None,
+                 meta=None, order_ref=None, error_status_code=None,
+                 error_reason=None):
+        super(Order, self).__init__()
+
         self._api = api
-        self._order_ref = order_ref
         self._type = type
-        self._meta = meta
-        if order_ref:
-            self._error_status_code = error_status_code
-            self._error_reason = error_reason
-            self._status = status
-            self._created = created
-            self._updated = updated
-            if self._created:
-                self._created = parse_isotime(self._created)
-            if self._updated:
-                self._updated = parse_isotime(self._updated)
-            self._secret_ref = secret_ref
-            self._secret = secret
+        self._status = status
+
+        if created:
+            self._created = parse_isotime(created)
         else:
-            self._error_status_code = None
-            self._error_reason = None
-            self._status = None
             self._created = None
+
+        if updated:
+            self._updated = parse_isotime(updated)
+        else:
             self._updated = None
-            self._secret_ref = None
-            self._secret = base.filter_empty_keys({
-                'name': name,
-                'algorithm': algorithm,
-                'bit_length': bit_length,
-                'mode': mode,
-                'payload_content_type': payload_content_type,
-                'expiration': expiration
-            })
-        if self._secret.get("expiration"):
-            self._secret['expiration'] = parse_isotime(
-                self._secret.get('expiration'))
+
+        self._order_ref = order_ref
+
+        self._meta = base.filter_empty_keys(meta)
+
+        self._error_status_code = error_status_code
+        self._error_reason = error_reason
+
+        if 'expiration' in self._meta.keys():
+            self._meta['expiration'] = parse_isotime(self._meta['expiration'])
 
     @property
     def name(self):
-        return self._secret.get('name')
+        return self._meta.get('name')
 
-    @property
-    def expiration(self):
-        return self._secret.get('expiration')
+    @name.setter
+    @immutable_after_save
+    def name(self, value):
+        self._meta['name'] = value
 
     @property
     def algorithm(self):
-        return self._secret.get('algorithm')
+        return self._meta.get('algorithm')
+
+    @algorithm.setter
+    @immutable_after_save
+    def algorithm(self, value):
+        self._meta['algorithm'] = value
 
     @property
     def bit_length(self):
-        return self._secret.get('bit_length')
+        return self._meta.get('bit_length')
+
+    @bit_length.setter
+    @immutable_after_save
+    def bit_length(self, value):
+        self._meta['bit_length'] = value
 
     @property
-    def mode(self):
-        return self._secret.get('mode')
+    def expiration(self):
+        return self._meta.get('expiration')
+
+    @expiration.setter
+    @immutable_after_save
+    def expiration(self, value):
+        self._meta['expiration'] = value
 
     @property
     def payload_content_type(self):
-        return self._secret.get('payload_content_type')
+        return self._meta.get('payload_content_type')
+
+    @payload_content_type.setter
+    @immutable_after_save
+    def payload_content_type(self, value):
+        self._meta['payload_content_type'] = value
 
     @property
     def order_ref(self):
         return self._order_ref
-
-    @property
-    def secret_ref(self):
-        return self._secret_ref
 
     @property
     def created(self):
@@ -153,60 +185,10 @@ class Order(OrderFormatter):
     def error_reason(self):
         return self._error_reason
 
-    @property
-    def type(self):
-        return self._type
-
-    @property
-    def meta(self):
-        return self._meta
-
-    @name.setter
-    @immutable_after_save
-    def name(self, value):
-        self._secret['name'] = value
-
-    @expiration.setter
-    @immutable_after_save
-    def expiration(self, value):
-        self._secret['expiration'] = value
-
-    @algorithm.setter
-    @immutable_after_save
-    def algorithm(self, value):
-        self._secret['algorithm'] = value
-
-    @bit_length.setter
-    @immutable_after_save
-    def bit_length(self, value):
-        self._secret['bit_length'] = value
-
-    @mode.setter
-    @immutable_after_save
-    def mode(self, value):
-        self._secret['mode'] = value
-
-    @payload_content_type.setter
-    @immutable_after_save
-    def payload_content_type(self, value):
-        self._secret['payload_content_type'] = value
-
-    @type.setter
-    @immutable_after_save
-    def type(self, value):
-        self._type = value
-
-    @meta.setter
-    @immutable_after_save
-    def meta(self, value):
-        self._meta = value
-
     @immutable_after_save
     def submit(self):
-        order_dict = dict({
-            'secret': self._secret
-        })
-        LOG.debug("Request body: {0}".format(order_dict.get('secret')))
+        order_dict = {'type': self._type, 'meta': self._meta}
+        LOG.debug("Request body: {0}".format(order_dict))
         response = self._api._post(self._entity, order_dict)
         if response:
             self._order_ref = response.get('order_ref')
@@ -219,11 +201,86 @@ class Order(OrderFormatter):
         else:
             raise LookupError("Order is not yet stored.")
 
+
+class KeyOrder(Order, KeyOrderFormatter):
+    _type = 'key'
+
+    def __init__(self, api, name=None, algorithm=None, bit_length=None,
+                 mode=None, expiration=None, payload_content_type=None,
+                 status=None, created=None, updated=None, order_ref=None,
+                 secret_ref=None, error_status_code=None, error_reason=None):
+        super(KeyOrder, self).__init__(
+            api, self._type, status=status, created=created, updated=updated,
+            meta={
+                'name': name, 'algorithm': algorithm, 'bit_length': bit_length,
+                'expiration': expiration,
+                'payload_content_type': payload_content_type
+            }, order_ref=order_ref, error_status_code=error_status_code,
+            error_reason=error_reason)
+        self._secret_ref = secret_ref
+        if mode:
+            self._meta['mode'] = mode
+
+    @property
+    def mode(self):
+        return self._meta.get('mode')
+
+    @property
+    def secret_ref(self):
+        return self._secret_ref
+
+    @mode.setter
+    @immutable_after_save
+    def mode(self, value):
+        self._meta['mode'] = value
+
     def __repr__(self):
-        return 'Order(order_ref={0})'.format(self.order_ref)
+        return 'KeyOrder(order_ref={0})'.format(self.order_ref)
+
+
+class AsymmetricOrder(Order, AsymmetricOrderFormatter):
+    _type = 'asymmetric'
+
+    def __init__(self, api, name=None, algorithm=None, bit_length=None,
+                 pass_phrase=None, expiration=None, payload_content_type=None,
+                 status=None, created=None, updated=None, order_ref=None,
+                 container_ref=None, error_status_code=None,
+                 error_reason=None):
+        super(AsymmetricOrder, self).__init__(
+            api, self._type, status=status, created=created, updated=updated,
+            meta={
+                'name': name, 'algorithm': algorithm, 'bit_length': bit_length,
+                'expiration': expiration,
+                'payload_content_type': payload_content_type
+            }, order_ref=order_ref, error_status_code=error_status_code,
+            error_reason=error_reason)
+        self._container_ref = container_ref
+        if pass_phrase:
+            self._meta['pass_phrase'] = pass_phrase
+
+    @property
+    def container_ref(self):
+        return self._container_ref
+
+    @property
+    def pass_phrase(self):
+        return self._meta.get('pass_phrase')
+
+    @pass_phrase.setter
+    @immutable_after_save
+    def pass_phrase(self, value):
+        self._meta['pass_phrase'] = value
+
+    def __repr__(self):
+        return 'AsymmetricOrder(order_ref={0})'.format(self.order_ref)
 
 
 class OrderManager(base.BaseEntityManager):
+
+    _order_type_to_class_map = {
+        'key': KeyOrder,
+        'asymmetric': AsymmetricOrder
+    }
 
     def __init__(self, api):
         super(OrderManager, self).__init__(api, 'orders')
@@ -233,30 +290,67 @@ class OrderManager(base.BaseEntityManager):
         Get an Order
 
         :param order_ref: Full HATEOAS reference to an Order
-        :returns: Order
+        :returns: An instance of the appropriate subtype of Order
         """
         LOG.debug("Getting order - Order href: {0}".format(order_ref))
         base.validate_ref(order_ref, 'Order')
-        response = self._api._get(order_ref)
-        return Order(api=self._api, **response)
+        try:
+            response = self._api._get(order_ref)
+        except AttributeError:
+            raise LookupError(
+                'Order {0} could not be found.'.format(order_ref)
+            )
+        return self._create_typed_order(response)
 
-    def create(self, name=None, payload_content_type=None,
-               algorithm=None, bit_length=None, mode=None, expiration=None):
+    def _create_typed_order(self, response):
+        resp_type = response.pop('type').lower()
+        order_type = self._order_type_to_class_map.get(resp_type)
+
+        response.update(response.pop('meta'))
+
+        if order_type is KeyOrder:
+            return KeyOrder(self._api, **response)
+        elif order_type is AsymmetricOrder:
+            return AsymmetricOrder(self._api, **response)
+        else:
+            raise TypeError('Unknown Order type "{0}"'.format(order_type))
+
+    def create_key(self, name=None, algorithm=None, bit_length=None, mode=None,
+                   payload_content_type=None, expiration=None):
         """
-        Create an Order
+        Create an Order for a Symmetric Key
 
-        :param name: A friendly name for the secret
-        :param payload_content_type: The format/type of the secret data
+        :param name: A friendly name for the secret to be created
         :param algorithm: The algorithm associated with this secret key
         :param bit_length: The bit length of this secret key
         :param mode: The algorithm mode used with this secret key
+        :param payload_content_type: The format/type of the secret data
         :param expiration: The expiration time of the secret in ISO 8601 format
-        :returns: Order
+        :returns: KeyOrder
         """
-        return Order(api=self._api, name=name,
-                     payload_content_type=payload_content_type,
-                     algorithm=algorithm, bit_length=bit_length, mode=mode,
-                     expiration=expiration)
+        return KeyOrder(api=self._api, name=name,
+                        algorithm=algorithm, bit_length=bit_length, mode=mode,
+                        payload_content_type=payload_content_type,
+                        expiration=expiration)
+
+    def create_asymmetric(self, name=None, algorithm=None, bit_length=None,
+                          pass_phrase=None, payload_content_type=None,
+                          expiration=None):
+        """
+        Create an Order for an Asymmetric Key
+
+        :param name: A friendly name for the container to be created
+        :param algorithm: The algorithm associated with this secret key
+        :param bit_length: The bit length of this secret key
+        :param pass_phrase: Optional passphrase
+        :param payload_content_type: The format/type of the secret data
+        :param expiration: The expiration time of the secret in ISO 8601 format
+        :returns AsymmetricOrder
+        """
+        return AsymmetricOrder(api=self._api, name=name, algorithm=algorithm,
+                               bit_length=bit_length, pass_phrase=pass_phrase,
+                               payload_content_type=payload_content_type,
+                               expiration=expiration)
 
     def delete(self, order_ref):
         """
@@ -282,4 +376,6 @@ class OrderManager(base.BaseEntityManager):
         params = {'limit': limit, 'offset': offset}
         response = self._api._get(href, params)
 
-        return [Order(api=self._api, **o) for o in response.get('orders', [])]
+        return [
+            self._create_typed_order(o) for o in response.get('orders', [])
+        ]
