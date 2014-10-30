@@ -650,11 +650,7 @@ class ContainerManager(base.BaseEntityManager):
         """
         if not container_ref:
             raise ValueError('container_ref is required.')
-        try:
-            self._api._delete(container_ref)
-        except AttributeError:
-            raise LookupError('Container {0} could not be deleted. '
-                              'Does it still exist?'.format(container_ref))
+        self._api._delete(container_ref)
 
     def list(self, limit=10, offset=0, name=None, type=None):
         """
