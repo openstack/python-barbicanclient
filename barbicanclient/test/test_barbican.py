@@ -45,6 +45,8 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
             exit_code = _barbican.run(argv=argstr.split())
         except Exception as exception:
             exit_message = exception.message
+        except SystemExit as sys_exit_exception:
+            exit_code = sys_exit_exception.code
         finally:
             out = stdout.getvalue()
             os.environ = _old_env
