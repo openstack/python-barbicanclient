@@ -3,17 +3,22 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to python-barbicanclient's documentation!
-========================================================
+Python bindings to the OpenStack Key Management API (Barbican)
+==============================================================
+
+This is a client for OpenStack Key Management API (Barbican).  There's a Python
+API (the `barbicanclient` module), and a command-line interface (installed as
+`barbican`).
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
-   readme
    installation
+   authentication
    usage
+   reference
    contributing
 
 Indices and tables
