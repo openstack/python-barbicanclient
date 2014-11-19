@@ -7,7 +7,7 @@ hacking>=0.7.0
 httpretty>=0.8.0,!=0.8.1,!=0.8.2,!=0.8.3
 mock>=1.0
 testrepository>=0.0.18
-testtools>=0.9.36,!=1.2.0
+testtools>=0.9.36,!=1.2.0,!=1.4.0
 
 # Documentation build requirements
 sphinx>=1.1.2,!=1.2.0,!=1.3b1,<1.3
