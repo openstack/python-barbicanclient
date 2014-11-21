@@ -138,15 +138,86 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
             except AttributeError:
                 pass
 
-    def test_should_get(self):
+    def test_should_get_lazy(self):
         self.api._get.return_value = self.secret.get_dict(self.entity_href)
 
         secret = self.manager.get(secret_ref=self.entity_href)
         self.assertIsInstance(secret, secrets.Secret)
         self.assertEqual(self.entity_href, secret.secret_ref)
 
-        # Verify the correct URL was used to make the call.
+        # Verify GET wasn't called yet
+        self.assertFalse(self.api._get.called)
+
+        # Check an attribute to trigger lazy-load
+        self.assertEqual(self.secret.name, secret.name)
+
+        # Verify the correct URL was used to make the GET call
         args, kwargs = self.api._get.call_args
+        url = args[0]
+        self.assertEqual(self.entity_href, url)
+
+    def test_should_get_payload_only(self):
+        self.api._get.return_value = self.secret.get_dict(self.entity_href)
+        self.api._get_raw.return_value = self.secret.payload
+
+        secret = self.manager.get(
+            secret_ref=self.entity_href,
+            payload_content_type=self.secret.payload_content_type
+        )
+        self.assertIsInstance(secret, secrets.Secret)
+        self.assertEqual(self.entity_href, secret.secret_ref)
+
+        # Verify `get` wasn't called yet (metadata)
+        self.assertFalse(self.api._get.called)
+
+        # Verify `get_raw` wasn't called yet (payload)
+        self.assertFalse(self.api._get_raw.called)
+
+        # GET payload (with payload_content_type)
+        self.assertEqual(self.secret.payload, secret.payload)
+
+        # Verify `get` still wasn't called (metadata)
+        self.assertFalse(self.api._get.called)
+
+        # Verify `get_raw` was called (payload)
+        self.assertTrue(self.api._get_raw.called)
+
+        # Verify the correct URL was used to make the `get_raw` call
+        args, kwargs = self.api._get_raw.call_args
+        url = args[0]
+        self.assertEqual(self.entity_href, url)
+
+    def test_should_fetch_metadata_to_get_payload_if_no_content_type_set(self):
+        content_types_dict = {'default': 'application/octet-stream'}
+        self.api._get.return_value = self.secret.get_dict(
+            self.entity_href, content_types_dict=content_types_dict)
+        self.api._get_raw.return_value = self.secret.payload
+
+        secret = self.manager.get(secret_ref=self.entity_href)
+        self.assertIsInstance(secret, secrets.Secret)
+        self.assertEqual(self.entity_href, secret.secret_ref)
+
+        # Verify `get` wasn't called yet (metadata)
+        self.assertFalse(self.api._get.called)
+
+        # Verify `get_raw` wasn't called yet (payload)
+        self.assertFalse(self.api._get_raw.called)
+
+        # GET payload (with no payload_content_type) trigger lazy-load
+        self.assertEqual(self.secret.payload, secret.payload)
+
+        # Verify `get` was called (metadata)
+        self.assertTrue(self.api._get.called)
+
+        # Verify `get_raw` was called (payload)
+        self.assertTrue(self.api._get_raw.called)
+
+        # Verify the correct URL was used to make the `get` calls
+        args, kwargs = self.api._get.call_args
+        url = args[0]
+        self.assertEqual(self.entity_href, url)
+
+        args, kwargs = self.api._get_raw.call_args
         url = args[0]
         self.assertEqual(self.entity_href, url)
 
