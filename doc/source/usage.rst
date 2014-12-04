@@ -1,6 +1,6 @@
-========
-Usage
-========
+============
+Client Usage
+============
 
 To use barbicanclient, you must first create an instance of the
 :class:`barbicanclient.client.Client` class.
