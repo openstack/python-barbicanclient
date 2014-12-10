@@ -361,7 +361,7 @@ class SecretManager(base.BaseEntityManager):
     def list(self, limit=10, offset=0, name=None, algorithm=None,
              mode=None, bits=0):
         """
-        List all Secrets for the tenant
+        List all Secrets for the project
 
         :param limit: Max number of secrets returned
         :param offset: Offset secrets to begin list

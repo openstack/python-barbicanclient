@@ -654,7 +654,7 @@ class ContainerManager(base.BaseEntityManager):
 
     def list(self, limit=10, offset=0, name=None, type=None):
         """
-        List all containers for the tenant
+        List all containers for the project
 
         :param limit: Max number of containers returned
         :param offset: Offset containers to begin list

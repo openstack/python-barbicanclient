@@ -364,7 +364,7 @@ class OrderManager(base.BaseEntityManager):
 
     def list(self, limit=10, offset=0):
         """
-        List all Orders for the tenant
+        List all Orders for the project
 
         :param limit: Max number of orders returned
         :param offset: Offset orders to begin list
