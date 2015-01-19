@@ -307,16 +307,16 @@ class BaseEntityResource(testtools.TestCase):
                     )
                 self.fail(msg)
 
-    def _setUp(self, entity):
+    def _setUp(self, entity, entity_id='abcd1234-eabc-5678-9abc-abcdef012345'):
         super(BaseEntityResource, self).setUp()
         self.responses = self.useFixture(fixture.Fixture())
         self.endpoint = 'http://localhost:9311'
         self.project_id = '1234567'
 
         self.entity = entity
-        self.entity_base = self.endpoint + "/" + self.entity + "/"
-        self.entity_href = self.entity_base + \
-            'abcd1234-eabc-5678-9abc-abcdef012345'
+        self.entity_id = entity_id
+        self.entity_base = self.endpoint + "/v1/" + self.entity
+        self.entity_href = self.entity_base + "/" + self.entity_id
 
-        self.api = mock.MagicMock()
-        self.api._base_url = self.endpoint
+        self.client = client.Client(endpoint=self.endpoint,
+                                    project_id=self.project_id)
