@@ -16,6 +16,7 @@ import json
 import logging
 import os
 
+from keystoneclient import adapter
 from keystoneclient.auth.base import BaseAuthPlugin
 from keystoneclient import session as ks_session
 
@@ -57,13 +58,23 @@ class HTTPAuthError(HTTPError):
     pass
 
 
-class _HTTPClient(object):
+class _HTTPClient(adapter.Adapter):
 
-    def __init__(self, session, endpoint=None, project_id=None,
-                 verify=True, service_type=_DEFAULT_SERVICE_TYPE,
-                 service_name=None, interface=_DEFAULT_SERVICE_INTERFACE,
-                 region_name=None):
-        self._session = session
+    def __init__(self, session, project_id=None, **kwargs):
+        kwargs.setdefault('interface', _DEFAULT_SERVICE_INTERFACE)
+        kwargs.setdefault('service_type', _DEFAULT_SERVICE_TYPE)
+
+        self._base_url = None
+
+        try:
+            endpoint = kwargs.pop('endpoint')
+        except KeyError:
+            pass
+        else:
+            self._base_url = '{0}/{1}'.format(endpoint, _DEFAULT_API_VERSION)
+            kwargs.setdefault('endpoint_override', self._base_url)
+
+        super(_HTTPClient, self).__init__(session, **kwargs)
 
         if project_id is None:
             self._default_headers = dict()
@@ -71,67 +82,31 @@ class _HTTPClient(object):
             # If provided we'll include the project ID in all requests.
             self._default_headers = {'X-Project-Id': project_id}
 
-        if not endpoint:
-            endpoint = session.get_endpoint(service_type=service_type,
-                                            service_name=service_name,
-                                            interface=interface,
-                                            region_name=region_name)
-
-        if endpoint.endswith('/'):
-            endpoint = endpoint[:-1]
-
-        self._barbican_endpoint = endpoint
-        self._base_url = '{0}/{1}'.format(endpoint, _DEFAULT_API_VERSION)
-
-    def _get(self, href, params=None):
-        headers = {'Accept': 'application/json'}
+    def request(self, *args, **kwargs):
+        headers = kwargs.setdefault('headers', {})
         headers.update(self._default_headers)
-        resp = self._session.get(href, params=params, headers=headers)
+        resp = super(_HTTPClient, self).request(*args, **kwargs)
+        # NOTE(jamielennox): _check_status_code is being completely ignored as
+        # errors are being raised from session.request. This behaviour is
+        # enforced by tests. Pass raise_exc=False to request() to make this
+        # work again.
         self._check_status_code(resp)
-        return resp.json()
+        return resp
 
-    def _get_raw(self, href, headers):
-        headers.update(self._default_headers)
-        resp = self._session.get(href, headers=headers)
-        self._check_status_code(resp)
-        return resp.content
+    def get(self, *args, **kwargs):
+        headers = kwargs.setdefault('headers', {})
+        headers.setdefault('Accept', 'application/json')
 
-    def _delete(self, href, json=None):
-        headers = dict()
-        headers.update(self._default_headers)
-        resp = self._session.delete(href, headers=headers, json=json)
-        self._check_status_code(resp)
+        return super(_HTTPClient, self).get(*args, **kwargs).json()
 
-    def _deserialization_helper(self, obj):
-        """
-        Help deserialization of objects which may require special processing
-        (for example datetime objects).  If your object gives you
-        json.dumps errors when you attempt to deserialize then this
-        function is the place where you will handle that special case.
+    def post(self, path, *args, **kwargs):
+        if not path[-1] == '/':
+            path += '/'
 
-        :param obj: an object that may or may not require special processing
-        :return: the stringified object (if it required special processing) or
-        the object itself.
-        """
-        # by default, return the object itself
-        return_str = obj
+        return super(_HTTPClient, self).post(path, *args, **kwargs).json()
 
-        # special case for objects that contain isoformat method (ie datetime)
-        if hasattr(obj, 'isoformat'):
-            return_str = obj.isoformat()
-
-        return return_str
-
-    def _post(self, path, data):
-        url = '{0}/{1}/'.format(self._base_url, path)
-        headers = {'Content-Type': 'application/json'}
-        headers.update(self._default_headers)
-        resp = self._session.post(
-            url,
-            data=json.dumps(data, default=self._deserialization_helper),
-            headers=headers)
-        self._check_status_code(resp)
-        return resp.json()
+    def _get_raw(self, path, *args, **kwargs):
+        return self.request(path, 'GET', *args, **kwargs).content
 
     def _check_status_code(self, resp):
         status = resp.status_code
@@ -200,7 +175,7 @@ class Client(object):
         if not session:
             session = ks_session.Session(verify=kwargs.pop('verify', True))
 
-        if session.auth is None:
+        if session.auth is None and kwargs.get('auth') is None:
             if kwargs.get('endpoint') is None:
                 raise ValueError('Barbican endpoint url must be provided when '
                                  'not using auth in the Keystone Session.')

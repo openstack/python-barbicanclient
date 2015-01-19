@@ -192,7 +192,7 @@ class Container(ContainerFormatter):
         LOG.debug("Request body: {0}".format(container_dict))
 
         # Save, store container_ref and return
-        response = self._api._post(self._entity, container_dict)
+        response = self._api.post(self._entity, json=container_dict)
         if response:
             self._container_ref = response['container_ref']
         return self.container_ref
@@ -200,7 +200,7 @@ class Container(ContainerFormatter):
     def delete(self):
         """Delete container from Barbican"""
         if self._container_ref:
-            self._api._delete(self._container_ref)
+            self._api.delete(self._container_ref)
             self._container_ref = None
             self._status = None
             self._created = None
@@ -225,7 +225,7 @@ class Container(ContainerFormatter):
                   .format(self._container_ref))
         base.validate_ref(self._container_ref, 'Container')
         try:
-            response = self._api._get(self._container_ref)
+            response = self._api.get(self._container_ref)
         except AttributeError:
             raise LookupError('Container {0} could not be found.'
                               .format(self._container_ref))
@@ -527,7 +527,7 @@ class ContainerManager(base.BaseEntityManager):
                   .format(container_ref))
         base.validate_ref(container_ref, 'Container')
         try:
-            response = self._api._get(container_ref)
+            response = self._api.get(container_ref)
         except AttributeError:
             raise LookupError('Container {0} could not be found.'
                               .format(container_ref))
@@ -677,7 +677,7 @@ class ContainerManager(base.BaseEntityManager):
         """
         if not container_ref:
             raise ValueError('container_ref is required.')
-        self._api._delete(container_ref)
+        self._api.delete(container_ref)
 
     def list(self, limit=10, offset=0, name=None, type=None):
         """
@@ -699,7 +699,7 @@ class ContainerManager(base.BaseEntityManager):
         if type:
             params['type'] = type
 
-        response = self._api._get(href, params)
+        response = self._api.get(href, params=params)
 
         return [self._generate_typed_container(container)
                 for container in response.get('containers', [])]
@@ -721,7 +721,7 @@ class ContainerManager(base.BaseEntityManager):
         consumer_dict['name'] = name
         consumer_dict['URL'] = url
 
-        response = self._api._post(href, consumer_dict)
+        response = self._api.post(href, json=consumer_dict)
         return self._generate_typed_container(response)
 
     def remove_consumer(self, container_ref, name, url):
@@ -742,4 +742,4 @@ class ContainerManager(base.BaseEntityManager):
             'URL': url
         }
 
-        self._api._delete(href, json=consumer_dict)
+        self._api.delete(href, json=consumer_dict)
