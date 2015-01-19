@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import mock
+from requests_mock.contrib import fixture
 import testtools
 
 from barbicanclient import client
@@ -22,6 +23,7 @@ class TestClient(testtools.TestCase):
 
     def setUp(self):
         super(TestClient, self).setUp()
+        self.responses = self.useFixture(fixture.Fixture())
         self.endpoint = 'http://localhost:9311'
         self.project_id = 'project_id'
         self.client = client.Client(endpoint=self.endpoint,
@@ -307,6 +309,7 @@ class BaseEntityResource(testtools.TestCase):
 
     def _setUp(self, entity):
         super(BaseEntityResource, self).setUp()
+        self.responses = self.useFixture(fixture.Fixture())
         self.endpoint = 'http://localhost:9311'
         self.project_id = '1234567'
 

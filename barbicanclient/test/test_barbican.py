@@ -16,9 +16,9 @@
 import os
 import sys
 
+from requests_mock.contrib import fixture
 import six
 import testtools
-import httpretty
 import uuid
 import json
 
@@ -101,13 +101,11 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
         self.assertEqual(code, exit_code)
         self.assertIn(expected_msg, out)
 
-    @httpretty.activate
     def test_should_succeed_if_noauth_with_valid_args_specified(self):
-        list_secrets_content = '{"secrets": [], "total": 0}'
         list_secrets_url = '{0}/v1/secrets'.format(self.endpoint)
-        httpretty.register_uri(
-            httpretty.GET, list_secrets_url,
-            body=list_secrets_content)
+
+        self.responses.get(list_secrets_url, json={"secrets": [], "total": 0})
+
         self._expect_success_code(
             "--no-auth --endpoint {0} --os-tenant-id {1} secret list".
             format(self.endpoint, self.project_id))
@@ -129,6 +127,7 @@ class TestBarbicanWithKeystoneClient(testtools.TestCase):
 
     def setUp(self):
         super(TestBarbicanWithKeystoneClient, self).setUp()
+        self.responses = self.useFixture(fixture.Fixture())
         self.kwargs = {'auth_url': keystone_client_fixtures.V3_URL}
         for arg in ['username', 'password', 'project_name',
                     'user_domain_name', 'project_domain_name']:
@@ -154,42 +153,37 @@ class TestBarbicanWithKeystoneClient(testtools.TestCase):
         mySecretRef = '{0}/secrets/mysecretid'.format(barbican_url)
         argv.append(mySecretRef)
         # emulate delete secret
-        httpretty.register_uri(
-            httpretty.DELETE,
-            mySecretRef,
-            status=204)
+        self.responses.delete(mySecretRef, status_code=204)
 
         try:
             self.barbican.run(argv=argv)
         except:
             self.fail('failed to delete secret')
 
-    @httpretty.activate
     def test_v2_auth(self):
         # emulate Keystone version discovery
-        httpretty.register_uri(httpretty.GET,
-                               keystone_client_fixtures.V2_URL,
-                               body=keystone_client_fixtures.V2_VERSION_ENTRY)
+        self.responses.get(keystone_client_fixtures.V2_URL,
+                           body=keystone_client_fixtures.V2_VERSION_ENTRY)
+
         # emulate Keystone v2 token request
-        v2_token = keystone_client_fixtures.generate_v2_project_scoped_token()
-        httpretty.register_uri(httpretty.POST,
-                               '{0}/tokens'.format(
-                                   keystone_client_fixtures.V2_URL),
-                               body=json.dumps(v2_token))
+        self.responses.post(
+            '{0}/tokens'.format(keystone_client_fixtures.V2_URL),
+            json=keystone_client_fixtures.generate_v2_project_scoped_token())
+
         self._delete_secret(keystone_client_fixtures.V2_URL)
 
-    @httpretty.activate
     def test_v3_auth(self):
         # emulate Keystone version discovery
-        httpretty.register_uri(httpretty.GET,
-                               keystone_client_fixtures.V3_URL,
-                               body=keystone_client_fixtures.V3_VERSION_ENTRY)
+        self.responses.get(keystone_client_fixtures.V3_URL,
+                           text=keystone_client_fixtures.V3_VERSION_ENTRY)
+
         # emulate Keystone v3 token request
         id, v3_token = \
             keystone_client_fixtures.generate_v3_project_scoped_token()
-        httpretty.register_uri(httpretty.POST,
-                               '{0}/auth/tokens'.format(
-                                   keystone_client_fixtures.V3_URL),
-                               body=json.dumps(v3_token),
-                               adding_headers={'x-subject-token': '1234'})
+
+        self.responses.post(
+            '{0}/auth/tokens'.format(keystone_client_fixtures.V3_URL),
+            json=v3_token,
+            headers={'X-Subject-Token': '1234'})
+
         self._delete_secret(keystone_client_fixtures.V3_URL)
