@@ -28,7 +28,8 @@ class ContainerData(object):
         self.type = 'generic'
         self.secret = mock.Mock(spec=secrets.Secret)
         self.secret.__bases__ = (secrets.Secret,)
-        self.secret.secret_ref = 'http://a/b/1'
+        self.secret.secret_ref = ('http://barbican/v1/secrets/'
+                                  'a73b62e4-eee2-4169-9a14-b8bb4da71d87')
         self.secret.name = 'thing1'
         self.generic_secret_refs = {self.secret.name: self.secret.secret_ref}
         self.generic_secret_refs_json = [{'name': self.secret.name,
@@ -92,9 +93,6 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self._setUp('containers')
 
         self.container = ContainerData()
-        self.client.secrets = mock.MagicMock()
-        self.client.secrets.get.return_value = self.container.secret
-        self.client.secrets._api = self.client
         self.manager = self.client.containers
 
         self.consumers_post_resource = self.entity_href + '/consumers/'
