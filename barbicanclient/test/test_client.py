@@ -12,6 +12,8 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from keystoneclient import session
 import mock
 from requests_mock.contrib import fixture
 import testtools
@@ -26,38 +28,33 @@ class TestClient(testtools.TestCase):
         self.responses = self.useFixture(fixture.Fixture())
         self.endpoint = 'http://localhost:9311'
         self.project_id = 'project_id'
-        sess = mock.MagicMock()
-        self.httpclient = client._HTTPClient(session=sess,
+        self.session = session.Session()
+        self.httpclient = client._HTTPClient(session=self.session,
                                              endpoint=self.endpoint,
                                              project_id=self.project_id)
 
 
 class WhenTestingClientInit(TestClient):
 
-    def _get_fake_session(self):
-        sess = mock.MagicMock()
-        sess.get_endpoint.return_value = self.endpoint
-        return sess
-
     def test_can_be_used_without_a_session(self):
-        c = client._HTTPClient(session=self._get_fake_session(),
+        c = client._HTTPClient(session=self.session,
                                endpoint=self.endpoint,
                                project_id=self.project_id)
         self.assertIsNotNone(c._session)
 
     def test_api_version_is_appended_to_endpoint(self):
-        c = client._HTTPClient(session=self._get_fake_session(),
+        c = client._HTTPClient(session=self.session,
                                endpoint=self.endpoint,
                                project_id=self.project_id)
         self.assertEqual(c._base_url, 'http://localhost:9311/v1')
 
     def test_default_headers_are_empty(self):
-        c = client._HTTPClient(self._get_fake_session(), self.endpoint)
+        c = client._HTTPClient(self.session, self.endpoint)
         self.assertIsInstance(c._default_headers, dict)
         self.assertFalse(bool(c._default_headers))
 
     def test_project_id_is_added_to_default_headers(self):
-        c = client._HTTPClient(session=self._get_fake_session(),
+        c = client._HTTPClient(session=self.session,
                                endpoint=self.endpoint,
                                project_id=self.project_id)
         self.assertIn('X-Project-Id', c._default_headers.keys())
@@ -72,180 +69,145 @@ class WhenTestingClientInit(TestClient):
                           **{"endpoint": self.endpoint})
 
     def test_client_strips_trailing_slash_from_endpoint(self):
-        c = client._HTTPClient(session=self._get_fake_session(),
+        c = client._HTTPClient(session=self.session,
                                endpoint=self.endpoint + '/',
                                project_id=self.project_id)
         self.assertEqual(c._barbican_endpoint, self.endpoint)
 
     def test_base_url_starts_with_endpoint_url(self):
-        c = client._HTTPClient(session=self._get_fake_session(),
+        c = client._HTTPClient(session=self.session,
                                endpoint=self.endpoint,
                                project_id=self.project_id)
         self.assertTrue(c._base_url.startswith(self.endpoint))
 
     def test_base_url_ends_with_default_api_version(self):
-        c = client._HTTPClient(session=self._get_fake_session(),
+        c = client._HTTPClient(session=self.session,
                                endpoint=self.endpoint,
                                project_id=self.project_id)
         self.assertTrue(c._base_url.endswith(client._DEFAULT_API_VERSION))
 
     def test_gets_endpoint_from_keystone_session(self):
-        c = client._HTTPClient(session=self._get_fake_session(),
+        c = client._HTTPClient(session=self.session,
                                endpoint=self.endpoint)
         self.assertEqual(c._barbican_endpoint, self.endpoint)
 
 
-class TestClientWithSession(testtools.TestCase):
-
-    def setUp(self):
-        super(TestClientWithSession, self).setUp()
-        self.endpoint = 'http://localhost:9311'
-
-    def _get_fake_session_with_status_code(self, status_code):
-        resp = mock.MagicMock()
-        resp.status_code = status_code
-        sess = mock.MagicMock()
-        sess.get.return_value = resp
-        sess.post.return_value = resp
-        sess.delete.return_value = resp
-        sess.get_endpoint.return_value = self.endpoint
-        return sess
-
-
-class WhenTestingClientPost(TestClientWithSession):
+class WhenTestingClientPost(TestClient):
 
     def setUp(self):
         super(WhenTestingClientPost, self).setUp()
-        self.session = self._get_fake_session_with_status_code(201)
         self.httpclient = client._HTTPClient(self.session, self.endpoint)
+        self.href = self.endpoint + '/v1/secrets/'
+        self.post_mock = self.responses.post(self.href, json={})
 
     def test_post_normalizes_url_with_traling_slash(self):
         self.httpclient._post(path='secrets', data={'test_data': 'test'})
-        args, kwargs = self.session.post.call_args
-        url = args[0]
-        self.assertTrue(url.endswith('/'))
+        self.assertTrue(self.post_mock.last_request.url.endswith('/'))
 
     def test_post_includes_content_type_header_of_application_json(self):
         self.httpclient._post(path='secrets', data={'test_data': 'test'})
-        args, kwargs = self.session.post.call_args
-        headers = kwargs.get('headers')
-        self.assertIn('Content-Type', headers.keys())
-        self.assertEqual(headers['Content-Type'], 'application/json')
+        self.assertEqual('application/json',
+                         self.post_mock.last_request.headers['Content-Type'])
 
     def test_post_includes_default_headers(self):
         self.httpclient._default_headers = {'Test-Default-Header': 'test'}
         self.httpclient._post(path='secrets', data={'test_data': 'test'})
-        args, kwargs = self.session.post.call_args
-        headers = kwargs.get('headers')
-        self.assertIn('Test-Default-Header', headers.keys())
+        self.assertEqual(
+            'test',
+            self.post_mock.last_request.headers['Test-Default-Header'])
 
     def test_post_checks_status_code(self):
         self.httpclient._check_status_code = mock.MagicMock()
         self.httpclient._post(path='secrets', data={'test_data': 'test'})
-        resp = self.session.post()
-        self.httpclient._check_status_code.assert_called_with(resp)
+        self.httpclient._check_status_code.assert_called()
 
 
-class WhenTestingClientGet(TestClientWithSession):
+class WhenTestingClientGet(TestClient):
 
     def setUp(self):
         super(WhenTestingClientGet, self).setUp()
-        self.session = self._get_fake_session_with_status_code(200)
         self.httpclient = client._HTTPClient(self.session, self.endpoint)
         self.headers = dict()
-        self.href = 'http://test_href'
+        self.href = 'http://test_href/'
+        self.get_mock = self.responses.get(self.href, json={})
 
     def test_get_uses_href_as_is(self):
         self.httpclient._get(self.href)
-        args, kwargs = self.session.get.call_args
-        url = args[0]
-        self.assertEqual(url, self.href)
+        self.assertEqual(self.get_mock.last_request.url, self.href)
 
     def test_get_passes_params(self):
-        params = object()
+        params = {'test': 'test1'}
         self.httpclient._get(self.href, params=params)
-        args, kwargs = self.session.get.call_args
-        passed_params = kwargs.get('params')
-        self.assertIs(params, passed_params)
+        self.assertEqual(self.get_mock.last_request.url.split('?')[0],
+                         self.href)
+        self.assertEqual(['test1'], self.get_mock.last_request.qs['test'])
 
     def test_get_includes_accept_header_of_application_json(self):
         self.httpclient._get(self.href)
-        args, kwargs = self.session.get.call_args
-        headers = kwargs.get('headers')
-        self.assertIn('Accept', headers.keys())
-        self.assertEqual(headers['Accept'], 'application/json')
+        self.assertEqual('application/json',
+                         self.get_mock.last_request.headers['Accept'])
 
     def test_get_includes_default_headers(self):
         self.httpclient._default_headers = {'Test-Default-Header': 'test'}
         self.httpclient._get(self.href)
-        args, kwargs = self.session.get.call_args
-        headers = kwargs.get('headers')
-        self.assertIn('Test-Default-Header', headers.keys())
+        self.assertEqual(
+            'test',
+            self.get_mock.last_request.headers['Test-Default-Header'])
 
     def test_get_checks_status_code(self):
         self.httpclient._check_status_code = mock.MagicMock()
         self.httpclient._get(self.href)
-        resp = self.session.get()
-        self.httpclient._check_status_code.assert_called_with(resp)
+        self.httpclient._check_status_code.assert_called()
 
     def test_get_raw_uses_href_as_is(self):
         self.httpclient._get_raw(self.href, self.headers)
-        args, kwargs = self.session.get.call_args
-        url = args[0]
-        self.assertEqual(url, self.href)
+        self.assertEqual(self.get_mock.last_request.url, self.href)
 
     def test_get_raw_passes_headers(self):
-        self.httpclient._get_raw(self.href, self.headers)
-        args, kwargs = self.session.get.call_args
-        headers = kwargs.get('headers')
-        self.assertIs(headers, self.headers)
+        self.httpclient._get_raw(self.href, {'test': 'test'})
+        self.assertEqual('test', self.get_mock.last_request.headers['test'])
 
     def test_get_raw_includes_default_headers(self):
         self.httpclient._default_headers = {'Test-Default-Header': 'test'}
         self.httpclient._get_raw(self.href, self.headers)
-        self.assertIn('Test-Default-Header', self.headers.keys())
+        self.assertIn('Test-Default-Header',
+                      self.get_mock.last_request.headers)
 
     def test_get_raw_checks_status_code(self):
         self.httpclient._check_status_code = mock.MagicMock()
         self.httpclient._get_raw(self.href, self.headers)
-        resp = self.session.get()
-        self.httpclient._check_status_code.assert_called_with(resp)
+        self.httpclient._check_status_code.assert_called()
 
 
-class WhenTestingClientDelete(TestClientWithSession):
+class WhenTestingClientDelete(TestClient):
 
     def setUp(self):
         super(WhenTestingClientDelete, self).setUp()
-        self.session = self._get_fake_session_with_status_code(200)
         self.httpclient = client._HTTPClient(session=self.session,
                                              endpoint=self.endpoint)
-        self.href = 'http://test_href'
+        self.href = 'http://test_href/'
+        self.del_mock = self.responses.delete(self.href, status_code=204)
 
     def test_delete_uses_href_as_is(self):
         self.httpclient._delete(self.href)
-        args, kwargs = self.session.delete.call_args
-        url = args[0]
-        self.assertEqual(url, self.href)
+        self.assertTrue(self.del_mock.called)
 
     def test_delete_passes_json(self):
-        json = '{"test": "test"}'
+        json = {"test": "test"}
         self.httpclient._delete(self.href, json=json)
-        args, kwargs = self.session.delete.call_args
-        passed_json = kwargs.get('json')
-        self.assertEqual(passed_json, json)
+        self.assertEqual(self.del_mock.last_request.text, '{"test": "test"}')
 
     def test_delete_includes_default_headers(self):
         self.httpclient._default_headers = {'Test-Default-Header': 'test'}
         self.httpclient._delete(self.href)
-        args, kwargs = self.session.delete.call_args
-        headers = kwargs.get('headers')
-        self.assertIn('Test-Default-Header', headers.keys())
+        self.assertEqual(
+            'test',
+            self.del_mock.last_request.headers['Test-Default-Header'])
 
     def test_delete_checks_status_code(self):
         self.httpclient._check_status_code = mock.MagicMock()
         self.httpclient._delete(self.href)
-        resp = self.session.get()
-        self.httpclient._check_status_code.assert_called_with(resp)
+        self.httpclient._check_status_code.assert_called()
 
 
 class WhenTestingCheckStatusCodes(TestClient):
