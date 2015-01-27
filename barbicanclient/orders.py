@@ -16,7 +16,7 @@ import abc
 import functools
 import logging
 
-from oslo.utils.timeutils import parse_isotime
+from oslo_utils.timeutils import parse_isotime
 import six
 
 from barbicanclient import base

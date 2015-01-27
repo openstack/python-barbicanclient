@@ -15,7 +15,7 @@
 import json
 
 import mock
-from oslo.utils import timeutils
+from oslo_utils import timeutils
 import testtools
 
 from barbicanclient import orders, base

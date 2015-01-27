@@ -13,7 +13,7 @@
 import copy
 import uuid
 
-from oslo.serialization import jsonutils
+from oslo_serialization import jsonutils
 
 
 # these are copied from python-keystoneclient tests
