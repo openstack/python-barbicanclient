@@ -35,7 +35,7 @@ Keystone API Version 2 Authentication
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Authentication using Keystone API Version 2 can be achieved using the
-`keystoneclient.auth.identity.v3.Password` auth plugin.
+`keystoneclient.auth.identity.v2.Password` auth plugin.
 
 Example::
 
