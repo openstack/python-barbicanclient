@@ -32,19 +32,24 @@ class that is exposed as the `secrets` attribute of the Client.
 
 Example::
 
-    # Create a random encryption key and store it in Barbican
+    # Store a random plain text password in Barbican
 
-    import base64
-    import os
     from barbicanclient import client
+    import random
+    import string
+
+    def random_password(length):
+        sys_random = random.SystemRandom()
+        return u''.join(
+            sys_random.choice(string.ascii_letters + string.digits) for _ in range(length)
+        )
 
     barbican = client.Client(...)
 
     my_secret = barbican.secrets.create()
-    my_secret.name = 'Encryption Key'
-    my_secret.payload = base64.b64encode(os.urandom(32))
-    my_secret.payload_content_type = 'application/octet-stream'
-    my_secret.payload_content_encoding = 'base64'
+    my_secret.name = u'Random plain text password'
+    my_secret.payload = random_password(24)
+    my_secret.payload_content_type = u'text/plain'
 
     my_secret_ref = my_secret.store()
 
@@ -56,7 +61,7 @@ Example::
     # Retrieve Secret from secret reference
 
     retrieved_secret = barbican.secrets.get(my_secret_ref)
-    key = retrieved_secret.payload
+    my_password = retrieved_secret.payload
 
 Orders
 ======
