@@ -187,6 +187,10 @@ class Order(object):
 
     @immutable_after_save
     def submit(self):
+        """
+        Submit the Order to Barbican.  New Order objects are not persisted
+        in Barbican until this method is called.
+        """
         order_dict = {'type': self._type, 'meta': self._meta}
         LOG.debug("Request body: {0}".format(order_dict))
         response = self._api._post(self._entity, order_dict)
@@ -195,6 +199,9 @@ class Order(object):
         return self._order_ref
 
     def delete(self):
+        """
+        Deletes the Order from Barbican
+        """
         if self._order_ref:
             self._api._delete(self._order_ref)
             self._order_ref = None
@@ -203,6 +210,9 @@ class Order(object):
 
 
 class KeyOrder(Order, KeyOrderFormatter):
+    """
+    KeyOrders can be used to request random key material from Barbican
+    """
     _type = 'key'
 
     def __init__(self, api, name=None, algorithm=None, bit_length=None,
@@ -223,6 +233,11 @@ class KeyOrder(Order, KeyOrderFormatter):
 
     @property
     def mode(self):
+        """Encryption mode being used with this key
+
+        The mode could be set to "CBC" for example, when requesting a key that
+        will be used for AES encryption in CBC mode.
+        """
         return self._meta.get('mode')
 
     @property
@@ -264,6 +279,8 @@ class AsymmetricOrder(Order, AsymmetricOrderFormatter):
 
     @property
     def pass_phrase(self):
+        """Passphrase to be used for passphrase protected asymmetric keys
+        """
         return self._meta.get('pass_phrase')
 
     @pass_phrase.setter
@@ -276,6 +293,9 @@ class AsymmetricOrder(Order, AsymmetricOrderFormatter):
 
 
 class OrderManager(base.BaseEntityManager):
+    """
+    Entity Manager for Order entitites
+    """
 
     _order_type_to_class_map = {
         'key': KeyOrder,
@@ -287,7 +307,7 @@ class OrderManager(base.BaseEntityManager):
 
     def get(self, order_ref):
         """
-        Get an Order
+        Retrieve an existing Order from Barbican
 
         :param order_ref: Full HATEOAS reference to an Order
         :returns: An instance of the appropriate subtype of Order
@@ -318,7 +338,10 @@ class OrderManager(base.BaseEntityManager):
     def create_key(self, name=None, algorithm=None, bit_length=None, mode=None,
                    payload_content_type=None, expiration=None):
         """
-        Create an Order for a Symmetric Key
+        Factory method for `KeyOrder` objects
+
+        `KeyOrder` objects returned by this method have not yet been submitted
+        to the Barbican service.
 
         :param name: A friendly name for the secret to be created
         :param algorithm: The algorithm associated with this secret key
@@ -327,6 +350,7 @@ class OrderManager(base.BaseEntityManager):
         :param payload_content_type: The format/type of the secret data
         :param expiration: The expiration time of the secret in ISO 8601 format
         :returns: KeyOrder
+        :rtype: :class:`barbicanclient.orders.KeyOrder`
         """
         return KeyOrder(api=self._api, name=name,
                         algorithm=algorithm, bit_length=bit_length, mode=mode,
@@ -337,7 +361,10 @@ class OrderManager(base.BaseEntityManager):
                           pass_phrase=None, payload_content_type=None,
                           expiration=None):
         """
-        Create an Order for an Asymmetric Key
+        Factory method for `AsymmetricOrder` objects
+
+        `AsymmetricOrder` objects returned by this method have not yet been
+        submitted to the Barbican service.
 
         :param name: A friendly name for the container to be created
         :param algorithm: The algorithm associated with this secret key
@@ -345,7 +372,8 @@ class OrderManager(base.BaseEntityManager):
         :param pass_phrase: Optional passphrase
         :param payload_content_type: The format/type of the secret data
         :param expiration: The expiration time of the secret in ISO 8601 format
-        :returns AsymmetricOrder
+        :returns: AsymmetricOrder
+        :rtype: :class:`barbicanclient.orders.AsymmetricOrder`
         """
         return AsymmetricOrder(api=self._api, name=name, algorithm=algorithm,
                                bit_length=bit_length, pass_phrase=pass_phrase,
@@ -354,7 +382,7 @@ class OrderManager(base.BaseEntityManager):
 
     def delete(self, order_ref):
         """
-        Delete an Order
+        Delete an Order from Barbican
 
         :param order_ref: The href for the order
         """
@@ -364,7 +392,9 @@ class OrderManager(base.BaseEntityManager):
 
     def list(self, limit=10, offset=0):
         """
-        List all Orders for the project
+        List Orders for the project
+
+        This method uses the limit and offset parameters for paging.
 
         :param limit: Max number of orders returned
         :param offset: Offset orders to begin list

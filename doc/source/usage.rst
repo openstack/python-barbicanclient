@@ -88,7 +88,7 @@ Example::
 
     my_order_ref = my_order.submit()
 
-The order reference returned by :meth:`barbicanclient.orders.Order.submit()`
+The order reference returned by :meth:`barbicanclient.orders.Order.submit`
 can later be used to retrieve the order from Barbican.
 
 Example::

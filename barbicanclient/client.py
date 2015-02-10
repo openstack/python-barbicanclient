@@ -66,34 +66,35 @@ class Client(object):
         """
         Barbican client object used to interact with barbican service.
 
-        :param session: An instance of keystoneclient.session.Session that
+        :param session: An instance of a keystoneclient Session that
             can be either authenticated, or not authenticated.  When using
             a non-authenticated Session, you must provide some additional
             parameters.  When no session is provided it will default to a
             non-authenticated Session.
-        :param endpoint: Barbican endpoint url. Required when a session is not
-            given, or when using a non-authentciated session.
+        :type session: keystoneclient.session.Session
+        :param str endpoint: Barbican endpoint url. Required when a session is
+            not given, or when using a non-authenticated session.
             When using an authenticated session, the client will attempt
             to get an endpoint from the session.
-        :param project_id: The project ID used for context in Barbican.
+        :param str project_id: The project ID used for context in Barbican.
             Required when a session is not given, or when using a
             non-authenticated session.
             When using an authenticated session, the project ID will be
             provided by the authentication mechanism.
-        :param verify: When a session is not given, the client will create
+        :param bool verify: When a session is not given, the client will create
             a non-authenticated session.  This parameter is passed to the
             session that is created.  If set to False, it allows
             barbicanclient to perform "insecure" TLS (https) requests.
             The server's certificate will not be verified against any
             certificate authorities.
-            WARNING: This option should be used with caution.
-        :param service_type: Used as an endpoint filter when using an
-            authenticated keystone session. Defaults to 'key-management'.
-        :param service_name: Used as an endpoint filter when using an
+            WARNING: This option should be used with extreme caution.
+        :param str service_type: Used as an endpoint filter when using an
+            authenticated keystone session. Defaults to 'key-manager'.
+        :param str service_name: Used as an endpoint filter when using an
             authenticated keystone session.
-        :param interface: Used as an endpoint filter when using an
+        :param str interface: Used as an endpoint filter when using an
             authenticated keystone session. Defaults to 'public'.
-        :param region_name: Used as an endpoint filter when using an
+        :param str region_name: Used as an endpoint filter when using an
             authenticated keystone session.
         """
         LOG.debug("Creating Client object")
