@@ -19,22 +19,29 @@ from functionaltests.client.v1.behaviors import base_behaviors
 
 class ContainerBehaviors(base_behaviors.BaseBehaviors):
 
-    def create_generic_container(self, data):
+    def create_generic_container(self, data, secrets=None):
         """Creates a generic container object
 
         :param data: Data used to create object
-
+        :param secrets: Optional paramter to include a dictionary of secrets
+            to override the default secrets data.
         :return: A generic container object
         """
-
+        if secrets:
+            data['secrets'] = secrets
         return self.client.containers.create(**data)
 
-    def create_rsa_container(self, data):
+    def create_rsa_container(self, data, disable_passphrase=False):
         """Creates RSA container object
 
         :param data: Data used to create object
+        :param disable_passphrase: Option to disable the passphrase on an RSA
+            container
         :return: RSA container object
         """
+        if disable_passphrase:
+            data['private_key_passphrase'] = None
+
         return self.client.containers.create_rsa(**data)
 
     def create_certificate_container(self, data):
