@@ -68,9 +68,7 @@ class ContainerFormatter(formatter.EntityFormatter):
 
 
 class Container(ContainerFormatter):
-    """
-    Containers are used to keep track of the data stored in Barbican.
-    """
+    """Container is a generic grouping of Secrets"""
     _entity = 'containers'
     _type = 'generic'
 
@@ -151,6 +149,7 @@ class Container(ContainerFormatter):
 
     @property
     def secrets(self, cache=True):
+        """List of Secrets in Containers"""
         if not self._cached_secrets or not cache:
             self._fill_secrets_from_secret_refs()
         return self._cached_secrets
@@ -180,6 +179,7 @@ class Container(ContainerFormatter):
 
     @_immutable_after_save
     def store(self):
+        """Store Container in Barbican"""
         secret_refs = self._get_secrets_and_store_them_if_necessary()
 
         container_dict = base.filter_empty_keys({
@@ -197,6 +197,7 @@ class Container(ContainerFormatter):
         return self.container_ref
 
     def delete(self):
+        """Delete container from Barbican"""
         if self._container_ref:
             self._api._delete(self._container_ref)
             self._container_ref = None
@@ -320,14 +321,17 @@ class RSAContainer(RSAContainerFormatter, Container):
 
     @property
     def public_key(self):
+        """Secret containing the Public Key"""
         return self._get_named_secret("public_key")
 
     @property
     def private_key(self):
+        """Secret containing the Private Key"""
         return self._get_named_secret("private_key")
 
     @property
     def private_key_passphrase(self):
+        """Secret containing the Passphrase"""
         return self._get_named_secret("private_key_passphrase")
 
     @public_key.setter
@@ -444,18 +448,22 @@ class CertificateContainer(CertificateContainerFormatter, Container):
 
     @property
     def certificate(self):
+        """Secret containing the certificate"""
         return self._get_named_secret("certificate")
 
     @property
     def private_key(self):
+        """Secret containing the private key"""
         return self._get_named_secret("private_key")
 
     @property
     def private_key_passphrase(self):
+        """Secret containing the passphrase"""
         return self._get_named_secret("private_key_passphrase")
 
     @property
     def intermediates(self):
+        """Secret containing intermediate certificates"""
         return self._get_named_secret("intermediates")
 
     @certificate.setter
@@ -491,6 +499,12 @@ class CertificateContainer(CertificateContainerFormatter, Container):
 
 
 class ContainerManager(base.BaseEntityManager):
+    """
+    EntityManager for Container entities
+
+    You should use the ContainerManager exposed by the Client and should not
+    need to instantiate your own.
+    """
 
     _container_map = {
         'generic': Container,
@@ -503,9 +517,9 @@ class ContainerManager(base.BaseEntityManager):
 
     def get(self, container_ref):
         """
-        Get a Container
+        Retrieve an existing Container from Barbican
 
-        :param container_ref: Full HATEOAS reference to a Container
+        :param str container_ref: Full HATEOAS reference to a Container
         :returns: Container object or a subclass of the appropriate type
         """
         LOG.debug('Getting container - Container href: {0}'
@@ -589,11 +603,15 @@ class ContainerManager(base.BaseEntityManager):
 
     def create(self, name=None, secrets=None):
         """
-        Create a Container
+        Factory method for `Container` objects
+
+        `Container` objects returned by this method have not yet been
+        stored in Barbican.
 
         :param name: A friendly name for the Container
         :param secrets: Secrets to populate when creating a Container
         :returns: Container
+        :rtype: :class:`barbicanclient.containers.Container`
         """
         return Container(
             api=self._api,
@@ -604,13 +622,17 @@ class ContainerManager(base.BaseEntityManager):
     def create_rsa(self, name=None, public_key=None, private_key=None,
                    private_key_passphrase=None):
         """
-        Create an RSAContainer
+        Factory method for `RSAContainer` objects
+
+        `RSAContainer` objects returned by this method have not yet been
+        stored in Barbican.
 
         :param name: A friendly name for the RSAContainer
         :param public_key: Secret object containing a Public Key
         :param private_key: Secret object containing a Private Key
         :param private_key_passphrase: Secret object containing a passphrase
         :returns: RSAContainer
+        :rtype: :class:`barbicanclient.containers.RSAContainer`
         """
         return RSAContainer(
             api=self._api,
@@ -624,7 +646,10 @@ class ContainerManager(base.BaseEntityManager):
                            intermediates=None, private_key=None,
                            private_key_passphrase=None):
         """
-        Create a CertificateContainer
+        Factory method for `CertificateContainer` objects
+
+        `CertificateContainer` objects returned by this method have not yet
+        been stored in Barbican.
 
         :param name: A friendly name for the CertificateContainer
         :param certificate: Secret object containing a Certificate
@@ -632,6 +657,7 @@ class ContainerManager(base.BaseEntityManager):
         :param private_key: Secret object containing a Private Key
         :param private_key_passphrase: Secret object containing a passphrase
         :returns: CertificateContainer
+        :rtype: :class:`barbicanclient.containers.CertificateContainer`
         """
         return CertificateContainer(
             api=self._api,
@@ -644,7 +670,7 @@ class ContainerManager(base.BaseEntityManager):
 
     def delete(self, container_ref):
         """
-        Delete a Container
+        Delete a Container from Barbican
 
         :param container_ref: Full HATEOAS reference to a Container
         """
@@ -654,7 +680,8 @@ class ContainerManager(base.BaseEntityManager):
 
     def list(self, limit=10, offset=0, name=None, type=None):
         """
-        List all containers for the project
+        List containers for the project.  This method uses the limit and offset
+        parameters for paging.
 
         :param limit: Max number of containers returned
         :param offset: Offset containers to begin list

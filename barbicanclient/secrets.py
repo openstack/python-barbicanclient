@@ -71,7 +71,8 @@ class SecretFormatter(formatter.EntityFormatter):
 
 class Secret(SecretFormatter):
     """
-    Secrets are used to keep track of the data stored in Barbican.
+    Secrets represent keys, credentials, and other sensitive data that is
+    stored by the Barbican service.
     """
     _entity = 'secrets'
 
@@ -80,6 +81,11 @@ class Secret(SecretFormatter):
                  payload_content_type=None, payload_content_encoding=None,
                  secret_ref=None, created=None, updated=None,
                  content_types=None, status=None):
+        """
+        Secret objects should not be instantiated directly.  You should use
+        the `create` or `get` methods of the
+        :class:`barbicanclient.secrets.SecretManager` instead.
+        """
         self._api = api
         self._secret_ref = secret_ref
         self._fill_from_data(
@@ -163,6 +169,9 @@ class Secret(SecretFormatter):
 
     @property
     def payload(self):
+        """
+        Lazy-loaded property that holds the unencrypted data
+        """
         if not self._payload:
             self._fetch_payload()
         return self._payload
@@ -219,6 +228,10 @@ class Secret(SecretFormatter):
 
     @immutable_after_save
     def store(self):
+        """
+        Stores the Secret in Barbican.  New Secret objects are not persisted
+        in Barbican until this method is called.
+        """
         secret_dict = base.filter_empty_keys({
             'name': self.name,
             'payload': self.payload,
@@ -239,6 +252,9 @@ class Secret(SecretFormatter):
         return self.secret_ref
 
     def delete(self):
+        """
+        Deletes the Secret from Barbican
+        """
         if self._secret_ref:
             self._api._delete(self._secret_ref)
             self._secret_ref = None
@@ -306,17 +322,20 @@ class Secret(SecretFormatter):
 
 
 class SecretManager(base.BaseEntityManager):
+    """Entity Manager for Secret entities"""
 
     def __init__(self, api):
         super(SecretManager, self).__init__(api, 'secrets')
 
     def get(self, secret_ref, payload_content_type=None):
         """
-        Get a Secret
+        Retrieve an existing Secret from Barbican
 
-        :param secret_ref: Full HATEOAS reference to a Secret
-        :param payload_content_type: Content type to use for payload decryption
-        :returns: Secret
+        :param str secret_ref: Full HATEOAS reference to a Secret
+        :param str payload_content_type: Content type to use for payload
+            decryption
+        :returns: Secret object retrieved from Barbican
+        :rtype: :class:`barbicanclient.secrets.Secret`
         """
         LOG.debug("Getting secret - Secret href: {0}".format(secret_ref))
         base.validate_ref(secret_ref, 'Secret')
@@ -330,7 +349,10 @@ class SecretManager(base.BaseEntityManager):
                payload_content_type=None, payload_content_encoding=None,
                algorithm=None, bit_length=None, mode=None, expiration=None):
         """
-        Create a Secret
+        Factory method for creating new `Secret` objects
+
+        Secrets returned by this method have not yet been stored in the
+        Barbican service.
 
         :param name: A friendly name for the Secret
         :param payload: The unencrypted secret data
@@ -340,7 +362,8 @@ class SecretManager(base.BaseEntityManager):
         :param bit_length: The bit length of this secret key
         :param mode: The algorithm mode used with this secret key
         :param expiration: The expiration time of the secret in ISO 8601 format
-        :returns: Secret
+        :returns: A new Secret object
+        :rtype: :class:`barbicanclient.secrets.Secret`
         """
         return Secret(api=self._api, name=name, payload=payload,
                       payload_content_type=payload_content_type,
@@ -350,9 +373,9 @@ class SecretManager(base.BaseEntityManager):
 
     def delete(self, secret_ref):
         """
-        Delete a Secret
+        Delete a Secret from Barbican
 
-        :param secret_ref: The href for the secret
+        :param secret_ref: The href for the secret to be deleted
         """
         if not secret_ref:
             raise ValueError('secret_ref is required.')
@@ -361,7 +384,10 @@ class SecretManager(base.BaseEntityManager):
     def list(self, limit=10, offset=0, name=None, algorithm=None,
              mode=None, bits=0):
         """
-        List all Secrets for the project
+        List Secrets for the project
+
+        This method uses the limit and offset parameters for paging,
+        and also supports filtering.
 
         :param limit: Max number of secrets returned
         :param offset: Offset secrets to begin list
@@ -369,7 +395,9 @@ class SecretManager(base.BaseEntityManager):
         :param algorithm: Algorithm filter for the list
         :param mode: Mode filter for the list
         :param bits: Bits filter for the list
-        :returns: list of Secret metadata objects
+        :returns: list of Secret objects that satisfy the provided filter
+            criteria.
+        :rtype: list
         """
         LOG.debug('Listing secrets - offset {0} limit {1}'.format(offset,
                                                                   limit))
