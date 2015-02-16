@@ -159,11 +159,34 @@ class Client(object):
         resp = self._session.delete(href, headers=headers, json=json)
         self._check_status_code(resp)
 
+    def _deserialization_helper(self, obj):
+        """
+        Help deserialization of objects which may require special processing
+        (for example datetime objects).  If your object gives you
+        json.dumps errors when you attempt to deserialize then this
+        function is the place where you will handle that special case.
+
+        :param obj: an object that may or may not require special processing
+        :return: the stringified object (if it required special processing) or
+        the object itself.
+        """
+        # by default, return the object itself
+        return_str = obj
+
+        # special case for objects that contain isoformat method (ie datetime)
+        if hasattr(obj, 'isoformat'):
+            return_str = obj.isoformat()
+
+        return return_str
+
     def _post(self, path, data):
         url = '{0}/{1}/'.format(self._base_url, path)
         headers = {'Content-Type': 'application/json'}
         headers.update(self._default_headers)
-        resp = self._session.post(url, data=json.dumps(data), headers=headers)
+        resp = self._session.post(
+            url,
+            data=json.dumps(data, default=self._deserialization_helper),
+            headers=headers)
         self._check_status_code(resp)
         return resp.json()
 
