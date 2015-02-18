@@ -38,7 +38,6 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
         :param secret: A barbican client secret object
         :return: The ref to the created secret
         """
-
         resp = secret.store()
 
         if resp:
@@ -54,10 +53,11 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
             :return: A barbican secret object with all meta and payload
                 information
         """
-
-        return self.client.secrets.get(
+        resp = self.client.secrets.get(
             secret_ref,
             payload_content_type=payload_content_type)
+
+        return resp
 
     def get_secrets(self, limit=10, offset=0):
         """Handles getting a list of secrets.
@@ -67,8 +67,9 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
                        the list
         :return: A list of secret objects
         """
+        resp = self.client.secrets.list(limit=limit, offset=offset)
 
-        return self.client.secrets.list(limit=limit, offset=offset)
+        return resp
 
     def delete_secret(self, secret_ref, expected_fail=False):
         """Delete a secret.
