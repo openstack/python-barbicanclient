@@ -17,5 +17,5 @@
 # Install packages from test-requirements.txt
 sudo pip install -r /opt/stack/new/python-barbicanclient/test-requirements.txt
 
-cd /opt/stack/new/barbican/functionaltests
+cd /opt/stack/new/python-barbicanclient/functionaltests
 sudo ./run_tests.sh
