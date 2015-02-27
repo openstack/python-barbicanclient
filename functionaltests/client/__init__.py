@@ -22,8 +22,8 @@ CONF = config.CONF
 
 # Use local tempest conf if one is available.
 # This usually means we're running tests outside of devstack
-if os.path.exists('../etc/functional_tests.conf'):
-    CONF.set_config_path('../etc/functional_tests.conf')
+if os.path.exists('./etc/functional_tests.conf'):
+    CONF.set_config_path('./etc/functional_tests.conf')
 
 CONF.register_group(cfg.OptGroup('keymanager'))
 CONF.register_opt(cfg.StrOpt('url'), group='keymanager')
