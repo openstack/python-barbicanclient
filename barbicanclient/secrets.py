@@ -80,7 +80,7 @@ class Secret(SecretFormatter):
                  bit_length=None, mode=None, payload=None,
                  payload_content_type=None, payload_content_encoding=None,
                  secret_ref=None, created=None, updated=None,
-                 content_types=None, status=None):
+                 content_types=None, status=None, secret_type=None):
         """
         Secret objects should not be instantiated directly.  You should use
         the `create` or `get` methods of the
