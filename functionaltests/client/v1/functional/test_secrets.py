@@ -276,3 +276,27 @@ class SecretsTestCase(base.TestCase):
         get_resp = self.behaviors.get_secret(secret_ref)
         self.assertIsNotNone(get_resp)
         self.assertEqual(get_resp.name, test_model.name)
+
+    @utils.parameterized_dataset({
+        'alphanumeric': ['1f34ds'],
+        'punctuation': ['~!@#$%^&*()_+`-={}[]|:;<>,.?'],
+        'uuid': ['54262d9d-4bc7-4821-8df0-dc2ca8e112bb'],
+        'len_255': [str(bytearray().zfill(255))],
+        'empty': [''],
+        'null': [None]
+    })
+    @testcase.attr('positive')
+    def test_secret_get_defaults_metadata_w_valid_name(self, name):
+        """Covers getting and checking a secret's metadata."""
+        test_model = self.behaviors.create_secret(secret_create_defaults_data)
+        test_model.name = name
+
+        secret_ref = self.behaviors.store_secret(test_model)
+        self.assertIsNotNone(secret_ref)
+
+        get_resp = self.behaviors.get_secret(secret_ref)
+        self.assertEqual(get_resp.status, "ACTIVE")
+        self.assertEqual(get_resp.name, name)
+        self.assertEqual(get_resp.mode, test_model.mode)
+        self.assertEqual(get_resp.algorithm, test_model.algorithm)
+        self.assertEqual(get_resp.bit_length, test_model.bit_length)
