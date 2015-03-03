@@ -47,13 +47,20 @@ class TestCase(oslotest.BaseTestCase):
         self.LOG.info('Starting: %s', self._testMethodName)
         super(TestCase, self).setUp()
 
-        self.auth = identity.v3.Password(
-            auth_url=CONF.identity.uri_v3,
-            username=CONF.keymanager.username,
-            user_domain_name=CONF.identity.domain_name,
-            password=CONF.keymanager.password,
-            project_name=CONF.keymanager.project_name,
-            project_domain_name=CONF.keymanager.project_domain_name)
+        if 'v2' in CONF.identity.auth_version:
+            self.auth = identity.v2.Password(
+                auth_url=CONF.identity.uri,
+                username=CONF.keymanager.username,
+                password=CONF.keymanager.password,
+                tenant_name=CONF.keymanager.project_name)
+        else:
+            self.auth = identity.v3.Password(
+                auth_url=CONF.identity.uri_v3,
+                username=CONF.keymanager.username,
+                user_domain_name=CONF.identity.domain_name,
+                password=CONF.keymanager.password,
+                project_name=CONF.keymanager.project_name,
+                project_domain_name=CONF.keymanager.project_domain_name)
 
         self.sess = session.Session(auth=self.auth)
         self.barbicanclient = client.Client(
