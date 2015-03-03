@@ -20,7 +20,7 @@ from oslo_utils.timeutils import parse_isotime
 
 from barbicanclient import base
 from barbicanclient import formatter
-from barbicanclient import secrets
+from barbicanclient import secrets as secret_manager
 
 
 LOG = logging.getLogger(__name__)
@@ -76,6 +76,7 @@ class Container(ContainerFormatter):
                  container_ref=None, created=None, updated=None, status=None,
                  secret_refs=None):
         self._api = api
+        self._secret_manager = secret_manager.SecretManager(api)
         self._name = name
         self._container_ref = container_ref
         self._secret_refs = secret_refs
@@ -109,7 +110,7 @@ class Container(ContainerFormatter):
     def _fill_secrets_from_secret_refs(self):
         if self._secret_refs:
             self._cached_secrets = dict(
-                (name.lower(), self._api.secrets.get(secret_ref=secret_ref))
+                (name.lower(), self._secret_manager.get(secret_ref=secret_ref))
                 for name, secret_ref in six.iteritems(self._secret_refs)
             )
 
@@ -165,7 +166,7 @@ class Container(ContainerFormatter):
 
     @_immutable_after_save
     def add(self, name, secret):
-        if not isinstance(secret, secrets.Secret):
+        if not isinstance(secret, secret_manager.Secret):
             raise ValueError("Must provide a valid Secret object")
         if name.lower() in self.secrets:
             raise KeyError("A secret with this name already exists!")
