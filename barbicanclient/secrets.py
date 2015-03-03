@@ -232,7 +232,7 @@ class Secret(SecretFormatter):
         Stores the Secret in Barbican.  New Secret objects are not persisted
         in Barbican until this method is called.
         """
-        secret_dict = base.filter_empty_keys({
+        secret_dict = base.filter_null_keys({
             'name': self.name,
             'payload': self.payload,
             'payload_content_type': self.payload_content_type,

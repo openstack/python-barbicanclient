@@ -108,7 +108,7 @@ class Order(object):
 
         self._order_ref = order_ref
 
-        self._meta = base.filter_empty_keys(meta)
+        self._meta = base.filter_null_keys(meta)
 
         self._error_status_code = error_status_code
         self._error_reason = error_reason

@@ -182,7 +182,7 @@ class Container(ContainerFormatter):
         """Store Container in Barbican"""
         secret_refs = self._get_secrets_and_store_them_if_necessary()
 
-        container_dict = base.filter_empty_keys({
+        container_dict = base.filter_null_keys({
             'name': self.name,
             'type': self._type,
             'secret_refs': secret_refs
