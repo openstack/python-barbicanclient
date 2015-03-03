@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from oslo_utils import timeutils
+import json
+
+from oslo.utils import timeutils
 
 from barbicanclient.test import test_client
 from barbicanclient import secrets, base
@@ -48,8 +50,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self._setUp('secrets')
 
         self.secret = SecretData()
-
-        self.manager = secrets.SecretManager(self.api)
+        self.manager = self.client.secrets
 
     def test_should_entity_str(self):
         secret_obj = self.manager.create(name=self.secret.name)
@@ -60,7 +61,8 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertIn('name="{0}"'.format(self.secret.name), repr(secret_obj))
 
     def test_should_store_via_constructor(self):
-        self.api._post.return_value = {'secret_ref': self.entity_href}
+        data = {'secret_ref': self.entity_href}
+        self.responses.post(self.entity_base + '/', json=data)
 
         secret = self.manager.create(name=self.secret.name,
                                      payload=self.secret.payload,
@@ -68,20 +70,16 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         secret_href = secret.store()
         self.assertEqual(self.entity_href, secret_href)
 
-        # Verify the correct URL was used to make the call.
-        args, kwargs = self.api._post.call_args
-        entity_resp = args[0]
-        self.assertEqual(self.entity, entity_resp)
-
         # Verify that correct information was sent in the call.
-        secret_req = args[1]
+        secret_req = json.loads(self.responses.last_request.text)
         self.assertEqual(self.secret.name, secret_req['name'])
         self.assertEqual(self.secret.payload, secret_req['payload'])
         self.assertEqual(self.secret.payload_content_type,
                          secret_req['payload_content_type'])
 
     def test_should_store_via_attributes(self):
-        self.api._post.return_value = {'secret_ref': self.entity_href}
+        data = {'secret_ref': self.entity_href}
+        self.responses.post(self.entity_base + '/', json=data)
 
         secret = self.manager.create()
         secret.name = self.secret.name
@@ -90,20 +88,16 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         secret_href = secret.store()
         self.assertEqual(self.entity_href, secret_href)
 
-        # Verify the correct URL was used to make the call.
-        args, kwargs = self.api._post.call_args
-        entity_resp = args[0]
-        self.assertEqual(self.entity, entity_resp)
-
         # Verify that correct information was sent in the call.
-        secret_req = args[1]
+        secret_req = json.loads(self.responses.last_request.text)
         self.assertEqual(self.secret.name, secret_req['name'])
         self.assertEqual(self.secret.payload, secret_req['payload'])
         self.assertEqual(self.secret.payload_content_type,
                          secret_req['payload_content_type'])
 
     def test_should_be_immutable_after_submit(self):
-        self.api._post.return_value = {'secret_ref': self.entity_href}
+        data = {'secret_ref': self.entity_href}
+        self.responses.post(self.entity_base + '/', json=data)
 
         secret = self.manager.create(name=self.secret.name,
                                      payload=self.secret.payload,
@@ -139,26 +133,29 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
                 pass
 
     def test_should_get_lazy(self):
-        self.api._get.return_value = self.secret.get_dict(self.entity_href)
+        data = self.secret.get_dict(self.entity_href)
+        m = self.responses.get(self.entity_href, json=data)
 
         secret = self.manager.get(secret_ref=self.entity_href)
         self.assertIsInstance(secret, secrets.Secret)
         self.assertEqual(self.entity_href, secret.secret_ref)
 
         # Verify GET wasn't called yet
-        self.assertFalse(self.api._get.called)
+        self.assertFalse(m.called)
 
         # Check an attribute to trigger lazy-load
         self.assertEqual(self.secret.name, secret.name)
 
         # Verify the correct URL was used to make the GET call
-        args, kwargs = self.api._get.call_args
-        url = args[0]
-        self.assertEqual(self.entity_href, url)
+        self.assertEqual(self.entity_href, m.last_request.url)
 
     def test_should_get_payload_only(self):
-        self.api._get.return_value = self.secret.get_dict(self.entity_href)
-        self.api._get_raw.return_value = self.secret.payload
+        m = self.responses.get(self.entity_href,
+                               request_headers={'Accept': 'application/json'},
+                               json=self.secret.get_dict(self.entity_href))
+        n = self.responses.get(self.entity_href,
+                               request_headers={'Accept': 'text/plain'},
+                               text=self.secret.payload)
 
         secret = self.manager.get(
             secret_ref=self.entity_href,
@@ -168,64 +165,68 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, secret.secret_ref)
 
         # Verify `get` wasn't called yet (metadata)
-        self.assertFalse(self.api._get.called)
+        self.assertFalse(m.called)
 
         # Verify `get_raw` wasn't called yet (payload)
-        self.assertFalse(self.api._get_raw.called)
+        self.assertFalse(n.called)
 
         # GET payload (with payload_content_type)
         self.assertEqual(self.secret.payload, secret.payload)
 
         # Verify `get` still wasn't called (metadata)
-        self.assertFalse(self.api._get.called)
+        self.assertFalse(m.called)
 
         # Verify `get_raw` was called (payload)
-        self.assertTrue(self.api._get_raw.called)
+        self.assertTrue(n.called)
 
         # Verify the correct URL was used to make the `get_raw` call
-        args, kwargs = self.api._get_raw.call_args
-        url = args[0]
-        self.assertEqual(self.entity_href, url)
+        self.assertEqual(self.entity_href, n.last_request.url)
 
     def test_should_fetch_metadata_to_get_payload_if_no_content_type_set(self):
         content_types_dict = {'default': 'application/octet-stream'}
-        self.api._get.return_value = self.secret.get_dict(
-            self.entity_href, content_types_dict=content_types_dict)
-        self.api._get_raw.return_value = self.secret.payload
+
+        data = self.secret.get_dict(self.entity_href,
+                                    content_types_dict=content_types_dict)
+        m = self.responses.get(self.entity_href,
+                               request_headers={'Accept': 'application/json'},
+                               json=data)
+
+        request_headers = {'Accept': 'application/octet-stream'}
+        n = self.responses.get(self.entity_href,
+                               request_headers=request_headers,
+                               text=self.secret.payload)
 
         secret = self.manager.get(secret_ref=self.entity_href)
         self.assertIsInstance(secret, secrets.Secret)
         self.assertEqual(self.entity_href, secret.secret_ref)
 
         # Verify `get` wasn't called yet (metadata)
-        self.assertFalse(self.api._get.called)
+        self.assertFalse(m.called)
 
         # Verify `get_raw` wasn't called yet (payload)
-        self.assertFalse(self.api._get_raw.called)
+        self.assertFalse(n.called)
 
         # GET payload (with no payload_content_type) trigger lazy-load
         self.assertEqual(self.secret.payload, secret.payload)
 
         # Verify `get` was called (metadata)
-        self.assertTrue(self.api._get.called)
+        self.assertTrue(m.called)
 
         # Verify `get_raw` was called (payload)
-        self.assertTrue(self.api._get_raw.called)
+        self.assertTrue(n.called)
 
         # Verify the correct URL was used to make the `get` calls
-        args, kwargs = self.api._get.call_args
-        url = args[0]
-        self.assertEqual(self.entity_href, url)
-
-        args, kwargs = self.api._get_raw.call_args
-        url = args[0]
-        self.assertEqual(self.entity_href, url)
+        self.assertEqual(self.entity_href, m.last_request.url)
+        self.assertEqual(self.entity_href, n.last_request.url)
 
     def test_should_decrypt_with_content_type(self):
-        self.api._get.return_value = self.secret.get_dict(self.entity_href)
-
         decrypted = 'decrypted text here'
-        self.api._get_raw.return_value = decrypted
+
+        request_headers = {'Accept': 'application/octet-stream'}
+
+        m = self.responses.get(self.entity_href,
+                               request_headers=request_headers,
+                               text=decrypted)
 
         secret = self.manager.get(
             secret_ref=self.entity_href,
@@ -235,51 +236,44 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(decrypted, secret_payload)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api._get_raw.call_args
-        url = args[0]
-        self.assertEqual(self.entity_href, url)
-
-        # Verify that correct information was sent in the call.
-        headers = args[1]
-        self.assertEqual('application/octet-stream', headers['Accept'])
+        self.assertEqual(self.entity_href, m.last_request.url)
 
     def test_should_decrypt_without_content_type(self):
         content_types_dict = {'default': 'application/octet-stream'}
-        self.api._get.return_value = self.secret.get_dict(self.entity_href,
-                                                          content_types_dict)
+        json = self.secret.get_dict(self.entity_href, content_types_dict)
+        m = self.responses.get(self.entity_href,
+                               request_headers={'Accept': 'application/json'},
+                               json=json)
+
         decrypted = 'decrypted text here'
-        self.api._get_raw.return_value = decrypted
+        request_headers = {'Accept': 'application/octet-stream'}
+        n = self.responses.get(self.entity_href,
+                               request_headers=request_headers,
+                               text=decrypted)
 
         secret = self.manager.get(secret_ref=self.entity_href)
         secret_payload = secret.payload
         self.assertEqual(decrypted, secret_payload)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api._get.call_args
-        url = args[0]
-        self.assertEqual(self.entity_href, url)
+        self.assertEqual(self.entity_href, m.last_request.url)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api._get_raw.call_args
-        url = args[0]
-        self.assertEqual(self.entity_href, url)
-
-        # Verify that correct information was sent in the call.
-        headers = args[1]
-        self.assertEqual('application/octet-stream', headers['Accept'])
+        self.assertEqual(self.entity_href, n.last_request.url)
 
     def test_should_delete(self):
+        self.responses.delete(self.entity_href, status_code=204)
+
         self.manager.delete(secret_ref=self.entity_href)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api._delete.call_args
-        url = args[0]
-        self.assertEqual(self.entity_href, url)
+        self.assertEqual(self.entity_href, self.responses.last_request.url)
 
     def test_should_get_list(self):
         secret_resp = self.secret.get_dict(self.entity_href)
-        self.api._get.return_value = {"secrets":
-                                      [secret_resp for v in range(3)]}
+
+        data = {"secrets": [secret_resp for v in range(3)]}
+        m = self.responses.get(self.entity_base, json=data)
 
         secrets_list = self.manager.list(limit=10, offset=5)
         self.assertTrue(len(secrets_list) == 3)
@@ -287,22 +281,22 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, secrets_list[0].secret_ref)
 
         # Verify the correct URL was used to make the call.
-        args, kwargs = self.api._get.call_args
-        url = args[0]
-        self.assertEqual(self.entity_base[:-1], url)
+        self.assertEqual(self.entity_base,
+                         m.last_request.url.split('?')[0])
 
         # Verify that correct information was sent in the call.
-        params = args[1]
-        self.assertEqual(10, params['limit'])
-        self.assertEqual(5, params['offset'])
+        self.assertEqual(['10'], m.last_request.qs['limit'])
+        self.assertEqual(['5'], m.last_request.qs['offset'])
 
     def test_should_fail_get_invalid_secret(self):
         self.assertRaises(ValueError, self.manager.get,
                           **{'secret_ref': '12345'})
 
     def test_should_fail_decrypt_no_content_types(self):
-        self.api._get.return_value = self.secret.get_dict(self.entity_href)
+        data = self.secret.get_dict(self.entity_href)
+        self.responses.get(self.entity_href, json=data)
         secret = self.manager.get(secret_ref=self.entity_href)
+
         try:
             secret.payload
             self.fail("didn't raise a ValueError exception")
@@ -311,8 +305,9 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
     def test_should_fail_decrypt_no_default_content_type(self):
         content_types_dict = {'no-default': 'application/octet-stream'}
-        self.api._get.return_value = self.secret.get_dict(self.entity_href,
-                                                          content_types_dict)
+        data = self.secret.get_dict(self.entity_href, content_types_dict)
+        self.responses.get(self.entity_href, json=data)
+
         secret = self.manager.get(secret_ref=self.entity_href)
         try:
             secret.payload
@@ -324,6 +319,6 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertRaises(ValueError, self.manager.delete, None)
 
     def test_should_get_total(self):
-        self.api._get.return_value = {'total': 1}
+        self.responses.get(self.entity_base, json={'total': 1})
         total = self.manager.total()
         self.assertEqual(total, 1)

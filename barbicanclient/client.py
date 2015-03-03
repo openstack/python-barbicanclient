@@ -151,7 +151,7 @@ class Client(object):
         headers.update(self._default_headers)
         resp = self._session.get(href, headers=headers)
         self._check_status_code(resp)
-        return resp.content
+        return resp.text
 
     def _delete(self, href, json=None):
         headers = dict()
