@@ -21,4 +21,6 @@ pip install -e $TEMPEST_DIR
 # Install test-requirements
 pip install -r /opt/stack/new/python-barbicanclient/test-requirements.txt
 
+echo "Running functional tests on $(python -V)"
+
 nosetests -v .
