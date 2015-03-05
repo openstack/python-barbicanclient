@@ -245,7 +245,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         m = self.responses.get(self.entity_href,
                                request_headers={'Accept': 'application/json'},
                                json=self.secret.get_dict(self.entity_href))
-        n = self.responses.get(self.entity_href,
+        n = self.responses.get(self.entity_payload_href,
                                request_headers={'Accept': 'text/plain'},
                                text=self.secret.payload)
 
@@ -272,44 +272,47 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertTrue(n.called)
 
         # Verify the correct URL was used to make the `get_raw` call
-        self.assertEqual(self.entity_href, n.last_request.url)
+        self.assertEqual(self.entity_payload_href, n.last_request.url)
 
     def test_should_fetch_metadata_to_get_payload(self):
         content_types_dict = {'default': 'application/octet-stream'}
 
         data = self.secret.get_dict(self.entity_href,
                                     content_types_dict=content_types_dict)
-        m = self.responses.get(self.entity_href,
-                               request_headers={'Accept': 'application/json'},
-                               json=data)
+        metadata_response = self.responses.get(
+            self.entity_href,
+            request_headers={'Accept': 'application/json'},
+            json=data)
 
         request_headers = {'Accept': 'application/octet-stream'}
-        n = self.responses.get(self.entity_href,
-                               request_headers=request_headers,
-                               text=self.secret.payload)
+        decryption_response = self.responses.get(
+            self.entity_payload_href,
+            request_headers=request_headers,
+            text=self.secret.payload)
 
         secret = self.manager.get(secret_ref=self.entity_href)
         self.assertIsInstance(secret, secrets.Secret)
         self.assertEqual(self.entity_href, secret.secret_ref)
 
         # Verify `get` wasn't called yet (metadata)
-        self.assertFalse(m.called)
+        self.assertFalse(metadata_response.called)
 
         # Verify `get_raw` wasn't called yet (payload)
-        self.assertFalse(n.called)
+        self.assertFalse(decryption_response.called)
 
         # GET payload (with no payload_content_type) trigger lazy-load
         self.assertEqual(self.secret.payload, secret.payload)
 
         # Verify `get` was called (metadata)
-        self.assertTrue(m.called)
+        self.assertTrue(metadata_response.called)
 
         # Verify `get_raw` was called (payload)
-        self.assertTrue(n.called)
+        self.assertTrue(decryption_response.called)
 
         # Verify the correct URL was used to make the `get` calls
-        self.assertEqual(self.entity_href, m.last_request.url)
-        self.assertEqual(self.entity_href, n.last_request.url)
+        self.assertEqual(self.entity_href, metadata_response.last_request.url)
+        self.assertEqual(self.entity_payload_href,
+                         decryption_response.last_request.url)
 
     def test_should_decrypt_when_content_type_is_set(self):
         """
@@ -321,7 +324,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
         request_headers = {'Accept': 'application/octet-stream'}
 
-        m = self.responses.get(self.entity_href,
+        m = self.responses.get(self.entity_payload_href,
                                request_headers=request_headers,
                                text=decrypted)
 
@@ -333,30 +336,33 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(decrypted, secret_payload)
 
         # Verify the correct URL was used to make the call.
-        self.assertEqual(self.entity_href, m.last_request.url)
+        self.assertEqual(self.entity_payload_href, m.last_request.url)
 
     def test_should_decrypt(self):
         content_types_dict = {'default': 'application/octet-stream'}
         json = self.secret.get_dict(self.entity_href, content_types_dict)
-        m = self.responses.get(self.entity_href,
-                               request_headers={'Accept': 'application/json'},
-                               json=json)
+        metadata_response = self.responses.get(
+            self.entity_href,
+            request_headers={'Accept': 'application/json'},
+            json=json)
 
         decrypted = 'decrypted text here'
         request_headers = {'Accept': 'application/octet-stream'}
-        n = self.responses.get(self.entity_href,
-                               request_headers=request_headers,
-                               text=decrypted)
+        decryption_response = self.responses.get(
+            self.entity_payload_href,
+            request_headers=request_headers,
+            text=decrypted)
 
         secret = self.manager.get(secret_ref=self.entity_href)
         secret_payload = secret.payload
         self.assertEqual(decrypted, secret_payload)
 
         # Verify the correct URL was used to make the call.
-        self.assertEqual(self.entity_href, m.last_request.url)
+        self.assertEqual(self.entity_href, metadata_response.last_request.url)
 
         # Verify the correct URL was used to make the call.
-        self.assertEqual(self.entity_href, n.last_request.url)
+        self.assertEqual(self.entity_payload_href,
+                         decryption_response.last_request.url)
 
     def test_should_delete(self):
         self.responses.delete(self.entity_href, status_code=204)
