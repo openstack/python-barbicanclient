@@ -22,8 +22,8 @@ import testtools
 import uuid
 import json
 
-from barbicanclient.test import keystone_client_fixtures
-from barbicanclient.test import test_client
+from barbicanclient.tests import keystone_client_fixtures
+from barbicanclient.tests import test_client
 import barbicanclient.barbican
 
 

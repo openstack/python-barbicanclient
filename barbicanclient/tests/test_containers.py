@@ -18,7 +18,7 @@ import json
 import mock
 from oslo_utils import timeutils
 
-from barbicanclient.test import test_client
+from barbicanclient.tests import test_client
 from barbicanclient import base, containers, secrets
 
 
