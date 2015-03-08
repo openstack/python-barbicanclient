@@ -19,8 +19,8 @@ from oslo_utils import timeutils
 import testtools
 
 from barbicanclient import orders, base
-from barbicanclient.test import test_client
-from barbicanclient.test import test_client_secrets as test_secrets
+from barbicanclient.tests import test_client
+from barbicanclient.tests import test_secrets
 
 
 class OrdersTestCase(test_client.BaseEntityResource):

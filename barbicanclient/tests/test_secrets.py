@@ -17,7 +17,7 @@ import json
 
 from oslo.utils import timeutils
 
-from barbicanclient.test import test_client
+from barbicanclient.tests import test_client
 from barbicanclient import secrets, base
 
 
