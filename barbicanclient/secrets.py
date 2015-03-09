@@ -12,11 +12,12 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import base64
 import functools
 import logging
-import six
 
 from oslo_utils.timeutils import parse_isotime
+import six
 
 from barbicanclient import base
 from barbicanclient import formatter
@@ -209,11 +210,21 @@ class Secret(SecretFormatter):
     @payload_content_type.setter
     @immutable_after_save
     def payload_content_type(self, value):
+        LOG.warning(
+            'DEPRECATION WARNING: Manually setting the payload_content_type '
+            'can lead to unexpected results.  It will be removed in a future '
+            'release.  See Launchpad Bug #1419166.'
+        )
         self._payload_content_type = value
 
     @payload_content_encoding.setter
     @immutable_after_save
     def payload_content_encoding(self, value):
+        LOG.warning(
+            'DEPRECATION WARNING: Manually setting the '
+            'payload_content_encoding can lead to unexpected results.  It '
+            'will be removed in a future release.  See Launchpad Bug #1419166.'
+        )
         self._payload_content_encoding = value
 
     def _fetch_payload(self):
@@ -234,14 +245,40 @@ class Secret(SecretFormatter):
         """
         secret_dict = base.filter_empty_keys({
             'name': self.name,
-            'payload': self.payload,
-            'payload_content_type': self.payload_content_type,
-            'payload_content_encoding': self.payload_content_encoding,
             'algorithm': self.algorithm,
             'mode': self.mode,
             'bit_length': self.bit_length,
             'expiration': self.expiration
         })
+
+        if self.payload_content_type:
+            """
+            Setting the payload_content_type and payload_content_encoding
+            manually is deprecated.  This clause of the if statement is here
+            for backwards compatibility and should be removed in a future
+            release.
+            """
+            secret_dict['payload'] = self.payload
+            secret_dict['payload_content_type'] = self.payload_content_type
+            secret_dict['payload_content_encoding'] = (
+                self.payload_content_encoding
+            )
+        elif type(self.payload) is six.binary_type:
+            """
+            six.binary_type is stored as application/octet-stream
+            and it is base64 encoded for a one-step POST
+            """
+            secret_dict['payload'] = (
+                base64.b64encode(self.payload)
+            ).decode('UTF-8')
+            secret_dict['payload_content_type'] = u'application/octet-stream'
+            secret_dict['payload_content_encoding'] = u'base64'
+        elif type(self.payload) is six.text_type:
+            """
+            six.text_type is stored as text/plain
+            """
+            secret_dict['payload'] = self.payload
+            secret_dict['payload_content_type'] = u'text/plain'
 
         LOG.debug("Request body: {0}".format(secret_dict))
 
@@ -332,8 +369,9 @@ class SecretManager(base.BaseEntityManager):
         Retrieve an existing Secret from Barbican
 
         :param str secret_ref: Full HATEOAS reference to a Secret
-        :param str payload_content_type: Content type to use for payload
-            decryption
+        :param str payload_content_type: DEPRECATED: Content type to use for
+            payload decryption. Setting this can lead to unexpected results.
+            See Launchpad Bug #1419166.
         :returns: Secret object retrieved from Barbican
         :rtype: :class:`barbicanclient.secrets.Secret`
         """
@@ -356,8 +394,12 @@ class SecretManager(base.BaseEntityManager):
 
         :param name: A friendly name for the Secret
         :param payload: The unencrypted secret data
-        :param payload_content_type: The format/type of the secret data
-        :param payload_content_encoding: The encoding of the secret data
+        :param payload_content_type: DEPRECATED: The format/type of the secret
+            data. Setting this can lead to unexpected results.  See Launchpad
+            Bug #1419166.
+        :param payload_content_encoding: DEPRECATED: The encoding of the secret
+            data. Setting this can lead to unexpected results.  See Launchpad
+            Bug #1419166.
         :param algorithm: The algorithm associated with this secret key
         :param bit_length: The bit length of this secret key
         :param mode: The algorithm mode used with this secret key
