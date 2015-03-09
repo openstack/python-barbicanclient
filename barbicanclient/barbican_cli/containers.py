@@ -103,7 +103,7 @@ class CreateContainer(show.ShowOne):
             private_key_ref = secret_refs.get('private_key')
             private_key_pass_ref = secret_refs.get('private_key_passphrase')
             entity = RSAContainer(
-                api=self.app.client,
+                api=self.app.client.containers._api,
                 name=args.name,
                 public_key_ref=public_key_ref,
                 private_key_ref=private_key_ref,
@@ -115,7 +115,7 @@ class CreateContainer(show.ShowOne):
             private_key_ref = secret_refs.get('private_key')
             private_key_pass_ref = secret_refs.get('private_key_passphrase')
             entity = CertificateContainer(
-                api=self.app.client,
+                api=self.app.client.containers._api,
                 name=args.name,
                 certificate_ref=certificate_ref,
                 intermediates_ref=intermediates_ref,
@@ -123,8 +123,8 @@ class CreateContainer(show.ShowOne):
                 private_key_passphrase_ref=private_key_pass_ref,
             )
         else:
-            entity = container_type(api=self.app.client, name=args.name,
-                                    secret_refs=secret_refs)
+            entity = container_type(api=self.app.client.containers._api,
+                                    name=args.name, secret_refs=secret_refs)
         entity.store()
         return entity._get_formatted_entity()
 
