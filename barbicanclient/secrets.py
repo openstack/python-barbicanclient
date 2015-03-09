@@ -377,6 +377,7 @@ class SecretManager(base.BaseEntityManager):
 
         :param secret_ref: The href for the secret to be deleted
         """
+        base.validate_ref(secret_ref, 'Secret')
         if not secret_ref:
             raise ValueError('secret_ref is required.')
         self._api._delete(secret_ref)
