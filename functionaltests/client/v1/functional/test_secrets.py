@@ -245,6 +245,47 @@ class SecretsTestCase(base.TestCase):
                          str(base64.b64encode(get_resp.payload)))
 
     @utils.parameterized_dataset({
+        'array': [['boom']],
+        'int': [123],
+        'zero': [0]
+    })
+    @testcase.attr('negative')
+    def test_secret_create_defaults_invalid_payload_http_err(self, payload):
+        """Covers creating secrets with various invalid payloads.
+
+        These requests will error with 400 and are will make a request to
+        the server.
+        """
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.payload = payload
+
+        e = self.assertRaises(Exception, self.behaviors.store_secret,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
+
+    @utils.parameterized_dataset({
+        'empty': [''],
+        'none': [None],
+    })
+    @testcase.attr('negative')
+    def test_secret_create_defaults_invalid_payload(self, payload):
+        """Covers creating secrets with various invalid payloads.
+
+        These requests will fail with a value error before the request to the
+        server is made"""
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.payload = payload
+
+        e = self.assertRaises(ValueError, self.behaviors.store_secret,
+                              test_model)
+
+        self.assertIn('Payload incorrectly specified.',
+                      e.message)
+
+    @utils.parameterized_dataset({
         'negative_five_long_expire': {
             'timezone': '-05:00',
             'days': 5},

@@ -172,7 +172,7 @@ class Secret(SecretFormatter):
         """
         Lazy-loaded property that holds the unencrypted data
         """
-        if not self._payload:
+        if self._payload is None:
             self._fetch_payload()
         return self._payload
 
