@@ -20,8 +20,8 @@ import uuid
 import six
 
 
-def filter_empty_keys(dictionary):
-    return dict(((k, v) for k, v in dictionary.items() if v))
+def filter_null_keys(dictionary):
+    return dict(((k, v) for k, v in dictionary.items() if v is not None))
 
 
 def validate_ref(ref, entity):
