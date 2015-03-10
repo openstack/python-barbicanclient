@@ -118,7 +118,7 @@ class SecretsTestCase(base.TestCase):
 
         This delete uses a reference with an invalid UUID format
         """
-        url = self.barbicanclient.secrets._api._base_url + '/secrets/notauuid'
+        url = self.behaviors.base_url + '/secrets/notauuid'
 
         e = self.assertRaises(ValueError, self.behaviors.delete_secret,
                               url)
@@ -133,12 +133,102 @@ class SecretsTestCase(base.TestCase):
         associated with this UUID
         """
         uuid = 'de20ad54-85b4-421b-adb2-eb7b9e546013'
-        url = self.barbicanclient.secrets._api._base_url + '/secrets/' + uuid
+        url = self.behaviors.base_url + '/secrets/' + uuid
 
         e = self.assertRaises(Exception, self.behaviors.delete_secret,
                               url)
 
         self.assertEqual(e.http_status, 404)
+
+    @testcase.attr('negative')
+    def test_secret_create_nones_content_type(self):
+        """Create secret with valid content type but no payload.
+
+        Secret will not create due to None in the payload even if content
+        type is valid.
+        """
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.payload = None
+
+        self.assertRaises(
+            exceptions.NoPayloadException,
+            self.behaviors.store_secret,
+            test_model
+        )
+
+    @testcase.attr('negative')
+    def test_secret_create_nones(self):
+        """Cover case of posting with all nones in the Secret object."""
+        test_model = self.behaviors.create_secret(
+            secret_create_nones_data)
+        test_model.payload = None
+        test_model.payload_content_encoding = None
+        test_model.payload_content_type = None
+
+        self.assertRaises(
+            exceptions.NoPayloadException,
+            self.behaviors.store_secret,
+            test_model
+        )
+
+    @testcase.attr('negative')
+    def test_secret_get_secret_doesnt_exist(self):
+        """GET an invalid secret ref.
+
+        Will get value error secret incorrectly specified since "notauuid"
+        is not a properly formatted uuid.
+        """
+        url = self.behaviors.base_url + '/secrets/notauuid'
+
+        e = self.assertRaises(ValueError, self.behaviors.get_secret,
+                              url)
+
+        self.assertIn("Secret incorrectly specified", e.message)
+
+    @testcase.attr('negative')
+    def test_secret_create_defaults_expiration_passed(self):
+        """Create a secret with an expiration that has already passed.
+
+        Returns a 400.
+        """
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.expiration = '2000-01-10T14:58:52.546795'
+
+        e = self.assertRaises(Exception, self.behaviors.store_secret,
+                              test_model)
+        self.assertEqual(e.http_status, 400)
+
+    @testcase.attr('negative')
+    def test_secret_create_emptystrings(self):
+        """Secret create with empty Strings for all attributes.
+
+        Fails with a value error, Payload incorrectly specified.
+        """
+        test_model = self.behaviors.create_secret(
+            secret_create_emptystrings_data)
+
+        self.assertRaises(
+            exceptions.NoPayloadException,
+            self.behaviors.store_secret,
+            test_model
+        )
+
+    @testcase.attr('negative')
+    def test_secret_create_defaults_oversized_payload(self):
+        """Create a secret with a payload that is larger than the allowed size.
+
+        Should return a 413 if the secret size is greater than the
+        maximum allowed size.
+        """
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.payload = str(self.oversized_payload)
+
+        e = self.assertRaises(Exception, self.behaviors.store_secret,
+                              test_model)
+        self.assertEqual(e.http_status, 413)
 
     @utils.parameterized_dataset({
         'alphanumeric': ['1f34ds'],

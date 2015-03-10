@@ -23,6 +23,7 @@ class BaseBehaviors(object):
         self.LOG = logging.getLogger(type(self).__name__)
         self.client = client
         self.created_entities = []
+        self.base_url = client.secrets._api._base_url
 
     def get_json(self, response):
         json_data = dict()
