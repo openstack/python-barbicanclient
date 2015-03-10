@@ -113,6 +113,34 @@ class SecretsTestCase(base.TestCase):
         get_resp = self.behaviors.get_secret(secret_ref)
         self.assertEqual(get_resp.mode, test_model.mode)
 
+    @testcase.attr('negative')
+    def test_secret_delete_doesnt_exist(self):
+        """Deletes a non-existent secret.
+
+        This delete uses a reference with an invalid UUID format
+        """
+        url = self.barbicanclient.secrets._api._base_url + '/secrets/notauuid'
+
+        e = self.assertRaises(ValueError, self.behaviors.delete_secret,
+                              url)
+
+        self.assertEqual(e.message, 'Secret incorrectly specified.')
+
+    @testcase.attr('negative')
+    def test_secret_delete_doesnt_exist_valid_uuid_format(self):
+        """Deletes a non-existent secret.
+
+        This delete has a valid UUID format but there is no secret
+        associated with this UUID
+        """
+        uuid = 'de20ad54-85b4-421b-adb2-eb7b9e546013'
+        url = self.barbicanclient.secrets._api._base_url + '/secrets/' + uuid
+
+        e = self.assertRaises(Exception, self.behaviors.delete_secret,
+                              url)
+
+        self.assertEqual(e.http_status, 404)
+
     @utils.parameterized_dataset({
         'alphanumeric': ['1f34ds'],
         'punctuation': ['~!@#$%^&*()_+`-={}[]|:;<>,.?'],
