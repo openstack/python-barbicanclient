@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import base64
+import sys
 
 from functionaltests.client import base
 from functionaltests.client.v1.behaviors import secret_behaviors
@@ -252,6 +253,24 @@ class SecretsTestCase(base.TestCase):
         self.assertEqual(get_resp.name, test_model.name)
 
     @utils.parameterized_dataset({
+        'int': [400]
+    })
+    @testcase.attr('negative')
+    def test_secret_create_defaults_invalid_name(self, name):
+        """Create secrets with various invalid names.
+
+        Should return 400.
+        """
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.name = name
+
+        e = self.assertRaises(Exception, self.behaviors.store_secret,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
+
+    @utils.parameterized_dataset({
         'aes': ['aes']
     })
     @testcase.attr('positive')
@@ -266,6 +285,24 @@ class SecretsTestCase(base.TestCase):
 
         get_resp = self.behaviors.get_secret(secret_ref)
         self.assertEqual(get_resp.algorithm, test_model.algorithm)
+
+    @utils.parameterized_dataset({
+        'int': [400]
+    })
+    @testcase.attr('negative')
+    def test_secret_create_defaults_invalid_algorithms(self, algorithm):
+        """Creates secrets with various invalid algorithms."""
+
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.algorithm = algorithm
+
+        # We are currently testing for exception with http_code
+        # launchpad bug 1431514 will address the change to this functionality
+        e = self.assertRaises(Exception, self.behaviors.store_secret,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
 
     @utils.parameterized_dataset({
         '512': [512],
@@ -290,6 +327,26 @@ class SecretsTestCase(base.TestCase):
         self.assertEqual(get_resp.bit_length, test_model.bit_length)
 
     @utils.parameterized_dataset({
+        'str_type': ['not-an-int'],
+        'empty': [''],
+        'blank': [' '],
+        'negative_maxint': [-sys.maxint],
+        'negative_one': [-1],
+        'zero': [0]
+    })
+    @testcase.attr('negative')
+    def test_secret_create_defaults_invalid_bit_length(self, bit_length):
+        """Covers cases of creating secrets with invalid bit lengths."""
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.bit_length = bit_length
+
+        e = self.assertRaises(Exception, self.behaviors.store_secret,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
+
+    @utils.parameterized_dataset({
         'cbc': ['cbc']
     })
     @testcase.attr('positive')
@@ -304,6 +361,23 @@ class SecretsTestCase(base.TestCase):
 
         get_resp = self.behaviors.get_secret(secret_ref)
         self.assertEqual(get_resp.mode, test_model.mode)
+
+    @utils.parameterized_dataset({
+        'zero': [0],
+        'oversized_string': [base.TestCase.oversized_field],
+        'int': [400]
+    })
+    @testcase.attr('negative')
+    def test_secret_create_defaults_invalid_mode(self, mode):
+        """Covers cases of creating secrets with invalid modes."""
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.mode = mode
+
+        e = self.assertRaises(Exception, self.behaviors.store_secret,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
 
     @utils.parameterized_dataset({
         'text_content_type_none_encoding': {
@@ -345,6 +419,91 @@ class SecretsTestCase(base.TestCase):
             )
         else:
             self.assertEqual(test_model.payload, str(get_resp.payload))
+
+    @utils.parameterized_dataset({
+        'large_string_content_type_and_encoding': {
+            'payload_content_type': base.TestCase.oversized_field,
+            'payload_content_encoding': base.TestCase.oversized_field},
+
+        'int_content_type_and_encoding': {
+            'payload_content_type': 123,
+            'payload_content_encoding': 123},
+
+        'text_content_type_none_content_encoding': {
+            'payload_content_type': 'text/plain',
+            'payload_content_encoding': ''},
+
+        'text_no_subtype_content_type_none_content_encoding': {
+            'payload_content_type': 'text',
+            'payload_content_encoding': None},
+
+        'text_slash_no_subtype_content_type_none_content_encoding': {
+            'payload_content_type': 'text/',
+            'payload_content_encoding': None},
+
+        'text_content_type_empty_content_encoding': {
+            'payload_content_type': 'text/plain',
+            'payload_content_encoding': ' '},
+
+        'text_content_type_spaces_content_encoding': {
+            'payload_content_type': 'text/plain',
+            'payload_content_encoding': ' '},
+
+        'text_content_type_base64_content_encoding': {
+            'payload_content_type': 'text/plain',
+            'payload_content_encoding': 'base64'},
+
+        'text_and_utf88_content_type_none_content_encoding': {
+            'payload_content_type': 'text/plain; charset=utf-88',
+            'payload_content_encoding': None},
+
+        'invalid_content_type_base64_content_encoding': {
+            'payload_content_type': 'invalid',
+            'payload_content_encoding': 'base64'},
+
+        'invalid_content_type_none_content_encoding': {
+            'payload_content_type': 'invalid',
+            'payload_content_encoding': None},
+
+        'octet_content_type_invalid_content_encoding': {
+            'payload_content_type': 'application/octet-stream',
+            'payload_content_encoding': 'invalid'},
+
+        'text_content_type_invalid_content_encoding': {
+            'payload_content_type': 'text/plain',
+            'payload_content_encoding': 'invalid'},
+
+        #Launchpad Bug (1434652)
+        # 'none_content_type_invalid_content_encoding': {
+        #     'payload_content_type': None,
+        #     'payload_content_encoding': 'invalid'},
+        #
+        # 'empty_content_type_and_encoding': {
+        #     'payload_content_type': '',
+        #     'payload_content_encoding': ''},
+        #
+        # 'none_content_type_and_encoding': {
+        #     'payload_content_type': None,
+        #     'payload_content_encoding': None},
+        #
+        # 'none_content_type_base64_content_encoding': {
+        #     'payload_content_type': None,
+        #     'payload_content_encoding': 'base64'}
+    })
+    @testcase.attr('negative')
+    def test_secret_create_defaults_invalid_types_and_encoding(self, **kwargs):
+        """Creating secrets with invalid payload types and encodings."""
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.payload_content_encoding = kwargs[
+            'payload_content_encoding']
+        test_model.payload_content_type = kwargs[
+            'payload_content_type']
+
+        e = self.assertRaises(Exception, self.behaviors.store_secret,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
 
     @utils.parameterized_dataset({
         'max_payload_string': [base.TestCase.max_sized_payload]
@@ -435,6 +594,24 @@ class SecretsTestCase(base.TestCase):
         get_resp = self.behaviors.get_secret(secret_ref)
         self.assertIsNotNone(get_resp)
         self.assertEqual(get_resp.name, test_model.name)
+
+    @utils.parameterized_dataset({
+        'malformed_timezone': {
+            'timezone': '-5:00',
+            'days': 0}
+    })
+    @testcase.attr('negative')
+    def test_secret_create_defaults_invalid_expiration(self, **kwargs):
+        """Create secrets with various invalid expiration data."""
+        timestamp = utils.create_timestamp_w_tz_and_offset(**kwargs)
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.expiration = timestamp
+
+        e = self.assertRaises(Exception, self.behaviors.store_secret,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
 
     @utils.parameterized_dataset({
         'alphanumeric': ['1f34ds'],
