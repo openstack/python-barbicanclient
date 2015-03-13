@@ -12,7 +12,7 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import base64
 import json
 
 from oslo.utils import timeutils
@@ -23,15 +23,14 @@ from barbicanclient import secrets, base
 
 class SecretData(object):
     def __init__(self):
-        self.name = 'Self destruction sequence'
-        self.payload = 'the magic words are squeamish ossifrage'
-        self.payload_content_type = 'text/plain'
-        self.content = 'text/plain'
-        self.algorithm = 'AES'
+        self.name = u'Self destruction sequence'
+        self.payload = u'the magic words are squeamish ossifrage'
+        self.payload_content_type = u'text/plain'
+        self.algorithm = u'AES'
         self.created = str(timeutils.utcnow())
 
         self.secret_dict = {'name': self.name,
-                            'status': 'ACTIVE',
+                            'status': u'ACTIVE',
                             'algorithm': self.algorithm,
                             'created': self.created}
 
@@ -65,8 +64,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.responses.post(self.entity_base + '/', json=data)
 
         secret = self.manager.create(name=self.secret.name,
-                                     payload=self.secret.payload,
-                                     payload_content_type=self.secret.content)
+                                     payload=self.secret.payload)
         secret_href = secret.store()
         self.assertEqual(self.entity_href, secret_href)
 
@@ -74,8 +72,6 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         secret_req = json.loads(self.responses.last_request.text)
         self.assertEqual(self.secret.name, secret_req['name'])
         self.assertEqual(self.secret.payload, secret_req['payload'])
-        self.assertEqual(self.secret.payload_content_type,
-                         secret_req['payload_content_type'])
 
     def test_should_store_via_attributes(self):
         data = {'secret_ref': self.entity_href}
@@ -84,7 +80,6 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         secret = self.manager.create()
         secret.name = self.secret.name
         secret.payload = self.secret.payload
-        secret.payload_content_type = self.secret.content
         secret_href = secret.store()
         self.assertEqual(self.entity_href, secret_href)
 
@@ -92,16 +87,108 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         secret_req = json.loads(self.responses.last_request.text)
         self.assertEqual(self.secret.name, secret_req['name'])
         self.assertEqual(self.secret.payload, secret_req['payload'])
-        self.assertEqual(self.secret.payload_content_type,
+
+    def test_should_store_binary_type_as_octet_stream(self):
+        """
+        We use six.binary_type as the canonical binary type.
+        The client should base64 encode the payload before sending the
+        request.
+        """
+        data = {'secret_ref': self.entity_href}
+        self.responses.post(self.entity_base + '/', json=data)
+
+        # This literal will have type(str) in Python 2, but will have
+        # type(bytes) in Python 3.  It is six.binary_type in both cases.
+        binary_payload = b'F\x130\x89f\x8e\xd9\xa1\x0e\x1f\r\xf67uu\x8b'
+
+        secret = self.manager.create()
+        secret.name = self.secret.name
+        secret.payload = binary_payload
+        secret.store()
+
+        secret_req = json.loads(self.responses.last_request.text)
+        self.assertEqual(self.secret.name, secret_req['name'])
+        self.assertEqual(u'application/octet-stream',
                          secret_req['payload_content_type'])
+        self.assertEqual(u'base64',
+                         secret_req['payload_content_encoding'])
+        self.assertNotEqual(binary_payload, secret_req['payload'])
+
+    def test_should_store_text_type_as_text_plain(self):
+        """
+        We use six.text_type as the canonical text type.
+        """
+        data = {'secret_ref': self.entity_href}
+        self.responses.post(self.entity_base + '/', json=data)
+
+        # This literal will have type(unicode) in Python 2, but will have
+        # type(str) in Python 3.  It is six.text_type in both cases.
+        text_payload = u'time for an ice cold \U0001f37a'
+
+        secret = self.manager.create()
+        secret.payload = text_payload
+        secret.store()
+
+        secret_req = json.loads(self.responses.last_request.text)
+        self.assertEqual(text_payload, secret_req['payload'])
+        self.assertEqual(u'text/plain', secret_req['payload_content_type'])
+
+    def test_should_store_with_deprecated_content_type(self):
+        """
+        DEPRECATION WARNING:
+        Manually setting the payload_content_type is deprecated and will be
+        removed in a future release.
+        """
+        data = {'secret_ref': self.entity_href}
+        self.responses.post(self.entity_base + '/', json=data)
+
+        payload = 'I should be octet-stream'
+        payload_content_type = u'text/plain'
+
+        secret = self.manager.create()
+        secret.payload = payload
+        secret.payload_content_type = payload_content_type
+        secret.store()
+
+        secret_req = json.loads(self.responses.last_request.text)
+        self.assertEqual(payload, secret_req['payload'])
+        self.assertEqual(payload_content_type,
+                         secret_req['payload_content_type'])
+
+    def test_should_store_with_deprecated_content_encoding(self):
+        """
+        DEPRECATION WARNING:
+        Manually setting the payload_content_encoding is deprecated and will be
+        removed in a future release.
+        """
+        data = {'secret_ref': self.entity_href}
+        self.responses.post(self.entity_base + '/', json=data)
+
+        encoded_payload = base64.b64encode(
+            b'F\x130\x89f\x8e\xd9\xa1\x0e\x1f\r\xf67uu\x8b'
+        ).decode('UTF-8')
+        payload_content_type = u'application/octet-stream'
+        payload_content_encoding = u'base64'
+
+        secret = self.manager.create()
+        secret.payload = encoded_payload
+        secret.payload_content_type = payload_content_type
+        secret.payload_content_encoding = payload_content_encoding
+        secret.store()
+
+        secret_req = json.loads(self.responses.last_request.text)
+        self.assertEqual(encoded_payload, secret_req['payload'])
+        self.assertEqual(payload_content_type,
+                         secret_req['payload_content_type'])
+        self.assertEqual(payload_content_encoding,
+                         secret_req['payload_content_encoding'])
 
     def test_should_be_immutable_after_submit(self):
         data = {'secret_ref': self.entity_href}
         self.responses.post(self.entity_base + '/', json=data)
 
         secret = self.manager.create(name=self.secret.name,
-                                     payload=self.secret.payload,
-                                     payload_content_type=self.secret.content)
+                                     payload=self.secret.payload)
         secret_href = secret.store()
 
         self.assertEqual(self.entity_href, secret_href)
@@ -149,7 +236,12 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         # Verify the correct URL was used to make the GET call
         self.assertEqual(self.entity_href, m.last_request.url)
 
-    def test_should_get_payload_only(self):
+    def test_should_get_payload_only_when_content_type_is_set(self):
+        """
+        DEPRECATION WARNING:
+        Manually setting the payload_content_type is deprecated and will be
+        removed in a future release.
+        """
         m = self.responses.get(self.entity_href,
                                request_headers={'Accept': 'application/json'},
                                json=self.secret.get_dict(self.entity_href))
@@ -182,7 +274,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         # Verify the correct URL was used to make the `get_raw` call
         self.assertEqual(self.entity_href, n.last_request.url)
 
-    def test_should_fetch_metadata_to_get_payload_if_no_content_type_set(self):
+    def test_should_fetch_metadata_to_get_payload(self):
         content_types_dict = {'default': 'application/octet-stream'}
 
         data = self.secret.get_dict(self.entity_href,
@@ -219,7 +311,12 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, m.last_request.url)
         self.assertEqual(self.entity_href, n.last_request.url)
 
-    def test_should_decrypt_with_content_type(self):
+    def test_should_decrypt_when_content_type_is_set(self):
+        """
+        DEPRECATION WARNING:
+        Manually setting the payload_content_type is deprecated and will be
+        removed in a future release.
+        """
         decrypted = 'decrypted text here'
 
         request_headers = {'Accept': 'application/octet-stream'}
@@ -238,7 +335,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         # Verify the correct URL was used to make the call.
         self.assertEqual(self.entity_href, m.last_request.url)
 
-    def test_should_decrypt_without_content_type(self):
+    def test_should_decrypt(self):
         content_types_dict = {'default': 'application/octet-stream'}
         json = self.secret.get_dict(self.entity_href, content_types_dict)
         m = self.responses.get(self.entity_href,

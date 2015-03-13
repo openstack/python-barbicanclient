@@ -31,12 +31,12 @@ with keystone authentication:
     >>> from barbicanclient import client
 
     >>> # We'll use Keystone API v3 for authentication
-    >>> auth = identity.v3.Password(auth_url='http://localhost:5000/v3',
-    ...                             username='admin_user',
-    ...                             user_domain_name='Default',
-    ...                             password='password',
-    ...                             project_name='demo',
-    ...                             project_domain_name='Default')
+    >>> auth = identity.v3.Password(auth_url=u'http://localhost:5000/v3',
+    ...                             username=u'admin_user',
+    ...                             user_domain_name=u'Default',
+    ...                             password=u'password',
+    ...                             project_name=u'demo',
+    ...                             project_domain_name=u'Default')
 
     >>> # Next we'll create a Keystone session using the auth plugin we just created
     >>> sess = session.Session(auth=auth)
@@ -45,9 +45,8 @@ with keystone authentication:
     >>> barbican = client.Client(session=sess)
 
     >>> # Let's create a Secret to store some sensitive data
-    >>> secret = barbican.secrets.create(name='Self destruction sequence',
-    ...                                  payload='the magic words are squeamish ossifrage',
-    ...                                  payload_content_type='text/plain')
+    >>> secret = barbican.secrets.create(name=u'Self destruction sequence',
+    ...                                  payload=u'the magic words are squeamish ossifrage')
 
     >>> # Now let's store the secret by using its store() method. This will send the secret data
     >>> # to Barbican, where it will be encrypted and stored securely in the cloud.

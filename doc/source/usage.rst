@@ -32,7 +32,7 @@ class that is exposed as the `secrets` attribute of the Client.
 
 Example::
 
-    # Store a random plain text password in Barbican
+    # Store a random text password in Barbican
 
     from barbicanclient import client
     import random
@@ -49,7 +49,6 @@ Example::
     my_secret = barbican.secrets.create()
     my_secret.name = u'Random plain text password'
     my_secret.payload = random_password(24)
-    my_secret.payload_content_type = u'text/plain'
 
     my_secret_ref = my_secret.store()
 
@@ -62,6 +61,31 @@ Example::
 
     retrieved_secret = barbican.secrets.get(my_secret_ref)
     my_password = retrieved_secret.payload
+
+Secret Content Types
+--------------------
+
+The Barbican service defines a Secret Content Type.  The client will choose
+the correct Content Type based on the type of the data that is set on the
+`Secret.payload` property.  The following table summarizes the mapping of
+Python types to Barbican Secret Content Types:
+
++-----------------+---------------+---------------+--------------------------+
+|    six Type     | Python 2 Type | Python 3 Type |  Barbican Content Type   |
++=================+===============+===============+==========================+
+| six.binary_type |      str      |     bytes     | application/octet-stream |
++-----------------+---------------+---------------+--------------------------+
+| six.text_type   |    unicode    |      str      |        text/plain        |
++-----------------+---------------+---------------+--------------------------+
+
+.. WARNING::
+   Previous versions of python-barbicanclient allowed the user to set the
+   `payload_content_type` and `payload_content_encoding` properties for any
+   secret.  This can lead to unexpected behavior such as changing a unicode
+   string back to a byte string in Python 2, and dropping the base64 encoding
+   of a binary secret as in Launchpad Bug #1419166.
+   Because of this, manually setting the `payload_content_type` and the
+   `payload_content_encoding` has been deprecated.
 
 Orders
 ======
