@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import logging
 import os
 
 import oslotest.base as oslotest
@@ -20,7 +21,6 @@ from barbicanclient import client
 from keystoneclient.auth import identity
 from keystoneclient import session
 from tempest import config
-from tempest.openstack.common import log as logging
 
 CONF = config.CONF
 
