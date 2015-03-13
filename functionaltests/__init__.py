@@ -17,9 +17,19 @@ import os
 
 from tempest import config
 
+
 CONF = config.CONF
 
+
+def _get_conf_file_path():
+    functional_dir = os.path.split(os.path.abspath(__file__))[0]
+    base_dir = os.path.split(functional_dir)[0]
+    return os.path.join(base_dir, 'etc', 'functional_tests.conf')
+
+
 # Use local tempest conf if one is available.
-# This usually means we're running tests outside of devstack
-if os.path.exists('./etc/functional_tests.conf'):
-    CONF.set_config_path('./etc/functional_tests.conf')
+conf_file = _get_conf_file_path()
+if os.path.exists(conf_file):
+    CONF.set_config_path(conf_file)
+
+
