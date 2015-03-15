@@ -235,7 +235,13 @@ class Secret(SecretFormatter):
                              "secret does not specify a 'default' "
                              "content-type.")
         headers = {'Accept': self.payload_content_type}
-        self._payload = self._api._get_raw(self._secret_ref, headers)
+
+        if self._secret_ref[-1] != "/":
+            payload_url = self._secret_ref + '/payload'
+        else:
+            payload_url = self._secret_ref + 'payload'
+
+        self._payload = self._api._get_raw(payload_url, headers)
 
     @immutable_after_save
     def store(self):

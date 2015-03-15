@@ -292,6 +292,7 @@ class BaseEntityResource(testtools.TestCase):
         self.entity_id = entity_id
         self.entity_base = self.endpoint + "/v1/" + self.entity
         self.entity_href = self.entity_base + "/" + self.entity_id
+        self.entity_payload_href = self.entity_href + "/payload"
 
         self.client = client.Client(endpoint=self.endpoint,
                                     project_id=self.project_id)
