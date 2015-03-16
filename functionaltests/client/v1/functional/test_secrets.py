@@ -26,9 +26,7 @@ secret_create_defaults_data = {
     "algorithm": "aes",
     "bit_length": 256,
     "mode": "cbc",
-    "payload": "gF6+lLoF3ohA9aPRpt+6bQ==",
-    "payload_content_type": "application/octet-stream",
-    "payload_content_encoding": "base64",
+    "payload": "gF6+lLoF3ohA9aPRpt+6bQ=="
 }
 
 secret_create_nones_data = {
@@ -262,6 +260,7 @@ class SecretsTestCase(base.TestCase):
     @testcase.attr('positive')
     def test_secret_create_defaults_valid_payload(self, payload):
         """Create secrets with a various valid payloads."""
+
         test_model = self.behaviors.create_secret(secret_create_defaults_data)
         test_model.payload = payload
 
@@ -269,8 +268,7 @@ class SecretsTestCase(base.TestCase):
         self.assertIsNotNone(secret_ref)
 
         get_resp = self.behaviors.get_secret(secret_ref)
-        self.assertEqual(test_model.payload,
-                         str(base64.b64encode(get_resp.payload)))
+        self.assertEqual(test_model.payload, get_resp.payload)
 
     @utils.parameterized_dataset({
         'array': [['boom']],
