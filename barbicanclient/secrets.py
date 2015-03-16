@@ -249,13 +249,13 @@ class Secret(SecretFormatter):
         Stores the Secret in Barbican.  New Secret objects are not persisted
         in Barbican until this method is called.
         """
-        secret_dict = base.filter_null_keys({
+        secret_dict = {
             'name': self.name,
             'algorithm': self.algorithm,
             'mode': self.mode,
             'bit_length': self.bit_length,
             'expiration': self.expiration
-        })
+        }
 
         if self.payload_content_type:
             """
@@ -285,6 +285,8 @@ class Secret(SecretFormatter):
             """
             secret_dict['payload'] = self.payload
             secret_dict['payload_content_type'] = u'text/plain'
+
+        secret_dict = base.filter_null_keys(secret_dict)
 
         LOG.debug("Request body: {0}".format(secret_dict))
 
