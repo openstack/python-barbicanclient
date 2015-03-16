@@ -20,6 +20,8 @@ from functionaltests.client.v1.behaviors import secret_behaviors
 from functionaltests import utils
 from testtools import testcase
 
+from barbicanclient import exceptions
+
 secret_create_defaults_data = {
     "name": "AES key",
     "expiration": "2018-02-28T19:14:44.180394",
@@ -296,7 +298,7 @@ class SecretsTestCase(base.TestCase):
         'none': [None],
     })
     @testcase.attr('negative')
-    def test_secret_create_defaults_invalid_payload(self, payload):
+    def test_secret_with_no_payload_exception(self, payload):
         """Covers creating secrets with various invalid payloads.
 
         These requests will fail with a value error before the request to the
@@ -305,11 +307,11 @@ class SecretsTestCase(base.TestCase):
             secret_create_defaults_data)
         test_model.payload = payload
 
-        e = self.assertRaises(ValueError, self.behaviors.store_secret,
-                              test_model)
-
-        self.assertIn('Payload incorrectly specified.',
-                      e.message)
+        self.assertRaises(
+            exceptions.NoPayloadException,
+            self.behaviors.store_secret,
+            test_model
+        )
 
     @utils.parameterized_dataset({
         'negative_five_long_expire': {
