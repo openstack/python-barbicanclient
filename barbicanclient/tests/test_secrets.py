@@ -275,7 +275,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(self.entity_payload_href, n.last_request.url)
 
     def test_should_fetch_metadata_to_get_payload(self):
-        content_types_dict = {'default': 'application/octet-stream'}
+        content_types_dict = {'default': 'text/plain'}
 
         data = self.secret.get_dict(self.entity_href,
                                     content_types_dict=content_types_dict)
@@ -284,7 +284,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
             request_headers={'Accept': 'application/json'},
             json=data)
 
-        request_headers = {'Accept': 'application/octet-stream'}
+        request_headers = {'Accept': 'text/plain'}
         decryption_response = self.responses.get(
             self.entity_payload_href,
             request_headers=request_headers,
@@ -320,13 +320,13 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         Manually setting the payload_content_type is deprecated and will be
         removed in a future release.
         """
-        decrypted = 'decrypted text here'
+        decrypted = b'decrypted text here'
 
         request_headers = {'Accept': 'application/octet-stream'}
 
         m = self.responses.get(self.entity_payload_href,
                                request_headers=request_headers,
-                               text=decrypted)
+                               content=decrypted)
 
         secret = self.manager.get(
             secret_ref=self.entity_href,
@@ -346,12 +346,12 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
             request_headers={'Accept': 'application/json'},
             json=json)
 
-        decrypted = 'decrypted text here'
+        decrypted = b'decrypted text here'
         request_headers = {'Accept': 'application/octet-stream'}
         decryption_response = self.responses.get(
             self.entity_payload_href,
             request_headers=request_headers,
-            text=decrypted)
+            content=decrypted)
 
         secret = self.manager.get(secret_ref=self.entity_href)
         secret_payload = secret.payload

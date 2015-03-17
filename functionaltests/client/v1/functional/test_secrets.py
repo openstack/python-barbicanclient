@@ -234,7 +234,7 @@ class SecretsTestCase(base.TestCase):
             'payload_content_encoding': 'base64'}
     })
     @testcase.attr('positive')
-    def test_secret_create_defaults_valid_types_and_encoding(
+    def test_secret_create_deprecated_types_and_encoding(
             self,
             payload_content_type,
             payload_content_encoding):
@@ -249,10 +249,11 @@ class SecretsTestCase(base.TestCase):
         get_resp = self.behaviors.get_secret(
             secret_ref,
             payload_content_type=test_model.payload_content_type)
-
         if test_model.payload_content_encoding == 'base64':
-            self.assertEqual(test_model.payload,
-                             str(base64.b64encode(get_resp.payload)))
+            self.assertEqual(
+                base64.b64decode(test_model.payload),
+                get_resp.payload
+            )
         else:
             self.assertEqual(test_model.payload, str(get_resp.payload))
 

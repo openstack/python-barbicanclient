@@ -94,7 +94,7 @@ class _HTTPClient(object):
         headers.update(self._default_headers)
         resp = self._session.get(href, headers=headers)
         self._check_status_code(resp)
-        return resp.text
+        return resp.content
 
     def _delete(self, href, json=None):
         headers = dict()

@@ -241,8 +241,11 @@ class Secret(SecretFormatter):
             payload_url = self._secret_ref + '/payload'
         else:
             payload_url = self._secret_ref + 'payload'
-
-        self._payload = self._api._get_raw(payload_url, headers)
+        payload = self._api._get_raw(payload_url, headers)
+        if self.payload_content_type == u'text/plain':
+            self._payload = payload.decode('UTF-8')
+        else:
+            self._payload = payload
 
     @immutable_after_save
     def store(self):
