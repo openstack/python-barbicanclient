@@ -20,6 +20,7 @@ from oslo_utils.timeutils import parse_isotime
 import six
 
 from barbicanclient import base
+from barbicanclient import exceptions
 from barbicanclient import formatter
 
 
@@ -248,6 +249,8 @@ class Secret(SecretFormatter):
         """
         Stores the Secret in Barbican.  New Secret objects are not persisted
         in Barbican until this method is called.
+
+        :raises: NoPayloadException
         """
         secret_dict = {
             'name': self.name,
@@ -257,6 +260,8 @@ class Secret(SecretFormatter):
             'expiration': self.expiration
         }
 
+        if not self.payload:
+            raise exceptions.NoPayloadException
         if self.payload_content_type:
             """
             Setting the payload_content_type and payload_content_encoding
