@@ -23,9 +23,7 @@ secret_create_defaults_data = {
     "algorithm": "aes",
     "bit_length": 256,
     "mode": "cbc",
-    "payload": "gF6+lLoF3ohA9aPRpt+6bQ==",
-    "payload_content_type": "application/octet-stream",
-    "payload_content_encoding": "base64",
+    "payload": "gF6+lLoF3ohA9aPRpt+6bQ=="
 }
 
 secret_create_nones_data = {
@@ -93,13 +91,12 @@ class SecretsTestCase(base.TestCase):
     def test_secret_get_defaults_payload(self):
         """Covers getting a secret's payload data."""
         test_model = self.behaviors.create_secret(secret_create_defaults_data)
-
         secret_ref = self.behaviors.store_secret(test_model)
 
         get_resp = self.behaviors.get_secret(
-            secret_ref,
-            payload_content_type=test_model.payload_content_type)
-        self.assertEqual(get_resp.payload, test_model.payload)
+            secret_ref
+            )
+        self.assertEqual(test_model.payload, get_resp.payload)
 
     @testcase.attr('positive')
     def test_secrets_get_defaults_multiple_secrets(self):

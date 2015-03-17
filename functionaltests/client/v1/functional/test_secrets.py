@@ -78,8 +78,7 @@ class SecretsTestCase(base.TestCase):
         content_types = resp.content_types
         self.assertIsNotNone(content_types)
         self.assertIn('default', content_types)
-        self.assertEqual(content_types['default'],
-                         test_model.payload_content_type)
+        self.assertEqual('application/octet-stream', content_types['default'])
 
     @testcase.attr('positive')
     def test_secret_create_defaults_non_standard_algorithm(self):
