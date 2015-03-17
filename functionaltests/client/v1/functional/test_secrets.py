@@ -273,29 +273,29 @@ class SecretsTestCase(base.TestCase):
         self.assertEqual(test_model.payload, get_resp.payload)
 
     @utils.parameterized_dataset({
-        'array': [['boom']],
-        'int': [123],
-        'zero': [0]
+        'list': [['boom']],
+        'int': [123]
     })
     @testcase.attr('negative')
-    def test_secret_create_defaults_invalid_payload_http_err(self, payload):
-        """Covers creating secrets with various invalid payloads.
+    def test_secret_create_with_invalid_payload_(self, payload):
+        """Covers attempting to create secret with invalid payload types
 
-        These requests will error with 400 and are will make a request to
-        the server.
+        Tests the negative cases of invalid types (list and int).
         """
         test_model = self.behaviors.create_secret(
             secret_create_defaults_data)
         test_model.payload = payload
 
-        e = self.assertRaises(Exception, self.behaviors.store_secret,
-                              test_model)
-
-        self.assertEqual(e.http_status, 400)
+        self.assertRaises(
+            exceptions.InvalidPayloadException,
+            self.behaviors.store_secret,
+            test_model
+        )
 
     @utils.parameterized_dataset({
         'empty': [''],
         'none': [None],
+        'zero': [0]
     })
     @testcase.attr('negative')
     def test_secret_with_no_payload_exception(self, payload):

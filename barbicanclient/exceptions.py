@@ -20,3 +20,7 @@ class BarbicanException(Exception):
 
 class NoPayloadException(BarbicanException):
     pass
+
+
+class InvalidPayloadException(BarbicanException):
+    pass

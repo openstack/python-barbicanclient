@@ -251,6 +251,7 @@ class Secret(SecretFormatter):
         in Barbican until this method is called.
 
         :raises: NoPayloadException
+        :raises: InvalidPayloadException
         """
         secret_dict = {
             'name': self.name,
@@ -262,6 +263,8 @@ class Secret(SecretFormatter):
 
         if not self.payload:
             raise exceptions.NoPayloadException
+        if not isinstance(self.payload, (six.text_type, six.binary_type)):
+            raise exceptions.InvalidPayloadException
         if self.payload_content_type:
             """
             Setting the payload_content_type and payload_content_encoding
