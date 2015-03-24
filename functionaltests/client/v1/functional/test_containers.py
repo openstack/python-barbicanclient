@@ -113,6 +113,79 @@ class GenericContainersTestCase(BaseContainersTestCase):
         container_ref = self.behaviors.store_container(test_model)
         self.assertIsNotNone(container_ref)
 
+    @testcase.attr('negative')
+    def test_create_defaults_duplicate_secret_refs(self):
+        """Covers creating a container with a duplicated secret ref."""
+        secrets = {'secret_1': self.secret_1,
+                   'secret_2': self.secret_1,
+                   'secret_3': self.secret_1}
+
+        test_model = self.behaviors.create_generic_container(
+            create_container_defaults_data, secrets=secrets)
+
+        e = self.assertRaises(Exception, self.behaviors.store_container,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
+
+    @testcase.attr('negative')
+    def test_get_non_existent_container(self):
+        """A get on a container that does not exist.
+
+        This should return a container incorrectly specified error since
+        the container does not have a correctly formatted UUID
+        """
+        base_url = self.behaviors.base_url
+        url = base_url + '/containers/notauuid'
+        e = self.assertRaises(ValueError, self.behaviors.get_container,
+                              url)
+
+        self.assertEqual(e.message, 'Container incorrectly specified.')
+
+    @testcase.attr('negative')
+    def test_get_non_existent_container_valid_uuid(self):
+        """A get on a container that does not exist with valid UUID
+
+        This should return a 404.
+        """
+        base_url = self.behaviors.base_url
+        uuid = 'de305d54-75b4-431b-cccc-eb6b9e546013'
+        url = base_url + '/containers/' + uuid
+
+        e = self.assertRaises(Exception, self.behaviors.get_container,
+                              url)
+
+        self.assertEqual(e.http_status, 404)
+
+    @testcase.attr('negative')
+    def test_delete_non_existent_container(self):
+        """A delete on a container that does not exist.
+
+        This should return a container incorrectly specified error since
+        the container does not have a correctly formatted UUID
+        """
+        base_url = self.behaviors.base_url
+        url = base_url + '/containers/notauuid'
+        e = self.assertRaises(ValueError, self.behaviors.get_container,
+                              url)
+
+        self.assertEqual(e.message, 'Container incorrectly specified.')
+
+    @testcase.attr('negative')
+    def test_delete_non_existent_container_valid_uuid(self):
+        """A delete on a container that does not exist with valid UUID
+
+        This should return a 404.
+        """
+        uuid = 'de305d54-75b4-431b-cccc-eb6b9e546013'
+        base_url = self.barbicanclient.secrets._api._base_url
+        url = base_url + '/containers/' + uuid
+
+        e = self.assertRaises(Exception, self.behaviors.get_container,
+                              url)
+
+        self.assertEqual(e.http_status, 404)
+
     @utils.parameterized_dataset({'0': [0], '1': [1], '50': [50]})
     @testcase.attr('positive')
     def test_create_container_defaults_size(self, num_secrets):
@@ -187,3 +260,56 @@ class RSAContainersTestCase(BaseContainersTestCase):
 
         get_resp = self.behaviors.get_container(container_ref)
         self.assertEqual(get_resp.name, name)
+
+    @testcase.attr('negative')
+    def test_create_rsa_invalid_key_names(self):
+        """Covers creating an RSA container with incorrect names."""
+        incorrect_names_rsa_container = {
+            "name": "bad_container",
+            "secret1": self.secret_ref_1,
+            "secret2": self.secret_ref_2,
+            "secret3": self.secret_ref_3
+        }
+
+        e = self.assertRaises(TypeError, self.behaviors.create_rsa_container,
+                              incorrect_names_rsa_container)
+
+        self.assertIn('got an unexpected keyword argument', e.message)
+
+    @testcase.attr('negative')
+    def test_create_rsa_no_public_key(self):
+        """Creating an rsa container without a public key should fail.
+
+        RSA containers must have at least a public key and private key.
+        """
+        no_public_key_rsa_container = {"name": "no_pub_key",
+                                       "private_key": self.secret_1,
+                                       "private_key_passphrase": self.secret_2,
+                                       }
+
+        test_model = self.behaviors.create_rsa_container(
+            no_public_key_rsa_container)
+
+        e = self.assertRaises(Exception, self.behaviors.store_container,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
+
+    @testcase.attr('negative')
+    def test_create_rsa_no_private_key(self):
+        """Creating an rsa container without a private key should fail.
+
+        RSA containers must have at least a public key and private key.
+        """
+        no_private_key_rsa_container = {
+            "name": "no_pub_key",
+            "public_key": self.secret_1,
+            "private_key_passphrase": self.secret_2}
+
+        test_model = self.behaviors.create_rsa_container(
+            no_private_key_rsa_container)
+
+        e = self.assertRaises(Exception, self.behaviors.store_container,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
