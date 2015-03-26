@@ -267,7 +267,7 @@ class Secret(SecretFormatter):
             raise exceptions.PayloadException("Missing Payload")
         if not isinstance(self.payload, (six.text_type, six.binary_type)):
             raise exceptions.PayloadException("Invalid Payload Type")
-        if self.payload_content_type:
+        if self.payload_content_type or self.payload_content_encoding:
             """
             Setting the payload_content_type and payload_content_encoding
             manually is deprecated.  This clause of the if statement is here

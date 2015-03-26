@@ -473,22 +473,13 @@ class SecretsTestCase(base.TestCase):
             'payload_content_type': 'text/plain',
             'payload_content_encoding': 'invalid'},
 
-        #Launchpad Bug (1434652)
-        # 'none_content_type_invalid_content_encoding': {
-        #     'payload_content_type': None,
-        #     'payload_content_encoding': 'invalid'},
-        #
-        # 'empty_content_type_and_encoding': {
-        #     'payload_content_type': '',
-        #     'payload_content_encoding': ''},
-        #
-        # 'none_content_type_and_encoding': {
-        #     'payload_content_type': None,
-        #     'payload_content_encoding': None},
-        #
-        # 'none_content_type_base64_content_encoding': {
-        #     'payload_content_type': None,
-        #     'payload_content_encoding': 'base64'}
+        'none_content_type_invalid_content_encoding': {
+            'payload_content_type': None,
+            'payload_content_encoding': 'invalid'},
+
+        'none_content_type_base64_content_encoding': {
+            'payload_content_type': None,
+            'payload_content_encoding': 'base64'}
     })
     @testcase.attr('negative')
     def test_secret_create_defaults_invalid_types_and_encoding(self, **kwargs):
