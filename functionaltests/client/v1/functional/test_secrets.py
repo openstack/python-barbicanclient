@@ -152,7 +152,7 @@ class SecretsTestCase(base.TestCase):
         test_model.payload = None
 
         self.assertRaises(
-            exceptions.NoPayloadException,
+            exceptions.PayloadException,
             self.behaviors.store_secret,
             test_model
         )
@@ -167,7 +167,7 @@ class SecretsTestCase(base.TestCase):
         test_model.payload_content_type = None
 
         self.assertRaises(
-            exceptions.NoPayloadException,
+            exceptions.PayloadException,
             self.behaviors.store_secret,
             test_model
         )
@@ -210,7 +210,7 @@ class SecretsTestCase(base.TestCase):
             secret_create_emptystrings_data)
 
         self.assertRaises(
-            exceptions.NoPayloadException,
+            exceptions.PayloadException,
             self.behaviors.store_secret,
             test_model
         )
@@ -377,7 +377,7 @@ class SecretsTestCase(base.TestCase):
         test_model.payload = payload
 
         self.assertRaises(
-            exceptions.InvalidPayloadException,
+            exceptions.PayloadException,
             self.behaviors.store_secret,
             test_model
         )
@@ -398,7 +398,7 @@ class SecretsTestCase(base.TestCase):
         test_model.payload = payload
 
         self.assertRaises(
-            exceptions.NoPayloadException,
+            exceptions.PayloadException,
             self.behaviors.store_secret,
             test_model
         )
