@@ -253,8 +253,7 @@ class Secret(SecretFormatter):
         Stores the Secret in Barbican.  New Secret objects are not persisted
         in Barbican until this method is called.
 
-        :raises: NoPayloadException
-        :raises: InvalidPayloadException
+        :raises: PayloadException
         """
         secret_dict = {
             'name': self.name,
@@ -265,9 +264,9 @@ class Secret(SecretFormatter):
         }
 
         if not self.payload:
-            raise exceptions.NoPayloadException
+            raise exceptions.PayloadException("Missing Payload")
         if not isinstance(self.payload, (six.text_type, six.binary_type)):
-            raise exceptions.InvalidPayloadException
+            raise exceptions.PayloadException("Invalid Payload Type")
         if self.payload_content_type:
             """
             Setting the payload_content_type and payload_content_encoding

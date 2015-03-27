@@ -18,9 +18,5 @@ class BarbicanException(Exception):
     pass
 
 
-class NoPayloadException(BarbicanException):
-    pass
-
-
-class InvalidPayloadException(BarbicanException):
+class PayloadException(BarbicanException):
     pass
