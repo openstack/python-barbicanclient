@@ -335,6 +335,13 @@ class OrderManager(base.BaseEntityManager):
         else:
             raise TypeError('Unknown Order type "{0}"'.format(order_type))
 
+    def create(self, type=None, **kwargs):
+        order_type = self._order_type_to_class_map.get(type.lower())
+        if order_type is not None:
+            return order_type(self._api, **kwargs)
+        else:
+            raise TypeError('Unknown Order type "{0}"'.format(type))
+
     def create_key(self, name=None, algorithm=None, bit_length=None, mode=None,
                    payload_content_type=None, expiration=None):
         """
