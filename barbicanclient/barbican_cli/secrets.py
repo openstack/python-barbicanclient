@@ -52,10 +52,10 @@ class GetSecret(show.ShowOne):
 
     def take_action(self, args):
         if args.decrypt:
-            entity = self.app.client.secrets.decrypt(args.URI,
-                                                     args.payload_content_type)
-            return (('Secret',),
-                    (entity,))
+            entity = self.app.client.secrets.get(args.URI,
+                                                 args.payload_content_type)
+            return (('Payload',),
+                    (entity.payload,))
         else:
             entity = self.app.client.secrets.get(secret_ref=args.URI)
             return entity._get_formatted_entity()
