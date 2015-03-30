@@ -27,6 +27,8 @@ class CreateOrder(show.ShowOne):
         parser = super(CreateOrder, self).get_parser(prog_name)
         parser.add_argument('--name', '-n',
                             help='a human-friendly name.')
+        parser.add_argument('--type', '-p',
+                            help='the type of the order to create.')
         parser.add_argument('--algorithm', '-a', default='aes',
                             help='the algorithm to be used with the '
                                  'requested key (default: '
@@ -49,7 +51,8 @@ class CreateOrder(show.ShowOne):
 
     def take_action(self, args):
         entity = self.app.client.orders.create(
-            name=args.name, payload_content_type=args.payload_content_type,
+            name=args.name, type=args.type,
+            payload_content_type=args.payload_content_type,
             algorithm=args.algorithm, bit_length=args.bit_length,
             mode=args.mode, expiration=args.expiration)
         entity.submit()
