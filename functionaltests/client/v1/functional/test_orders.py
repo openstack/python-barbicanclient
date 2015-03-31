@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytz
+import sys
 
 from testtools import testcase
 from functionaltests import utils
@@ -158,6 +159,71 @@ class OrdersTestCase(base.TestCase):
                          secret_resp.mode,
                          'Modes were not the same')
 
+    @testcase.attr('negative')
+    def test_get_order_defaults_that_doesnt_exist(self):
+        """Covers case of getting a non-existent order."""
+        ref = self.behaviors.base_url + '/orders/notauuid'
+        # try to get a non-existent order
+        e = self.assertRaises(ValueError, self.behaviors.get_order, ref)
+
+        # verify that the order get failed
+        self.assertEqual(e.message, 'Order incorrectly specified.')
+
+    @testcase.attr('negative')
+    def test_get_order_defaults_that_doesnt_exist_valid_uuid(self):
+        """Covers case of getting a non-existent order with a valid UUID"""
+        uuid = '54262d9d-4bc7-4821-8df0-dc2ca8e112bb'
+        ref = self.behaviors.base_url + '/orders/' + uuid
+
+        # try to get a non-existent order
+        e = self.assertRaises(Exception, self.behaviors.get_order, ref)
+
+        # verify that the order get failed
+        self.assertEqual(e.http_status, 404)
+
+    @testcase.attr('negative')
+    def test_create_order_nones(self):
+        """Covers order creation with empty JSON."""
+
+        test_model = self.behaviors.create_key_order(order_create_nones_data)
+
+        e = self.assertRaises(Exception, self.behaviors.store_order,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
+
+
+    @testcase.attr('negative')
+    def test_create_order_empty_entries(self):
+        """Covers order creation with empty JSON."""
+
+        test_model = self.behaviors.create_key_order(order_create_nones_data)
+        test_model.name = ""
+        test_model.algorithm = ""
+        test_model.mode = ""
+        test_model.bit_length = ""
+        test_model.payload_content_type = ""
+
+        e = self.assertRaises(Exception, self.behaviors.store_order,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
+
+
+    @testcase.attr('negative')
+    def test_create_order_defaults_oversized_strings(self):
+        """Covers order creation with empty JSON."""
+
+        test_model = self.behaviors.create_key_order(order_create_key_data)
+        test_model.name = base.TestCase.oversized_field
+        test_model.algorithm = base.TestCase.oversized_field
+        test_model.mode = base.TestCase.oversized_field
+
+        e = self.assertRaises(Exception, self.behaviors.store_order,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
+
     @utils.parameterized_dataset({
         '8': [8],
         '64': [64],
@@ -181,6 +247,29 @@ class OrdersTestCase(base.TestCase):
         self.assertEqual(get_resp.bit_length, test_model.bit_length)
 
     @utils.parameterized_dataset({
+        'negative_maxint': [-sys.maxint],
+        'negative_7': [-7],
+        'negative_1': [-1],
+        '0': [0],
+        '1': [1],
+        '7': [7],
+        '129': [129],
+        'none': [None],
+        'empty': [''],
+        'space': [' '],
+        'over_signed_small_int': [32768]
+    })
+    @testcase.attr('negative')
+    def test_create_order_defaults_invalid_bit_length(self, bit_length):
+        """Covers creating orders with various invalid bit lengths."""
+        test_model = self.behaviors.create_key_order(order_create_key_data)
+        test_model.bit_length = bit_length
+
+        e = self.assertRaises(Exception, self.behaviors.store_order,
+                              test_model)
+        self.assertEqual(e.http_status, 400)
+
+    @utils.parameterized_dataset({
         'alphanumeric': ['1f34ds'],
         'len_255': [base.TestCase.max_sized_field],
         'uuid': ['54262d9d-4bc7-4821-8df0-dc2ca8e112bb'],
@@ -199,6 +288,20 @@ class OrdersTestCase(base.TestCase):
         self.assertEqual(get_resp.name, test_model.name)
 
     @utils.parameterized_dataset({
+        'int': [123]
+    })
+    @testcase.attr('negative')
+    def test_create_order_defaults_invalid_name(self, name):
+        """Covers creating orders with various invalid names."""
+        test_model = self.behaviors.create_key_order(order_create_key_data)
+        test_model.name = name
+
+        e = self.assertRaises(Exception, self.behaviors.store_order,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
+
+    @utils.parameterized_dataset({
         'cbc': ['cbc']
     })
     @testcase.attr('positive')
@@ -212,6 +315,19 @@ class OrdersTestCase(base.TestCase):
 
         get_resp = self.behaviors.get_order(order_ref)
         self.assertEqual(get_resp.mode, test_model.mode)
+
+    @utils.parameterized_dataset({
+        'int': [123]
+    })
+    @testcase.attr('negative')
+    def test_create_order_defaults_invalid_mode(self, mode):
+        """Covers creating orders with various invalid modes."""
+        test_model = self.behaviors.create_key_order(order_create_key_data)
+        test_model.mode = mode
+
+        e = self.assertRaises(Exception, self.behaviors.store_order,
+                              test_model)
+        self.assertEqual(e.http_status, 400)
 
     @utils.parameterized_dataset({
         'aes': ['aes']
@@ -228,6 +344,20 @@ class OrdersTestCase(base.TestCase):
 
         get_resp = self.behaviors.get_order(order_ref)
         self.assertEqual(get_resp.algorithm, test_model.algorithm)
+
+    @utils.parameterized_dataset({
+        'int': [123]
+    })
+    @testcase.attr('negative')
+    def test_create_order_defaults_invalid_algorithm(self, algorithm):
+        """Covers creating orders with various invalid algorithms."""
+        test_model = self.behaviors.create_key_order(order_create_key_data)
+        test_model.algorithm = algorithm
+
+        e = self.assertRaises(Exception, self.behaviors.store_order,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
 
     # TODO(tdink) Add empty after Launchpad 1420444 is resolved
     @utils.parameterized_dataset({
@@ -246,6 +376,24 @@ class OrdersTestCase(base.TestCase):
         get_resp = self.behaviors.get_order(order_ref)
         self.assertEqual(get_resp.payload_content_type,
                          test_model.payload_content_type)
+
+    @utils.parameterized_dataset({
+        'int': [123],
+        'invalid': ['invalid'],
+        'oversized_string': [base.TestCase.oversized_field],
+        'text': ['text'],
+        'text_slash_with_no_subtype': ['text/'],
+    })
+    @testcase.attr('negative')
+    def test_create_order_defaults_invalid_payload_content_type(self, pct):
+        """Covers order creation with various invalid payload content types."""
+        test_model = self.behaviors.create_key_order(order_create_key_data)
+        test_model.payload_content_type = pct
+
+        e = self.assertRaises(Exception, self.behaviors.store_order,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
 
     @utils.parameterized_dataset({
         'negative_five_long_expire': {
@@ -281,3 +429,20 @@ class OrdersTestCase(base.TestCase):
         get_resp = self.behaviors.get_order(order_ref)
         self.assertIsNotNone(get_resp)
         self.assertEqual(date, get_resp.expiration)
+
+    @utils.parameterized_dataset({
+        'malformed_timezone': {
+            'timezone': '-5:00',
+            'days': 5},
+    })
+    @testcase.attr('negative')
+    def test_create_order_defaults_invalid_expiration(self, **kwargs):
+        """Covers creating orders with various invalid expiration data."""
+        timestamp = utils.create_timestamp_w_tz_and_offset(**kwargs)
+        test_model = self.behaviors.create_key_order(order_create_key_data)
+        test_model.expiration = timestamp
+
+        e = self.assertRaises(Exception, self.behaviors.store_order,
+                              test_model)
+
+        self.assertEqual(e.http_status, 400)
