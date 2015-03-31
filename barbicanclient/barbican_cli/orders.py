@@ -102,4 +102,8 @@ class ListOrder(lister.Lister):
 
     def take_action(self, args):
         obj_list = self.app.client.orders.list(args.limit, args.offset)
-        return orders.Order._list_objects(obj_list)
+        if not obj_list:
+            return [], []
+        columns = obj_list[0]._get_generic_columns()
+        data = (obj._get_generic_data() for obj in obj_list)
+        return columns, data

@@ -38,6 +38,8 @@ def immutable_after_save(func):
 class KeyOrderFormatter(formatter.EntityFormatter):
 
     columns = ("Order href",
+               "Type",
+               "Container href",
                "Secret href",
                "Created",
                "Status",
@@ -47,6 +49,8 @@ class KeyOrderFormatter(formatter.EntityFormatter):
 
     def _get_formatted_data(self):
         data = (self.order_ref,
+                "Key",
+                "N/A",
                 self.secret_ref,
                 self.created,
                 self.status,
@@ -59,7 +63,9 @@ class KeyOrderFormatter(formatter.EntityFormatter):
 class AsymmetricOrderFormatter(formatter.EntityFormatter):
 
     columns = ("Order href",
+               "Type",
                "Container href",
+               "Secret href",
                "Created",
                "Status",
                "Error code",
@@ -68,7 +74,9 @@ class AsymmetricOrderFormatter(formatter.EntityFormatter):
 
     def _get_formatted_data(self):
         data = (self.order_ref,
+                "Asymmetric",
                 self.container_ref,
+                "N/A",
                 self.created,
                 self.status,
                 self.error_status_code,
@@ -263,10 +271,11 @@ class AsymmetricOrder(Order, AsymmetricOrderFormatter):
     _type = 'asymmetric'
 
     def __init__(self, api, name=None, algorithm=None, bit_length=None,
-                 pass_phrase=None, expiration=None, payload_content_type=None,
-                 status=None, created=None, updated=None, order_ref=None,
-                 container_ref=None, error_status_code=None, error_reason=None,
-                 sub_status=None, sub_status_message=None, creator_id=None):
+                 mode=None, pass_phrase=None, expiration=None,
+                 payload_content_type=None, status=None, created=None,
+                 updated=None, order_ref=None, container_ref=None,
+                 error_status_code=None, error_reason=None, sub_status=None,
+                 sub_status_message=None, creator_id=None):
         super(AsymmetricOrder, self).__init__(
             api, self._type, status=status, created=created, updated=updated,
             meta={
