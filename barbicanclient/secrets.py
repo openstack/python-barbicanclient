@@ -82,7 +82,8 @@ class Secret(SecretFormatter):
                  bit_length=None, mode=None, payload=None,
                  payload_content_type=None, payload_content_encoding=None,
                  secret_ref=None, created=None, updated=None,
-                 content_types=None, status=None, secret_type=None):
+                 content_types=None, status=None, secret_type=None,
+                 creator_id=None):
         """
         Secret objects should not be instantiated directly.  You should use
         the `create` or `get` methods of the
@@ -102,7 +103,8 @@ class Secret(SecretFormatter):
             created=created,
             updated=updated,
             content_types=content_types,
-            status=status
+            status=status,
+            creator_id=creator_id
         )
 
     @property
@@ -320,7 +322,8 @@ class Secret(SecretFormatter):
                         bit_length=None, mode=None, payload=None,
                         payload_content_type=None,
                         payload_content_encoding=None, created=None,
-                        updated=None, content_types=None, status=None):
+                        updated=None, content_types=None, status=None,
+                        creator_id=None):
         self._name = name
         self._algorithm = algorithm
         self._bit_length = bit_length
@@ -328,6 +331,7 @@ class Secret(SecretFormatter):
         self._payload = payload
         self._payload_content_encoding = payload_content_encoding
         self._expiration = expiration
+        self._creator_id = creator_id
         if self._expiration:
             self._expiration = parse_isotime(self._expiration)
         if self._secret_ref:
