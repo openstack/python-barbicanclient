@@ -89,12 +89,16 @@ class Order(object):
 
     def __init__(self, api, type, status=None, created=None, updated=None,
                  meta=None, order_ref=None, error_status_code=None,
-                 error_reason=None):
+                 error_reason=None, sub_status=None, sub_status_message=None,
+                 creator_id=None):
         super(Order, self).__init__()
 
         self._api = api
         self._type = type
         self._status = status
+        self._sub_status = sub_status
+        self._sub_status_message = sub_status_message
+        self._creator_id = creator_id
 
         if created:
             self._created = parse_isotime(created)
@@ -218,7 +222,8 @@ class KeyOrder(Order, KeyOrderFormatter):
     def __init__(self, api, name=None, algorithm=None, bit_length=None,
                  mode=None, expiration=None, payload_content_type=None,
                  status=None, created=None, updated=None, order_ref=None,
-                 secret_ref=None, error_status_code=None, error_reason=None):
+                 secret_ref=None, error_status_code=None, error_reason=None,
+                 sub_status=None, sub_status_message=None, creator_id=None):
         super(KeyOrder, self).__init__(
             api, self._type, status=status, created=created, updated=updated,
             meta={
@@ -226,7 +231,8 @@ class KeyOrder(Order, KeyOrderFormatter):
                 'expiration': expiration,
                 'payload_content_type': payload_content_type
             }, order_ref=order_ref, error_status_code=error_status_code,
-            error_reason=error_reason)
+            error_reason=error_reason, sub_status=sub_status,
+            sub_status_message=sub_status_message, creator_id=creator_id)
         self._secret_ref = secret_ref
         if mode:
             self._meta['mode'] = mode
@@ -259,8 +265,8 @@ class AsymmetricOrder(Order, AsymmetricOrderFormatter):
     def __init__(self, api, name=None, algorithm=None, bit_length=None,
                  pass_phrase=None, expiration=None, payload_content_type=None,
                  status=None, created=None, updated=None, order_ref=None,
-                 container_ref=None, error_status_code=None,
-                 error_reason=None):
+                 container_ref=None, error_status_code=None, error_reason=None,
+                 sub_status=None, sub_status_message=None, creator_id=None):
         super(AsymmetricOrder, self).__init__(
             api, self._type, status=status, created=created, updated=updated,
             meta={
@@ -268,7 +274,8 @@ class AsymmetricOrder(Order, AsymmetricOrderFormatter):
                 'expiration': expiration,
                 'payload_content_type': payload_content_type
             }, order_ref=order_ref, error_status_code=error_status_code,
-            error_reason=error_reason)
+            error_reason=error_reason, sub_status=sub_status,
+            sub_status_message=sub_status_message, creator_id=creator_id)
         self._container_ref = container_ref
         if pass_phrase:
             self._meta['pass_phrase'] = pass_phrase

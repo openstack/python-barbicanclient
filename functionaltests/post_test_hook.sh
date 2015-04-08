@@ -17,5 +17,8 @@
 # Install packages from test-requirements.txt
 sudo pip install -r /opt/stack/new/python-barbicanclient/test-requirements.txt
 
+# Make sure we're running the trunk client before we run the tests
+sudo pip install -U /opt/stack/new/python-barbicanclient
+
 cd /opt/stack/new/python-barbicanclient/functionaltests
 sudo ./run_tests.sh
