@@ -136,10 +136,13 @@ class SecretsTestCase(base.TestCase):
         uuid = 'de20ad54-85b4-421b-adb2-eb7b9e546013'
         url = self.behaviors.base_url + '/secrets/' + uuid
 
-        e = self.assertRaises(Exception, self.behaviors.delete_secret,
-                              url)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.delete_secret,
+            url
+        )
 
-        self.assertEqual(e.http_status, 404)
+        self.assertEqual(e.status_code, 404)
 
     @testcase.attr('negative')
     def test_secret_create_nones_content_type(self):
@@ -197,9 +200,12 @@ class SecretsTestCase(base.TestCase):
             secret_create_defaults_data)
         test_model.expiration = '2000-01-10T14:58:52.546795'
 
-        e = self.assertRaises(Exception, self.behaviors.store_secret,
-                              test_model)
-        self.assertEqual(e.http_status, 400)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_secret,
+            test_model
+        )
+        self.assertEqual(e.status_code, 400)
 
     @testcase.attr('negative')
     def test_secret_create_emptystrings(self):
@@ -227,9 +233,12 @@ class SecretsTestCase(base.TestCase):
             secret_create_defaults_data)
         test_model.payload = str(self.oversized_payload)
 
-        e = self.assertRaises(Exception, self.behaviors.store_secret,
-                              test_model)
-        self.assertEqual(e.http_status, 413)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_secret,
+            test_model
+        )
+        self.assertEqual(e.status_code, 413)
 
     @utils.parameterized_dataset({
         'alphanumeric': ['1f34ds'],
@@ -265,10 +274,13 @@ class SecretsTestCase(base.TestCase):
             secret_create_defaults_data)
         test_model.name = name
 
-        e = self.assertRaises(Exception, self.behaviors.store_secret,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_secret,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)
 
     @utils.parameterized_dataset({
         'aes': ['aes']
@@ -299,10 +311,13 @@ class SecretsTestCase(base.TestCase):
 
         # We are currently testing for exception with http_code
         # launchpad bug 1431514 will address the change to this functionality
-        e = self.assertRaises(Exception, self.behaviors.store_secret,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_secret,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)
 
     @utils.parameterized_dataset({
         '512': [512],
@@ -341,10 +356,13 @@ class SecretsTestCase(base.TestCase):
             secret_create_defaults_data)
         test_model.bit_length = bit_length
 
-        e = self.assertRaises(Exception, self.behaviors.store_secret,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_secret,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)
 
     @utils.parameterized_dataset({
         'cbc': ['cbc']
@@ -374,10 +392,13 @@ class SecretsTestCase(base.TestCase):
             secret_create_defaults_data)
         test_model.mode = mode
 
-        e = self.assertRaises(Exception, self.behaviors.store_secret,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_secret,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)
 
     @utils.parameterized_dataset({
         'text_content_type_none_encoding': {
@@ -491,10 +512,13 @@ class SecretsTestCase(base.TestCase):
         test_model.payload_content_type = kwargs[
             'payload_content_type']
 
-        e = self.assertRaises(Exception, self.behaviors.store_secret,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_secret,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)
 
     @utils.parameterized_dataset({
         'max_payload_string': [base.TestCase.max_sized_payload]
@@ -599,10 +623,13 @@ class SecretsTestCase(base.TestCase):
             secret_create_defaults_data)
         test_model.expiration = timestamp
 
-        e = self.assertRaises(Exception, self.behaviors.store_secret,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_secret,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)
 
     @utils.parameterized_dataset({
         'alphanumeric': ['1f34ds'],

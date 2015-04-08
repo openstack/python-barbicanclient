@@ -18,6 +18,8 @@ from functionaltests.client import base
 from functionaltests.client.v1.behaviors import container_behaviors
 from functionaltests.client.v1.behaviors import secret_behaviors
 
+from barbicanclient import exceptions
+
 
 create_secret_defaults_data = {
     "name": "AES key",
@@ -123,10 +125,13 @@ class GenericContainersTestCase(BaseContainersTestCase):
         test_model = self.behaviors.create_generic_container(
             create_container_defaults_data, secrets=secrets)
 
-        e = self.assertRaises(Exception, self.behaviors.store_container,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_container,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)
 
     @testcase.attr('negative')
     def test_get_non_existent_container(self):
@@ -152,10 +157,13 @@ class GenericContainersTestCase(BaseContainersTestCase):
         uuid = 'de305d54-75b4-431b-cccc-eb6b9e546013'
         url = base_url + '/containers/' + uuid
 
-        e = self.assertRaises(Exception, self.behaviors.get_container,
-                              url)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.get_container,
+            url
+        )
 
-        self.assertEqual(e.http_status, 404)
+        self.assertEqual(e.status_code, 404)
 
     @testcase.attr('negative')
     def test_delete_non_existent_container(self):
@@ -181,10 +189,13 @@ class GenericContainersTestCase(BaseContainersTestCase):
         base_url = self.barbicanclient.secrets._api._base_url
         url = base_url + '/containers/' + uuid
 
-        e = self.assertRaises(Exception, self.behaviors.get_container,
-                              url)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.get_container,
+            url
+        )
 
-        self.assertEqual(e.http_status, 404)
+        self.assertEqual(e.status_code, 404)
 
     @utils.parameterized_dataset({'0': [0], '1': [1], '50': [50]})
     @testcase.attr('positive')
@@ -290,10 +301,13 @@ class RSAContainersTestCase(BaseContainersTestCase):
         test_model = self.behaviors.create_rsa_container(
             no_public_key_rsa_container)
 
-        e = self.assertRaises(Exception, self.behaviors.store_container,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_container,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)
 
     @testcase.attr('negative')
     def test_create_rsa_no_private_key(self):
@@ -309,7 +323,10 @@ class RSAContainersTestCase(BaseContainersTestCase):
         test_model = self.behaviors.create_rsa_container(
             no_private_key_rsa_container)
 
-        e = self.assertRaises(Exception, self.behaviors.store_container,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_container,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)

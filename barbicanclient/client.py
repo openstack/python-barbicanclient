@@ -21,6 +21,7 @@ from keystoneclient.auth.base import BaseAuthPlugin
 from keystoneclient import session as ks_session
 
 from barbicanclient import containers
+from barbicanclient import exceptions
 from barbicanclient._i18n import _
 from barbicanclient import orders
 from barbicanclient import secrets
@@ -30,32 +31,6 @@ LOG = logging.getLogger(__name__)
 _DEFAULT_SERVICE_TYPE = 'key-manager'
 _DEFAULT_SERVICE_INTERFACE = 'public'
 _DEFAULT_API_VERSION = 'v1'
-
-
-class HTTPError(Exception):
-
-    """Base exception for HTTP errors."""
-
-    def __init__(self, message):
-        super(HTTPError, self).__init__(message)
-
-
-class HTTPServerError(HTTPError):
-
-    """Raised for 5xx responses from the server."""
-    pass
-
-
-class HTTPClientError(HTTPError):
-
-    """Raised for 4xx responses from the server."""
-    pass
-
-
-class HTTPAuthError(HTTPError):
-
-    """Raised for 401 Unauthorized responses from the server."""
-    pass
 
 
 class _HTTPClient(adapter.Adapter):
@@ -85,11 +60,11 @@ class _HTTPClient(adapter.Adapter):
     def request(self, *args, **kwargs):
         headers = kwargs.setdefault('headers', {})
         headers.update(self._default_headers)
+
+        # Set raise_exc=False by default so that we handle request exceptions
+        kwargs.setdefault('raise_exc', False)
+
         resp = super(_HTTPClient, self).request(*args, **kwargs)
-        # NOTE(jamielennox): _check_status_code is being completely ignored as
-        # errors are being raised from session.request. This behaviour is
-        # enforced by tests. Pass raise_exc=False to request() to make this
-        # work again.
         self._check_status_code(resp)
         return resp
 
@@ -113,17 +88,25 @@ class _HTTPClient(adapter.Adapter):
         LOG.debug('Response status {0}'.format(status))
         if status == 401:
             LOG.error('Auth error: {0}'.format(self._get_error_message(resp)))
-            raise HTTPAuthError('{0}'.format(self._get_error_message(resp)))
+            raise exceptions.HTTPAuthError(
+                '{0}'.format(self._get_error_message(resp))
+            )
         if not status or status >= 500:
             LOG.error('5xx Server error: {0}'.format(
                 self._get_error_message(resp)
             ))
-            raise HTTPServerError('{0}'.format(self._get_error_message(resp)))
+            raise exceptions.HTTPServerError(
+                '{0}'.format(self._get_error_message(resp)),
+                status
+            )
         if status >= 400:
             LOG.error('4xx Client error: {0}'.format(
                 self._get_error_message(resp)
             ))
-            raise HTTPClientError('{0}'.format(self._get_error_message(resp)))
+            raise exceptions.HTTPClientError(
+                '{0}'.format(self._get_error_message(resp)),
+                status
+            )
 
     def _get_error_message(self, resp):
         try:

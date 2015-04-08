@@ -22,6 +22,8 @@ from functionaltests.client.v1.behaviors import order_behaviors
 from functionaltests.client.v1.behaviors import secret_behaviors
 from oslo_utils import timeutils
 
+from barbicanclient import exceptions
+
 order_create_key_data = {
     "name": "barbican functional test secret name",
     "algorithm": "aes",
@@ -176,10 +178,14 @@ class OrdersTestCase(base.TestCase):
         ref = self.behaviors.base_url + '/orders/' + uuid
 
         # try to get a non-existent order
-        e = self.assertRaises(Exception, self.behaviors.get_order, ref)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.get_order,
+            ref
+        )
 
         # verify that the order get failed
-        self.assertEqual(e.http_status, 404)
+        self.assertEqual(e.status_code, 404)
 
     @testcase.attr('negative')
     def test_create_order_nones(self):
@@ -187,11 +193,13 @@ class OrdersTestCase(base.TestCase):
 
         test_model = self.behaviors.create_key_order(order_create_nones_data)
 
-        e = self.assertRaises(Exception, self.behaviors.store_order,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_order,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
-
+        self.assertEqual(e.status_code, 400)
 
     @testcase.attr('negative')
     def test_create_order_empty_entries(self):
@@ -204,11 +212,13 @@ class OrdersTestCase(base.TestCase):
         test_model.bit_length = ""
         test_model.payload_content_type = ""
 
-        e = self.assertRaises(Exception, self.behaviors.store_order,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_order,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
-
+        self.assertEqual(e.status_code, 400)
 
     @testcase.attr('negative')
     def test_create_order_defaults_oversized_strings(self):
@@ -219,10 +229,13 @@ class OrdersTestCase(base.TestCase):
         test_model.algorithm = base.TestCase.oversized_field
         test_model.mode = base.TestCase.oversized_field
 
-        e = self.assertRaises(Exception, self.behaviors.store_order,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_order,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)
 
     @utils.parameterized_dataset({
         '8': [8],
@@ -265,9 +278,12 @@ class OrdersTestCase(base.TestCase):
         test_model = self.behaviors.create_key_order(order_create_key_data)
         test_model.bit_length = bit_length
 
-        e = self.assertRaises(Exception, self.behaviors.store_order,
-                              test_model)
-        self.assertEqual(e.http_status, 400)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_order,
+            test_model
+        )
+        self.assertEqual(e.status_code, 400)
 
     @utils.parameterized_dataset({
         'alphanumeric': ['1f34ds'],
@@ -296,10 +312,13 @@ class OrdersTestCase(base.TestCase):
         test_model = self.behaviors.create_key_order(order_create_key_data)
         test_model.name = name
 
-        e = self.assertRaises(Exception, self.behaviors.store_order,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_order,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)
 
     @utils.parameterized_dataset({
         'cbc': ['cbc']
@@ -325,9 +344,12 @@ class OrdersTestCase(base.TestCase):
         test_model = self.behaviors.create_key_order(order_create_key_data)
         test_model.mode = mode
 
-        e = self.assertRaises(Exception, self.behaviors.store_order,
-                              test_model)
-        self.assertEqual(e.http_status, 400)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_order,
+            test_model
+        )
+        self.assertEqual(e.status_code, 400)
 
     @utils.parameterized_dataset({
         'aes': ['aes']
@@ -354,10 +376,13 @@ class OrdersTestCase(base.TestCase):
         test_model = self.behaviors.create_key_order(order_create_key_data)
         test_model.algorithm = algorithm
 
-        e = self.assertRaises(Exception, self.behaviors.store_order,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_order,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)
 
     # TODO(tdink) Add empty after Launchpad 1420444 is resolved
     @utils.parameterized_dataset({
@@ -390,10 +415,13 @@ class OrdersTestCase(base.TestCase):
         test_model = self.behaviors.create_key_order(order_create_key_data)
         test_model.payload_content_type = pct
 
-        e = self.assertRaises(Exception, self.behaviors.store_order,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_order,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)
 
     @utils.parameterized_dataset({
         'negative_five_long_expire': {
@@ -442,7 +470,10 @@ class OrdersTestCase(base.TestCase):
         test_model = self.behaviors.create_key_order(order_create_key_data)
         test_model.expiration = timestamp
 
-        e = self.assertRaises(Exception, self.behaviors.store_order,
-                              test_model)
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_order,
+            test_model
+        )
 
-        self.assertEqual(e.http_status, 400)
+        self.assertEqual(e.status_code, 400)
