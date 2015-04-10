@@ -15,6 +15,7 @@ limitations under the License.
 """
 import os
 
+from oslo.config import cfg
 from tempest import config
 
 
@@ -33,3 +34,12 @@ if os.path.exists(conf_file):
     CONF.set_config_path(conf_file)
 
 
+CONF.register_group(cfg.OptGroup('keymanager'))
+CONF.register_opt(cfg.StrOpt('url'), group='keymanager')
+CONF.register_opt(cfg.StrOpt('username'), group='keymanager')
+CONF.register_opt(cfg.StrOpt('password'), group='keymanager')
+CONF.register_opt(cfg.StrOpt('project_name'), group='keymanager')
+CONF.register_opt(cfg.StrOpt('project_id'), group='keymanager')
+CONF.register_opt(cfg.IntOpt('max_payload_size', default=10000),
+                  group='keymanager')
+CONF.register_opt(cfg.StrOpt('project_domain_name'), group='keymanager')
