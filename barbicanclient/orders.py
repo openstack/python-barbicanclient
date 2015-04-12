@@ -205,7 +205,7 @@ class Order(object):
         """
         order_dict = {'type': self._type, 'meta': self._meta}
         LOG.debug("Request body: {0}".format(order_dict))
-        response = self._api._post(self._entity, order_dict)
+        response = self._api.post(self._entity, json=order_dict)
         if response:
             self._order_ref = response.get('order_ref')
         return self._order_ref
@@ -215,7 +215,7 @@ class Order(object):
         Deletes the Order from Barbican
         """
         if self._order_ref:
-            self._api._delete(self._order_ref)
+            self._api.delete(self._order_ref)
             self._order_ref = None
         else:
             raise LookupError("Order is not yet stored.")
@@ -331,7 +331,7 @@ class OrderManager(base.BaseEntityManager):
         LOG.debug("Getting order - Order href: {0}".format(order_ref))
         base.validate_ref(order_ref, 'Order')
         try:
-            response = self._api._get(order_ref)
+            response = self._api.get(order_ref)
         except AttributeError:
             raise LookupError(
                 'Order {0} could not be found.'.format(order_ref)
@@ -411,7 +411,7 @@ class OrderManager(base.BaseEntityManager):
         """
         if not order_ref:
             raise ValueError('order_ref is required.')
-        self._api._delete(order_ref)
+        self._api.delete(order_ref)
 
     def list(self, limit=10, offset=0):
         """
@@ -425,9 +425,8 @@ class OrderManager(base.BaseEntityManager):
         """
         LOG.debug('Listing orders - offset {0} limit {1}'.format(offset,
                                                                  limit))
-        href = '{0}/{1}'.format(self._api._base_url, self._entity)
         params = {'limit': limit, 'offset': offset}
-        response = self._api._get(href, params)
+        response = self._api.get(self._entity, params=params)
 
         return [
             self._create_typed_order(o) for o in response.get('orders', [])

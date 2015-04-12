@@ -243,7 +243,7 @@ class Secret(SecretFormatter):
             payload_url = self._secret_ref + '/payload'
         else:
             payload_url = self._secret_ref + 'payload'
-        payload = self._api._get_raw(payload_url, headers)
+        payload = self._api._get_raw(payload_url, headers=headers)
         if self.payload_content_type == u'text/plain':
             self._payload = payload.decode('UTF-8')
         else:
@@ -303,7 +303,7 @@ class Secret(SecretFormatter):
         LOG.debug("Request body: {0}".format(secret_dict))
 
         # Save, store secret_ref and return
-        response = self._api._post(self._entity, secret_dict)
+        response = self._api.post(self._entity, json=secret_dict)
         if response:
             self._secret_ref = response.get('secret_ref')
         return self.secret_ref
@@ -313,7 +313,7 @@ class Secret(SecretFormatter):
         Deletes the Secret from Barbican
         """
         if self._secret_ref:
-            self._api._delete(self._secret_ref)
+            self._api.delete(self._secret_ref)
             self._secret_ref = None
         else:
             raise LookupError("Secret is not yet stored.")
@@ -357,7 +357,7 @@ class Secret(SecretFormatter):
 
     def _fill_lazy_properties(self):
         if self._secret_ref and not self._name:
-            result = self._api._get(self._secret_ref)
+            result = self._api.get(self._secret_ref)
             self._fill_from_data(
                 name=result.get('name'),
                 expiration=result.get('expiration'),
@@ -444,7 +444,7 @@ class SecretManager(base.BaseEntityManager):
         base.validate_ref(secret_ref, 'Secret')
         if not secret_ref:
             raise ValueError('secret_ref is required.')
-        self._api._delete(secret_ref)
+        self._api.delete(secret_ref)
 
     def list(self, limit=10, offset=0, name=None, algorithm=None,
              mode=None, bits=0):
@@ -466,7 +466,6 @@ class SecretManager(base.BaseEntityManager):
         """
         LOG.debug('Listing secrets - offset {0} limit {1}'.format(offset,
                                                                   limit))
-        href = '{0}/{1}'.format(self._api._base_url, self._entity)
         params = {'limit': limit, 'offset': offset}
         if name:
             params['name'] = name
@@ -477,7 +476,7 @@ class SecretManager(base.BaseEntityManager):
         if bits > 0:
             params['bits'] = bits
 
-        response = self._api._get(href, params)
+        response = self._api.get(self._entity, params=params)
 
         return [
             Secret(api=self._api, **s)

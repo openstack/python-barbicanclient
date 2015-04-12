@@ -52,6 +52,6 @@ class BaseEntityManager(object):
         """
         href = '{0}/{1}'.format(self._api._base_url, self._entity)
         params = {'limit': 0, 'offset': 0}
-        resp = self._api._get(href, params)
+        resp = self._api.get(href, params=params)
 
         return resp['total']
