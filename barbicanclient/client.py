@@ -38,18 +38,16 @@ class _HTTPClient(adapter.Adapter):
     def __init__(self, session, project_id=None, **kwargs):
         kwargs.setdefault('interface', _DEFAULT_SERVICE_INTERFACE)
         kwargs.setdefault('service_type', _DEFAULT_SERVICE_TYPE)
-
-        self._base_url = None
-
-        try:
-            endpoint = kwargs.pop('endpoint')
-        except KeyError:
-            pass
-        else:
-            self._base_url = '{0}/{1}'.format(endpoint, _DEFAULT_API_VERSION)
-            kwargs.setdefault('endpoint_override', self._base_url)
+        endpoint = kwargs.pop('endpoint', None)
 
         super(_HTTPClient, self).__init__(session, **kwargs)
+
+        if not endpoint:
+            endpoint = self.get_endpoint()
+
+        self.endpoint_override = '{0}/{1}'.format(endpoint,
+                                                  _DEFAULT_API_VERSION)
+        self._base_url = self.endpoint_override
 
         if project_id is None:
             self._default_headers = dict()
@@ -159,7 +157,7 @@ class Client(object):
             session = ks_session.Session(verify=kwargs.pop('verify', True))
 
         if session.auth is None and kwargs.get('auth') is None:
-            if kwargs.get('endpoint') is None:
+            if not kwargs.get('endpoint'):
                 raise ValueError('Barbican endpoint url must be provided when '
                                  'not using auth in the Keystone Session.')
 
