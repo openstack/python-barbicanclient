@@ -44,6 +44,16 @@ class GetSecret(show.ShowOne):
                                  'the data type can be specified with '
                                  '--payload-content-type.',
                             action='store_true')
+        parser.add_argument('--payload', '-p',
+                            help='if specified, retrieve the '
+                                 'unencrypted secret data; '
+                                 'the data type can be specified with '
+                                 '--payload-content-type. If the user'
+                                 ' wishes to only retrieve the value of'
+                                 ' the payload they must add '
+                                 '"-f value" to format returning only'
+                                 ' the value of the payload',
+                            action='store_true')
         parser.add_argument('--payload_content_type', '-t',
                             default='text/plain',
                             help='the content type of the decrypted'
@@ -51,7 +61,7 @@ class GetSecret(show.ShowOne):
         return parser
 
     def take_action(self, args):
-        if args.decrypt:
+        if args.decrypt or args.payload:
             entity = self.app.client.secrets.get(args.URI,
                                                  args.payload_content_type)
             return (('Payload',),
