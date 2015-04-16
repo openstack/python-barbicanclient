@@ -43,7 +43,7 @@ Subcommand actions that a user can take for secrets are:
 
 .. code-block:: bash
 
-    secret delete  Delete an secret by providing its href.
+    secret delete  Delete a secret by providing its URI.
     secret get     Retrieve a secret by providing its URI.
     secret list    List secrets.
     secret store   Store a secret in Barbican.

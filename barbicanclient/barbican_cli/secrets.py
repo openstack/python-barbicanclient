@@ -21,7 +21,7 @@ from barbicanclient import secrets
 
 
 class DeleteSecret(command.Command):
-    """Delete an secret by providing its href."""
+    """Delete a secret by providing its URI."""
 
     def get_parser(self, prog_name):
         parser = super(DeleteSecret, self).get_parser(prog_name)
