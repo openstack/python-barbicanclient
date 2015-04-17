@@ -66,3 +66,74 @@ Example::
 
     barbican = client.Client(endpoint='http://localhost:9311',
                              project_id='123456')
+
+
+CLI Authentication
+==================
+
+Keystone V3 Authentication
+--------------------------
+
+Barbican can be configured to use Keystone for authentication. The user's
+credentials can be passed to Barbican via arguments.
+
+.. code-block:: bash
+
+    $ barbican --os-auth-url <keystone-v3-url> --os-project-domain-id \
+    <domain id> --os-user-domain-id <user domain id> --os-username <username> \
+    --os-password <password> --os-project-name <project-name> --endpoint \
+    <barbican-endpoint> secret list
+
+This can become annoying and tedious, so authentication via Keystone can
+also be configured by setting environment variables. Barbican uses the same env
+variables as python-keystoneclient so if you already have keystone client
+configured you can skip this section.
+
+An example clientrc file is provided in the main python-barbicanclient
+directory.
+
+.. code-block:: bash
+
+    export OS_PROJECT_NAME=admin
+
+    # Either Project ID or Project Name is required
+    export OS_PROJECT_DOMAIN_ID=<YourProjectID>
+    export OS_PROJECT_DOMAIN_NAME=<YourProjectName>
+
+    # Either User ID or User Name is required
+    export OS_USER_DOMAIN_ID=<YourUserDomainID>
+    export OS_USER_DOMAIN_NAME=<YourUserDomainName>
+    export OS_USERNAME=admin
+    export OS_PASSWORD=password
+
+    # OS_AUTH_URL should be your location of Keystone
+    # Barbican Client defaults to Keystone V3
+    export OS_AUTH_URL="http://localhost:5000/v3/"
+    export BARBICAN_ENDPOINT="http://localhost:9311"
+
+
+Make any appropriate changes to this file.
+
+You will need to source it into your environment on each load:
+
+.. code-block:: bash
+
+    source ~/clientrc
+
+If you would like, you can configure your bash to load the variables on
+each login:
+
+.. code-block:: bash
+
+    echo "source ~/clientrc" >> ~/.bashrc
+
+
+No Auth Mode
+------------
+
+When working with a Barbican instance that does not use Keystone authentication
+(e.g. during development) you can use the :code:`--no-auth` option. If you do
+this, you'll have to specify the Barbican endpoint and project ID
+:code:`--os-project-id`. This is because Barbican normally gets the endpoint
+and tenant ID from Keystone.
+
