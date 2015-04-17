@@ -46,3 +46,9 @@ Containers
 
 .. autoclass:: barbicanclient.containers.CertificateContainer
    :members:
+
+Exceptions
+==========
+
+.. automodule:: barbicanclient.exceptions
+    :members:

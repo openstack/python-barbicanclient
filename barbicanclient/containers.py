@@ -613,6 +613,9 @@ class ContainerManager(base.BaseEntityManager):
         :param secrets: Secrets to populate when creating a Container
         :returns: Container
         :rtype: :class:`barbicanclient.containers.Container`
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         return Container(
             api=self._api,
@@ -634,6 +637,9 @@ class ContainerManager(base.BaseEntityManager):
         :param private_key_passphrase: Secret object containing a passphrase
         :returns: RSAContainer
         :rtype: :class:`barbicanclient.containers.RSAContainer`
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         return RSAContainer(
             api=self._api,
@@ -659,6 +665,9 @@ class ContainerManager(base.BaseEntityManager):
         :param private_key_passphrase: Secret object containing a passphrase
         :returns: CertificateContainer
         :rtype: :class:`barbicanclient.containers.CertificateContainer`
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         return CertificateContainer(
             api=self._api,
@@ -674,6 +683,9 @@ class ContainerManager(base.BaseEntityManager):
         Delete a Container from Barbican
 
         :param container_ref: Full HATEOAS reference to a Container
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         if not container_ref:
             raise ValueError('container_ref is required.')
@@ -689,6 +701,9 @@ class ContainerManager(base.BaseEntityManager):
         :param name: Name filter for the list
         :param type: Type filter for the list
         :returns: list of Container metadata objects
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         LOG.debug('Listing containers - offset {0} limit {1} name {2} type {3}'
                   .format(offset, limit, name, type))
@@ -712,6 +727,9 @@ class ContainerManager(base.BaseEntityManager):
         :param name: Name of the consuming service
         :param url: URL of the consuming resource
         :returns: A container object per the get() method
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         LOG.debug('Creating consumer registration for container '
                   '{0} as {1}: {2}'.format(container_ref, name, url))
@@ -731,6 +749,9 @@ class ContainerManager(base.BaseEntityManager):
         :param container_ref: Full HATEOAS reference to a Container
         :param name: Name of the previously consuming service
         :param url: URL of the previously consuming resource
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         LOG.debug('Deleting consumer registration for container '
                   '{0} as {1}: {2}'.format(container_ref, name, url))

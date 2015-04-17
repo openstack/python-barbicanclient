@@ -20,3 +20,31 @@ class BarbicanException(Exception):
 
 class PayloadException(BarbicanException):
     pass
+
+
+class HTTPError(Exception):
+
+    """Base exception for HTTP errors."""
+
+    def __init__(self, message, status_code=0):
+        super(HTTPError, self).__init__(message)
+        self.status_code = status_code
+
+
+class HTTPServerError(HTTPError):
+
+    """Raised for 5xx responses from the server."""
+    pass
+
+
+class HTTPClientError(HTTPError):
+
+    """Raised for 4xx responses from the server."""
+    pass
+
+
+class HTTPAuthError(HTTPError):
+
+    """Raised for 401 Unauthorized responses from the server."""
+    def __init__(self, message, status_code=401):
+        super(HTTPError, self).__init__(message, status_code)

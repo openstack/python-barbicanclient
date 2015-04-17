@@ -396,6 +396,9 @@ class SecretManager(base.BaseEntityManager):
             See Launchpad Bug #1419166.
         :returns: Secret object retrieved from Barbican
         :rtype: :class:`barbicanclient.secrets.Secret`
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         LOG.debug("Getting secret - Secret href: {0}".format(secret_ref))
         base.validate_ref(secret_ref, 'Secret')
@@ -428,6 +431,9 @@ class SecretManager(base.BaseEntityManager):
         :param expiration: The expiration time of the secret in ISO 8601 format
         :returns: A new Secret object
         :rtype: :class:`barbicanclient.secrets.Secret`
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         return Secret(api=self._api, name=name, payload=payload,
                       payload_content_type=payload_content_type,
@@ -440,6 +446,9 @@ class SecretManager(base.BaseEntityManager):
         Delete a Secret from Barbican
 
         :param secret_ref: The href for the secret to be deleted
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         base.validate_ref(secret_ref, 'Secret')
         if not secret_ref:
@@ -463,6 +472,9 @@ class SecretManager(base.BaseEntityManager):
         :returns: list of Secret objects that satisfy the provided filter
             criteria.
         :rtype: list
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         LOG.debug('Listing secrets - offset {0} limit {1}'.format(offset,
                                                                   limit))

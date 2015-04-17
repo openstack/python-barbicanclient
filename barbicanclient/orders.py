@@ -327,6 +327,9 @@ class OrderManager(base.BaseEntityManager):
 
         :param order_ref: Full HATEOAS reference to an Order
         :returns: An instance of the appropriate subtype of Order
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         LOG.debug("Getting order - Order href: {0}".format(order_ref))
         base.validate_ref(order_ref, 'Order')
@@ -374,6 +377,9 @@ class OrderManager(base.BaseEntityManager):
         :param expiration: The expiration time of the secret in ISO 8601 format
         :returns: KeyOrder
         :rtype: :class:`barbicanclient.orders.KeyOrder`
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         return KeyOrder(api=self._api, name=name,
                         algorithm=algorithm, bit_length=bit_length, mode=mode,
@@ -397,6 +403,9 @@ class OrderManager(base.BaseEntityManager):
         :param expiration: The expiration time of the secret in ISO 8601 format
         :returns: AsymmetricOrder
         :rtype: :class:`barbicanclient.orders.AsymmetricOrder`
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         return AsymmetricOrder(api=self._api, name=name, algorithm=algorithm,
                                bit_length=bit_length, pass_phrase=pass_phrase,
@@ -422,6 +431,9 @@ class OrderManager(base.BaseEntityManager):
         :param limit: Max number of orders returned
         :param offset: Offset orders to begin list
         :returns: list of Order objects
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         LOG.debug('Listing orders - offset {0} limit {1}'.format(offset,
                                                                  limit))
