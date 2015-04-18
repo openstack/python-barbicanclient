@@ -33,6 +33,6 @@ class HelpTestCase(CmdLineTestCase):
     })
     @testcase.attr('positive')
     def test_help(self, argv):
-        result = self.issue_barbican_command(argv)
-        self.assertIsNotNone(result, "{0} returned None".format(argv))
-        self.assertGreater(len(result), 0, "{0} invalid length".format(argv))
+        stdout, stderr = self.issue_barbican_command(argv)
+        self.assertIsNotNone(stdout, "{0} returned None".format(argv))
+        self.assertGreater(len(stdout), 0, "{0} invalid length".format(argv))

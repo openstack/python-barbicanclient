@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import exceptions as exc
+import six
 
 from functionaltests.base import BaseTestCase
 from barbicanclient import barbican
@@ -31,16 +32,26 @@ class CmdLineTestCase(BaseTestCase):
     def issue_barbican_command(self, argv):
         """ Issue the barbican command and return its output.
 
+        The barbican command sometimes raises SystemExit, but not always, so
+        we will handle either situation here.
+
+        Also we will create new stdout/stderr streams for each command so that
+        any output from a previous command doesn't contaminate the new command.
+
         :param argv: dict of keyword arguments to pass to the command.  This
         does NOT include "barbican" - that's not needed.
-        :return: list of strings returned by the command, one list element
-        per line of output.  This means the caller doesn't have to worry about
-        parsing newlines, etc.  If there is a problem then this method
-        will return None
+        :return: Two strings - one the captured stdout and one the captured
+        stderr.
         """
-        result = None
+
         try:
+            self.cmdline_client.stdout = six.StringIO()
+            self.cmdline_client.stderr = six.StringIO()
             self.cmdline_client.run(argv)
         except exc.SystemExit:
-            result = self.cmdline_client.stdout.getvalue()
-        return result
+            pass
+
+        outstr = self.cmdline_client.stdout.getvalue()
+        errstr = self.cmdline_client.stderr.getvalue()
+
+        return outstr, errstr
