@@ -18,6 +18,7 @@ Contents:
    installation
    authentication
    usage
+   cli_usage
    reference
    contributing
 

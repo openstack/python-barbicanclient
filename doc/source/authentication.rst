@@ -81,8 +81,7 @@ credentials can be passed to Barbican via arguments.
 
     $ barbican --os-auth-url <keystone-v3-url> --os-project-domain-id \
     <domain id> --os-user-domain-id <user domain id> --os-username <username> \
-    --os-password <password> --os-project-name <project-name> --endpoint \
-    <barbican-endpoint> secret list
+    --os-password <password> --os-project-name <project-name> secret list
 
 This can become annoying and tedious, so authentication via Keystone can
 also be configured by setting environment variables. Barbican uses the same env
@@ -126,6 +125,21 @@ each login:
 .. code-block:: bash
 
     echo "source ~/clientrc" >> ~/.bashrc
+
+Keystone Token Authentication
+-----------------------------
+
+Barbican can be configured to use Keystone tokens for authentication. The
+user's credentials can be passed to Barbican via arguments.
+
+.. code-block:: bash
+
+    $ barbican --os-auth-url <auth_endpoint> --os-auth-token <auth_token> \
+    --os-project-id <project_id> secret list
+
+Much like normal password authentication you can specify these values via
+environmental variables. Refer to `Keystone V3 authentication`_ for more
+information.
 
 
 No Auth Mode

@@ -133,3 +133,15 @@ class TestBarbicanWithKeystonePasswordAuth(
             '--os-username': 'some_user',
             '--os-password': 'some_pass',
         }
+
+
+class TestBarbicanWithKeystoneTokenAuth(
+        keystone_client_fixtures.KeystoneClientFixture):
+
+    def setUp(self):
+        super(TestBarbicanWithKeystoneTokenAuth, self).setUp()
+
+        self.test_arguments = {
+            '--os-auth-token': 'some_token',
+            '--os-project-id': 'some_project_id',
+        }

@@ -23,6 +23,7 @@ from cliff import app
 from cliff import commandmanager
 from keystoneclient.auth import identity
 from keystoneclient import session
+import six
 
 from barbicanclient import client
 from barbicanclient import version
@@ -110,6 +111,10 @@ class Barbican(app.App):
                             metavar='<auth-project-domain-name>',
                             default=client.env('OS_PROJECT_DOMAIN_NAME'),
                             help='Defaults to env[OS_PROJECT_DOMAIN_NAME].')
+        parser.add_argument('--os-auth-token',
+                            metavar='<auth-token>',
+                            default=client.env('OS_AUTH_TOKEN'),
+                            help='Defaults to env[OS_AUTH_TOKEN].')
         parser.add_argument('--endpoint', '-E',
                             metavar='<barbican-url>',
                             default=client.env('BARBICAN_ENDPOINT'),
@@ -123,6 +128,63 @@ class Barbican(app.App):
             raise Exception("ERROR: argument --os-auth-url/-A: not allowed "
                             "with argument --no-auth/-N")
 
+    def _check_auth_arguments(self, args, api_version=None, raise_exc=False):
+        """Verifies that we have the correct arguments for authentication
+
+        Supported Keystone v3 combinations:
+            - Project Id
+            - Project Name + Project Domain Name
+            - Project Name + Project Domain Id
+        Support Keystone v2 combinations:
+            - Tenant Id
+            - Tenant Name
+        """
+        successful = True
+        v3_arg_combinations = [
+            args.os_project_id,
+            args.os_project_name and args.os_project_domain_name,
+            args.os_project_name and args.os_project_domain_id
+        ]
+        v2_arg_combinations = [args.os_tenant_id, args.os_tenant_name]
+
+        # Keystone V3
+        if not api_version or api_version == _DEFAULT_IDENTITY_API_VERSION:
+            if not any(v3_arg_combinations):
+                msg = ('ERROR: please specify the following --os-project-id or'
+                       '--os-project-name and --os-project-domain-name or '
+                       '--os-project-name and --os-project-domain-id')
+                successful = False
+        # Keystone V2
+        else:
+            if not any(v2_arg_combinations):
+                msg = ('ERROR: please specify --os-tenant-id or'
+                       '--os-tenant-name')
+                successful = False
+
+        if not successful and raise_exc:
+            raise Exception(msg)
+
+        return successful
+
+    def _build_kwargs_based_on_version(self, args, api_version=None):
+        if not api_version or api_version == _DEFAULT_IDENTITY_API_VERSION:
+            kwargs = {
+                'project_id': args.os_project_id,
+                'project_name': args.os_project_name,
+                'user_domain_id': args.os_user_domain_id,
+                'user_domain_name': args.os_user_domain_name,
+                'project_domain_id': args.os_project_id,
+                'project_domain_name': args.os_project_name
+            }
+        else:
+            kwargs = {
+                'tenant_name': args.os_tenant_name,
+                'tenant_id': args.os_tenant_id
+            }
+
+        # Return a dictionary with only the populated (not None) values
+        return dict((k, v) for (k, v) in six.iteritems(kwargs) if v)
+
     def initialize_app(self, argv):
         """Initializes the application.
         Checks if the minimal parameters are provided and creates the client
@@ -132,6 +194,11 @@ class Barbican(app.App):
         args = self.options
         self._assert_no_auth_and_auth_url_mutually_exclusive(args.no_auth,
                                                              args.os_auth_url)
+
+        # Aliasing as we use this a number of times
+        api_version = args.os_identity_api_version
+
+        # TODO(jmvrbanac): Split out these conditionals into discrete functions
         if args.no_auth:
             if not all([args.endpoint, args.os_tenant_id or
                         args.os_project_id]):
@@ -142,6 +209,31 @@ class Barbican(app.App):
                                         project_id=args.os_tenant_id or
                                         args.os_project_id,
                                         verify=not args.insecure)
+        # Token-based authentication
+        elif args.os_auth_token:
+            if not args.os_auth_url:
+                raise Exception('ERROR: please specify --os-auth-url')
+
+            # Make sure we have the correct arguments to function
+            self._check_auth_arguments(args, api_version, raise_exc=True)
+
+            kwargs = self._build_kwargs_based_on_version(args, api_version)
+            kwargs.update({
+                'auth_url': args.os_auth_url,
+                'token': args.os_auth_token
+            })
+
+            if not api_version or api_version == _DEFAULT_IDENTITY_API_VERSION:
+                auth = identity.v3.Token(**kwargs)
+            else:
+                auth = identity.v2.Token(**kwargs)
+
+            ks_session = session.Session(auth=auth, verify=not args.insecure)
+            self.client = client.Client(
+                session=ks_session,
+                endpoint=args.endpoint
+            )
+        # Password-based authentication
         elif all([args.os_auth_url, args.os_user_id or args.os_username,
                   args.os_password, args.os_tenant_name or args.os_tenant_id or
                   args.os_project_name or args.os_project_id]):
@@ -152,8 +244,6 @@ class Barbican(app.App):
                 kwargs['user_id'] = args.os_user_id
             if args.os_username:
                 kwargs['username'] = args.os_username
-
-            api_version = args.os_identity_api_version
 
             if not api_version or api_version == _DEFAULT_IDENTITY_API_VERSION:
                 if args.os_project_id:
