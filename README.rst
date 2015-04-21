@@ -164,3 +164,8 @@ The command line client is self-documenting. Use the --help flag to access the u
       secret get     Retrieve a secret by providing its URI.
       secret list    List secrets.
       secret store   Store a secret in Barbican.
+
+* License: Apache License, Version 2.0
+* Documentation: http://docs.openstack.org/developer/python-barbicanclient
+* Source: http://git.openstack.org/cgit/openstack/python-barbicanclient
+* Bugs: http://bugs.launchpad.net/python-barbicanclient
