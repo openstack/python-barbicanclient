@@ -123,67 +123,13 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
                                          'secret list', expected_error_msg)
 
 
-class TestBarbicanWithKeystoneClient(testtools.TestCase):
+class TestBarbicanWithKeystonePasswordAuth(
+        keystone_client_fixtures.KeystoneClientFixture):
 
     def setUp(self):
-        super(TestBarbicanWithKeystoneClient, self).setUp()
-        self.responses = self.useFixture(fixture.Fixture())
-        self.kwargs = {'auth_url': keystone_client_fixtures.V3_URL}
-        for arg in ['username', 'password', 'project_name',
-                    'user_domain_name', 'project_domain_name']:
-            self.kwargs[arg] = uuid.uuid4().hex
-        self.barbican = barbicanclient.barbican.Barbican()
+        super(TestBarbicanWithKeystonePasswordAuth, self).setUp()
 
-    def _to_argv(self, **kwargs):
-        """Format Keystone client arguments into command line argv."""
-        argv = []
-        for k, v in six.iteritems(kwargs):
-            argv.append('--os-' + k.replace('_', '-'))
-            argv.append(v)
-        return argv
-
-    def _delete_secret(self, auth_url):
-        self.kwargs['auth_url'] = auth_url
-        argv = self._to_argv(**self.kwargs)
-        barbican_url = keystone_client_fixtures.BARBICAN_ENDPOINT
-        argv.append('--endpoint')
-        argv.append(barbican_url)
-        argv.append('secret')
-        argv.append('delete')
-        mySecretRef = '{0}/secrets/mysecretid'.format(barbican_url)
-        argv.append(mySecretRef)
-        # emulate delete secret
-        self.responses.delete(mySecretRef, status_code=204)
-
-        try:
-            self.barbican.run(argv=argv)
-        except:
-            self.fail('failed to delete secret')
-
-    def test_v2_auth(self):
-        # emulate Keystone version discovery
-        self.responses.get(keystone_client_fixtures.V2_URL,
-                           body=keystone_client_fixtures.V2_VERSION_ENTRY)
-
-        # emulate Keystone v2 token request
-        self.responses.post(
-            '{0}/tokens'.format(keystone_client_fixtures.V2_URL),
-            json=keystone_client_fixtures.generate_v2_project_scoped_token())
-
-        self._delete_secret(keystone_client_fixtures.V2_URL)
-
-    def test_v3_auth(self):
-        # emulate Keystone version discovery
-        self.responses.get(keystone_client_fixtures.V3_URL,
-                           text=keystone_client_fixtures.V3_VERSION_ENTRY)
-
-        # emulate Keystone v3 token request
-        id, v3_token = \
-            keystone_client_fixtures.generate_v3_project_scoped_token()
-
-        self.responses.post(
-            '{0}/auth/tokens'.format(keystone_client_fixtures.V3_URL),
-            json=v3_token,
-            headers={'X-Subject-Token': '1234'})
-
-        self._delete_secret(keystone_client_fixtures.V3_URL)
+        self.test_arguments = {
+            '--os-username': 'some_user',
+            '--os-password': 'some_pass',
+        }
