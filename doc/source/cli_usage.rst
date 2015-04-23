@@ -1,5 +1,5 @@
-Usage
-=====
+CLI Usage
+=========
 
 .. code-block:: bash
 
@@ -15,6 +15,7 @@ Usage
                     [--os-project-name <auth-project-name>]
                     [--os-project-domain-id <auth-project-domain-id>]
                     [--os-project-domain-name <auth-project-domain-name>]
+                    [--os-auth-token <auth-token>]
                     [--endpoint <barbican-url>] [--insecure]
                     [--os-cacert <ca-certificate>] [--os-cert <certificate>]
                     [--os-key <key>] [--timeout <seconds>]
