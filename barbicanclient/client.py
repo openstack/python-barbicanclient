@@ -129,7 +129,7 @@ class Client(object):
             parameters.  When no session is provided it will default to a
             non-authenticated Session.
         :param endpoint: Barbican endpoint url. Required when a session is not
-            given, or when using a non-authentciated session.
+            given, or when using a non-authenticated session.
             When using an authenticated session, the client will attempt
             to get an endpoint from the session.
         :param project_id: The project ID used for context in Barbican.
