@@ -74,7 +74,7 @@ class Barbican(app.App):
         else:
             if not any(v2_arg_combinations):
                 msg = ('ERROR: please specify --os-tenant-id or'
-                       '--os-tenant-name')
+                       ' --os-tenant-name')
                 successful = False
 
         if not successful and raise_exc:
@@ -276,6 +276,5 @@ def main(argv=sys.argv[1:]):
     barbican_app = Barbican()
     return barbican_app.run(argv)
 
-
-if __name__ == '__main__':
+if __name__ == '__main__':   # pragma: no cover
     sys.exit(main(sys.argv[1:]))
