@@ -47,14 +47,44 @@ class CreateOrder(show.ShowOne):
         parser.add_argument('--expiration', '-x',
                             help='the expiration '
                                  'time for the secret in ISO 8601 format.')
+        parser.add_argument('--request-type',
+                            help='the type of the certificate request.')
+        parser.add_argument('--subject-dn',
+                            help='the subject of the certificate.')
+        parser.add_argument('--source-container-ref',
+                            help='the source of the certificate when using '
+                                 'stored-key requests.')
+        parser.add_argument('--ca-id',
+                            help='the identifier of the CA to use for the '
+                                 'certificate request.')
+        parser.add_argument('--profile',
+                            help='the profile of certificate to use.')
+        parser.add_argument('--request-file',
+                            help='the file containing the CSR.')
         return parser
 
     def take_action(self, args):
-        entity = self.app.client.orders.create(
-            name=args.name, type=args.type,
-            payload_content_type=args.payload_content_type,
-            algorithm=args.algorithm, bit_length=args.bit_length,
-            mode=args.mode, expiration=args.expiration)
+        if args.type == 'certificate':
+            request_data = None
+            if args.request_file:
+                try:
+                    request_data = file(args.request_file).read()
+                except IOError:
+                    raise ValueError(
+                        'Couldn\'t read request file %s.' % args.request_file)
+
+            entity = self.app.client.orders.create(
+                name=args.name, type=args.type, subject_dn=args.subject_dn,
+                request_type=args.request_type,
+                source_container_ref=args.source_container_ref,
+                ca_id=args.ca_id, profile=args.profile,
+                request_data=request_data)
+        else:
+            entity = self.app.client.orders.create(
+                name=args.name, type=args.type,
+                payload_content_type=args.payload_content_type,
+                algorithm=args.algorithm, bit_length=args.bit_length,
+                mode=args.mode, expiration=args.expiration)
         entity.submit()
         return entity._get_formatted_entity()
 
