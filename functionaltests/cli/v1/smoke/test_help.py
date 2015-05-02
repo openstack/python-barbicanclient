@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from functionaltests.cli.base import CmdLineTestCase
+from functionaltests.cli.v1.behaviors import base_behaviors
 from functionaltests import utils
 from testtools import testcase
 
@@ -23,6 +24,7 @@ class HelpTestCase(CmdLineTestCase):
 
     def setUp(self):
         super(HelpTestCase, self).setUp()
+        self.help_behaviors = base_behaviors.BaseBehaviors()
 
     def tearDown(self):
         super(HelpTestCase, self).tearDown()
@@ -33,6 +35,6 @@ class HelpTestCase(CmdLineTestCase):
     })
     @testcase.attr('positive')
     def test_help(self, argv):
-        stdout, stderr = self.issue_barbican_command(argv)
+        stdout, stderr = self.help_behaviors.issue_barbican_command(argv)
         self.assertIsNotNone(stdout, "{0} returned None".format(argv))
         self.assertGreater(len(stdout), 0, "{0} invalid length".format(argv))
