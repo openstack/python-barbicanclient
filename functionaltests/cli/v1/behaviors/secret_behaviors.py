@@ -17,6 +17,7 @@ import logging
 
 import base_behaviors
 
+
 class SecretBehaviors(base_behaviors.BaseBehaviors):
 
     def __init__(self):
