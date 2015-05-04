@@ -90,7 +90,7 @@ class Barbican(app.App):
                 'user_domain_id': args.os_user_domain_id,
                 'user_domain_name': args.os_user_domain_name,
                 'project_domain_id': args.os_project_domain_id,
-                'project_domain_name': args.os_project_name
+                'project_domain_name': args.os_project_domain_name
             }
         else:
             kwargs = {
