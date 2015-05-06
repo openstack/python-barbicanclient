@@ -13,33 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import os
 
-from oslo.config import cfg
-from tempest import config
+from functionaltests.common import config
 
 
-CONF = config.CONF
-
-
-def _get_conf_file_path():
-    functional_dir = os.path.split(os.path.abspath(__file__))[0]
-    base_dir = os.path.split(functional_dir)[0]
-    return os.path.join(base_dir, 'etc', 'functional_tests.conf')
-
-
-# Use local tempest conf if one is available.
-conf_file = _get_conf_file_path()
-if os.path.exists(conf_file):
-    CONF.set_config_path(conf_file)
-
-
-CONF.register_group(cfg.OptGroup('keymanager'))
-CONF.register_opt(cfg.StrOpt('url'), group='keymanager')
-CONF.register_opt(cfg.StrOpt('username'), group='keymanager')
-CONF.register_opt(cfg.StrOpt('password'), group='keymanager')
-CONF.register_opt(cfg.StrOpt('project_name'), group='keymanager')
-CONF.register_opt(cfg.StrOpt('project_id'), group='keymanager')
-CONF.register_opt(cfg.IntOpt('max_payload_size', default=10000),
-                  group='keymanager')
-CONF.register_opt(cfg.StrOpt('project_domain_name'), group='keymanager')
+CONF = config.get_config()

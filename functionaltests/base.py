@@ -14,15 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import logging
-import os
 
+from functionaltests.common import config
 import oslotest.base as oslotest
-from barbicanclient import client
-from keystoneclient.auth import identity
-from keystoneclient import session
-from tempest import config
 
-CONF = config.CONF
+CONF = config.get_config()
 
 
 class BaseTestCase(oslotest.BaseTestCase):

@@ -11,12 +11,6 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-# Where tempest code lives
-
-TEMPEST_DIR=${TEMPEST_DIR:-/opt/stack/new/tempest}
-
-# Install tempest
-pip install -e $TEMPEST_DIR
 
 # Install test-requirements
 pip install -r /opt/stack/new/python-barbicanclient/test-requirements.txt
