@@ -15,7 +15,7 @@
 import base64
 import json
 
-from oslo.utils import timeutils
+from oslo_utils import timeutils
 
 from barbicanclient.tests import test_client
 from barbicanclient import secrets, base
