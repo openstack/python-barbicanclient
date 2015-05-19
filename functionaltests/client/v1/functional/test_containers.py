@@ -186,7 +186,7 @@ class GenericContainersTestCase(BaseContainersTestCase):
         This should return a 404.
         """
         uuid = 'de305d54-75b4-431b-cccc-eb6b9e546013'
-        base_url = self.barbicanclient.secrets._api._base_url
+        base_url = self.behaviors.base_url
         url = base_url + '/containers/' + uuid
 
         e = self.assertRaises(
