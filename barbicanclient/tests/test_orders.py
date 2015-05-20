@@ -237,4 +237,89 @@ class WhenTestingOrderManager(OrdersTestCase):
     def test_should_get_total(self):
         self.responses.get(self.entity_base, json={'total': 1})
         total = self.manager.total()
-        self.assertEqual(total, 1)
+
+
+class WhenTestingCertificateOrders(test_client.BaseEntityResource):
+    def setUp(self):
+        self._setUp('orders', entity_id='d0460cc4-2876-4493-b7de-fc5c812883cc')
+
+        self.container_ref = (
+            self.endpoint + '/containers/a2292306-6da0-4f60-bd8a-84fc8d692716')
+        self.source_container_ref = (
+            self.endpoint + '/containers/c6f20480-c1e5-442b-94a0-cb3b5e0cf179')
+
+        self.cert_order_data = """{{
+            "status": "ACTIVE",
+            "container_ref": "{0}",
+            "updated": "2014-10-21T17:15:50.871596",
+            "meta": {{
+                "name": "secretname",
+                "subject_dn": "cn=server.example.com,o=example.com",
+                "request_type": "stored-key",
+                "container_ref": "{1}"
+            }},
+            "created": "2014-10-21T17:15:50.824202",
+            "type": "certificate",
+            "order_ref": "{2}"
+        }}""".format(self.container_ref, self.source_container_ref,
+                     self.entity_href)
+
+        self.manager = self.client.orders
+
+    def _get_order_args(self, order_data):
+        order_args = json.loads(order_data)
+        order_args.update(order_args.pop('meta'))
+        order_args.pop('type')
+        return order_args
+
+    def test_get(self):
+        self.responses.get(self.entity_href, text=self.cert_order_data)
+
+        order = self.manager.get(order_ref=self.entity_href)
+        self.assertIsInstance(order, orders.CertificateOrder)
+        self.assertEqual(self.entity_href, order.order_ref)
+
+        # Verify the correct URL was used to make the call.
+        self.assertEqual(self.entity_href, self.responses.last_request.url)
+
+    def test_repr(self):
+        order_args = self._get_order_args(self.cert_order_data)
+        order_obj = orders.CertificateOrder(api=None, **order_args)
+        self.assertIn('order_ref=' + self.entity_href, repr(order_obj))
+
+    def test_constructor(self):
+        data = {'order_ref': self.entity_href}
+        self.responses.post(self.entity_base + '/', json=data)
+
+        order = self.manager.create_certificate(
+            name='name',
+            subject_dn='cn=server.example.com,o=example.com',
+            request_type='stored-key',
+            source_container_ref=self.source_container_ref
+        )
+        order_href = order.submit()
+
+        self.assertEqual(self.entity_href, order_href)
+
+        # Verify the correct URL was used to make the call.
+        self.assertEqual(self.entity_base + '/',
+                         self.responses.last_request.url)
+
+        # Verify that correct information was sent in the call.
+        order_req = json.loads(self.responses.last_request.text)
+        self.assertEqual('name', order_req['meta']['name'])
+        self.assertEqual('cn=server.example.com,o=example.com',
+                         order_req['meta']['subject_dn'])
+        self.assertEqual('stored-key',
+                         order_req['meta']['request_type'])
+        self.assertEqual(self.source_container_ref,
+                         order_req['meta']['container_ref'])
+
+    def test_list(self):
+        data = {"orders": [json.loads(self.cert_order_data) for _ in range(3)]}
+        self.responses.get(self.entity_base, json=data)
+
+        orders_list = self.manager.list(limit=10, offset=5)
+        self.assertEqual(len(orders_list), 3)
+        self.assertIsInstance(orders_list[0], orders.CertificateOrder)
+        self.assertEqual(self.entity_href, orders_list[0].order_ref)
