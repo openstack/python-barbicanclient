@@ -38,15 +38,19 @@ class _HTTPClient(adapter.Adapter):
     def __init__(self, session, project_id=None, **kwargs):
         kwargs.setdefault('interface', _DEFAULT_SERVICE_INTERFACE)
         kwargs.setdefault('service_type', _DEFAULT_SERVICE_TYPE)
+        kwargs.setdefault('version', _DEFAULT_API_VERSION)
         endpoint = kwargs.pop('endpoint', None)
 
         super(_HTTPClient, self).__init__(session, **kwargs)
 
         if not endpoint:
             endpoint = self.get_endpoint()
+        # NOTE(jaosorior): We are manually appending the given version. This
+        #                  could be filled automatically by keystoneclient; but
+        #                  we need the fix-version-api blueprint to land in the
+        #                  server first.
+        self.endpoint_override = '{0}/{1}'.format(endpoint, self.version)
 
-        self.endpoint_override = '{0}/{1}'.format(endpoint,
-                                                  _DEFAULT_API_VERSION)
         if project_id is None:
             self._default_headers = dict()
         else:

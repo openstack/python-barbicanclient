@@ -16,6 +16,7 @@ import logging
 
 from functionaltests.base import BaseTestCase
 from barbicanclient import client
+from barbicanclient import exceptions
 from keystoneclient.auth import identity
 from keystoneclient import session
 from tempest import config
@@ -64,6 +65,11 @@ class WhenTestingClientConnectivity(BaseTestCase):
         self.assertIsNotNone(orders)
         self.assertIsNotNone(secrets)
 
+    def assert_client_cannot_contact_barbican(self, client):
+        self.assertRaises(exceptions.HTTPClientError, client.containers.list)
+        self.assertRaises(exceptions.HTTPClientError, client.orders.list)
+        self.assertRaises(exceptions.HTTPClientError, client.secrets.list)
+
     def test_can_access_server_if_endpoint_and_session_specified(self):
         barbicanclient = client.Client(
             endpoint=CONF.keymanager.url,
@@ -86,3 +92,12 @@ class WhenTestingClientConnectivity(BaseTestCase):
             auth=self.auth)
 
         self.assert_client_can_contact_barbican(barbicanclient)
+
+    def test_client_cannot_access_server_if_nonexistent_version_specified(self):
+        barbicanclient = client.Client(
+            endpoint=CONF.keymanager.url,
+            project_id=CONF.keymanager.project_id,
+            auth=self.auth,
+            version='nonexistent_version')
+
+        self.assert_client_cannot_contact_barbican(barbicanclient)
