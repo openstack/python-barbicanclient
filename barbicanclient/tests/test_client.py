@@ -41,7 +41,7 @@ class WhenTestingClientInit(TestClient):
         c = client._HTTPClient(session=self.session,
                                endpoint=self.endpoint,
                                project_id=self.project_id)
-        self.assertEqual(c._base_url, 'http://localhost:9311/v1')
+        self.assertEqual(c.endpoint_override, 'http://localhost:9311/v1')
 
     def test_default_headers_are_empty(self):
         c = client._HTTPClient(session=self.session, endpoint=self.endpoint)
@@ -63,17 +63,18 @@ class WhenTestingClientInit(TestClient):
         self.assertRaises(ValueError, client.Client,
                           **{"endpoint": self.endpoint})
 
-    def test_base_url_starts_with_endpoint_url(self):
+    def test_endpoint_override_starts_with_endpoint_url(self):
         c = client._HTTPClient(session=self.session,
                                endpoint=self.endpoint,
                                project_id=self.project_id)
-        self.assertTrue(c._base_url.startswith(self.endpoint))
+        self.assertTrue(c.endpoint_override.startswith(self.endpoint))
 
-    def test_base_url_ends_with_default_api_version(self):
+    def test_endpoint_override_ends_with_default_api_version(self):
         c = client._HTTPClient(session=self.session,
                                endpoint=self.endpoint,
                                project_id=self.project_id)
-        self.assertTrue(c._base_url.endswith(client._DEFAULT_API_VERSION))
+        self.assertTrue(
+            c.endpoint_override.endswith(client._DEFAULT_API_VERSION))
 
 
 class WhenTestingClientPost(TestClient):

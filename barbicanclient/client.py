@@ -47,8 +47,6 @@ class _HTTPClient(adapter.Adapter):
 
         self.endpoint_override = '{0}/{1}'.format(endpoint,
                                                   _DEFAULT_API_VERSION)
-        self._base_url = self.endpoint_override
-
         if project_id is None:
             self._default_headers = dict()
         else:

@@ -707,14 +707,13 @@ class ContainerManager(base.BaseEntityManager):
         """
         LOG.debug('Listing containers - offset {0} limit {1} name {2} type {3}'
                   .format(offset, limit, name, type))
-        href = '{0}/{1}'.format(self._api._base_url, self._entity)
         params = {'limit': limit, 'offset': offset}
         if name:
             params['name'] = name
         if type:
             params['type'] = type
 
-        response = self._api.get(href, params=params)
+        response = self._api.get(self._entity, params=params)
 
         return [self._generate_typed_container(container)
                 for container in response.get('containers', [])]
@@ -755,9 +754,8 @@ class ContainerManager(base.BaseEntityManager):
         """
         LOG.debug('Deleting consumer registration for container '
                   '{0} as {1}: {2}'.format(container_ref, name, url))
-        href = '{0}/{1}/{2}/consumers'.format(self._api._base_url,
-                                              self._entity,
-                                              container_ref.split('/')[-1])
+        href = '{0}/{1}/consumers'.format(self._entity,
+                                          container_ref.split('/')[-1])
         consumer_dict = {
             'name': name,
             'URL': url
