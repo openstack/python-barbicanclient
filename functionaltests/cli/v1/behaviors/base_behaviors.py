@@ -19,9 +19,9 @@ import re
 import six
 
 from barbicanclient import barbican
-from tempest import config
+from functionaltests.common import config
 
-CONF = config.CONF
+CONF = config.get_config()
 
 
 class BaseBehaviors(object):
