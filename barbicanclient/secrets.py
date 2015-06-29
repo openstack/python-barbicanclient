@@ -185,7 +185,11 @@ class Secret(SecretFormatter):
         Lazy-loaded property that holds the unencrypted data
         """
         if self._payload is None and self.secret_ref is not None:
-            self._fetch_payload()
+            try:
+                self._fetch_payload()
+            except ValueError:
+                LOG.warning("Secret does not contain a payload")
+                return None
         return self._payload
 
     @name.setter
@@ -219,7 +223,6 @@ class Secret(SecretFormatter):
         self._mode = value
 
     @payload.setter
-    @immutable_after_save
     def payload(self, value):
         self._payload = value
 
@@ -279,10 +282,15 @@ class Secret(SecretFormatter):
             'expiration': self.expiration
         }
 
-        if not self.payload:
-            raise exceptions.PayloadException("Missing Payload")
-        if not isinstance(self.payload, (six.text_type, six.binary_type)):
+        if self.payload == '':
+            raise exceptions.PayloadException("Invalid Payload: "
+                                              "Cannot Be Empty String")
+
+        if self.payload is not None and not isinstance(self.payload,
+                                                       (six.text_type,
+                                                        six.binary_type)):
             raise exceptions.PayloadException("Invalid Payload Type")
+
         if self.payload_content_type or self.payload_content_encoding:
             """
             Setting the payload_content_type and payload_content_encoding
@@ -321,6 +329,27 @@ class Secret(SecretFormatter):
         if response:
             self._secret_ref = response.get('secret_ref')
         return self.secret_ref
+
+    def update(self):
+        """
+        Updates the secret in Barbican.
+        """
+
+        if not self.payload:
+            raise exceptions.PayloadException("Missing Payload")
+        if not self.secret_ref:
+            raise LookupError("Secret is not yet stored.")
+
+        if type(self.payload) is six.binary_type:
+            headers = {'content-type': "application/octet-stream"}
+        elif type(self.payload) is six.text_type:
+            headers = {'content-type': "text/plain"}
+        else:
+            raise exceptions.PayloadException("Invalid Payload Type")
+
+        self._api.put(self._secret_ref,
+                      headers=headers,
+                      data=self.payload)
 
     def delete(self):
         """
@@ -425,6 +454,32 @@ class SecretManager(base.BaseEntityManager):
             payload_content_type=payload_content_type,
             secret_ref=secret_ref
         )
+
+    def update(self, secret_ref, payload=None):
+        """
+        Update an existing Secret from Barbican
+
+        :param str secret_ref: Full HATEOAS reference to a Secret
+        :param str payload: New payload to add to secret
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
+        """
+
+        base.validate_ref(secret_ref, 'Secret')
+        if not secret_ref:
+            raise ValueError('secret_ref is required.')
+
+        if type(payload) is six.binary_type:
+            headers = {'content-type': "application/octet-stream"}
+        elif type(payload) is six.text_type:
+            headers = {'content-type': "text/plain"}
+        else:
+            raise exceptions.PayloadException("Invalid Payload Type")
+
+        self._api.put(secret_ref,
+                      headers=headers,
+                      data=payload)
 
     def create(self, name=None, payload=None,
                payload_content_type=None, payload_content_encoding=None,

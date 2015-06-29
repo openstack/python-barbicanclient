@@ -70,10 +70,14 @@ class _HTTPClient(adapter.Adapter):
         return super(_HTTPClient, self).get(*args, **kwargs).json()
 
     def post(self, path, *args, **kwargs):
-        if not path[-1] == '/':
-            path += '/'
+        path = self._fix_path(path)
 
         return super(_HTTPClient, self).post(path, *args, **kwargs).json()
+
+    def _fix_path(self, path):
+        if not path[-1] == '/':
+            path += '/'
+        return path
 
     def _get_raw(self, path, *args, **kwargs):
         return self.request(path, 'GET', *args, **kwargs).content

@@ -157,6 +157,15 @@ Secret Delete
 
     $ barbican secret delete http://localhost:9311/v1/secrets/a70a45d8-4076-42a2-b111-8893d3b92a3e
 
+Secret Update
+~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    $ barbican secret update http://localhost:9311/v1/secrets/a70a45d8-4076-42a2-b111-8893d3b92a3e ``my_payload``
+
+In order for a secret to be updated it must have been created without a payload.
+``my_payload`` will be added as the secret's payload.
 
 Secret List
 ~~~~~~~~~~~
