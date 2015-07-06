@@ -30,7 +30,7 @@ class ContainerBehaviors(base_behaviors.BaseBehaviors):
 
         :param container_href the href to the container to delete
         """
-        argv = ['container', 'delete']
+        argv = ['secret', 'container', 'delete']
         self.add_auth_and_endpoint(argv)
         argv.extend([container_href])
 
@@ -44,7 +44,7 @@ class ContainerBehaviors(base_behaviors.BaseBehaviors):
 
         :return: the href to the newly created container
         """
-        argv = ['container', 'create']
+        argv = ['secret', 'container', 'create']
         self.add_auth_and_endpoint(argv)
         for secret_href in secret_hrefs:
             argv.extend(['--secret', secret_href])
@@ -64,7 +64,7 @@ class ContainerBehaviors(base_behaviors.BaseBehaviors):
         :return dict of container values, or an empty dict if the container
         is not found.
         """
-        argv = ['container', 'get']
+        argv = ['secret', 'container', 'get']
         self.add_auth_and_endpoint(argv)
         argv.extend([container_href])
 
@@ -81,7 +81,7 @@ class ContainerBehaviors(base_behaviors.BaseBehaviors):
 
         :return: a list of containers
         """
-        argv = ['container', 'list']
+        argv = ['secret', 'container', 'list']
 
         self.add_auth_and_endpoint(argv)
         stdout, stderr = self.issue_barbican_command(argv)

@@ -18,6 +18,7 @@ Command-line interface to the Barbican API.
 """
 
 import sys
+from collections import namedtuple
 
 from cliff import app
 from cliff import command
@@ -52,7 +53,8 @@ class Barbican(app.App):
         super(Barbican, self).__init__(
             description=__doc__.strip(),
             version=version.__version__,
-            command_manager=commandmanager.CommandManager('barbican.client'),
+            command_manager=commandmanager.CommandManager(
+                'openstack.key_manager.v1'),
             deferred_help=True,
             **kwargs
         )
@@ -309,8 +311,9 @@ class Barbican(app.App):
         client interface.
         This is inherited from the framework.
         """
+        self.client_manager = namedtuple('ClientManager', 'key_manager')
         if cmd.auth_required:
-            self.client = self.create_client(self.options)
+            self.client_manager.key_manager = self.create_client(self.options)
 
     def run(self, argv):
         # If no arguments are provided, usage is displayed

@@ -28,7 +28,7 @@ class GetCA(show.ShowOne):
         return parser
 
     def take_action(self, args):
-        entity = self.app.client.cas.get(ca_ref=args.URI)
+        entity = self.app.client_manager.key_manager.cas.get(ca_ref=args.URI)
         return entity._get_formatted_entity()
 
 
@@ -52,5 +52,6 @@ class ListCA(lister.Lister):
         return parser
 
     def take_action(self, args):
-        obj_list = self.app.client.cas.list(args.limit, args.offset, args.name)
+        obj_list = self.app.client_manager.key_manager.cas.list(
+            args.limit, args.offset, args.name)
         return cas.CA._list_objects(obj_list)
