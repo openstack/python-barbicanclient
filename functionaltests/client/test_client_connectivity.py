@@ -20,6 +20,7 @@ from barbicanclient import client
 from barbicanclient import exceptions
 from keystoneclient.auth import identity
 from keystoneclient import session
+import keystoneclient.openstack.common.apiclient.exceptions as ks_exceptions
 
 CONF = config.get_config()
 
@@ -70,6 +71,14 @@ class WhenTestingClientConnectivity(BaseTestCase):
         self.assertRaises(exceptions.HTTPClientError, client.orders.list)
         self.assertRaises(exceptions.HTTPClientError, client.secrets.list)
 
+    def assert_client_cannot_get_endpoint(self, client):
+        self.assertRaises(ks_exceptions.EndpointNotFound,
+                          client.containers.list)
+        self.assertRaises(ks_exceptions.EndpointNotFound,
+                          client.orders.list)
+        self.assertRaises(ks_exceptions.EndpointNotFound,
+                          client.secrets.list)
+
     def test_can_access_server_if_endpoint_and_session_specified(self):
         barbicanclient = client.Client(
             endpoint=CONF.keymanager.url,
@@ -92,6 +101,71 @@ class WhenTestingClientConnectivity(BaseTestCase):
             auth=self.auth)
 
         self.assert_client_can_contact_barbican(barbicanclient)
+
+    def test_client_can_access_server_if_endpoint_filters_specified(self):
+        barbicanclient = client.Client(
+            project_id=CONF.keymanager.project_id,
+            auth=self.auth,
+            interface=client._DEFAULT_SERVICE_INTERFACE,
+            service_type=client._DEFAULT_SERVICE_TYPE,
+            version=client._DEFAULT_API_VERSION,
+            )
+
+        self.assert_client_can_contact_barbican(barbicanclient)
+
+    def test_client_cannot_access_server_if_endpoint_filter_wrong(self):
+        barbicanclient = client.Client(
+            project_id=CONF.keymanager.project_id,
+            auth=self.auth,
+            interface=client._DEFAULT_SERVICE_INTERFACE,
+            service_type='wrong-service-type',
+            version=client._DEFAULT_API_VERSION,
+            )
+
+        self.assert_client_cannot_get_endpoint(barbicanclient)
+
+        barbicanclient = client.Client(
+            project_id=CONF.keymanager.project_id,
+            auth=self.auth,
+            interface='wrong-interface',
+            service_type=client._DEFAULT_SERVICE_TYPE,
+            version=client._DEFAULT_API_VERSION,
+            )
+
+        self.assert_client_cannot_get_endpoint(barbicanclient)
+
+        barbicanclient = client.Client(
+            project_id=CONF.keymanager.project_id,
+            auth=self.auth,
+            interface=client._DEFAULT_SERVICE_INTERFACE,
+            service_type=client._DEFAULT_SERVICE_TYPE,
+            service_name='wrong-service-name',
+            version=client._DEFAULT_API_VERSION,
+            )
+
+        self.assert_client_cannot_get_endpoint(barbicanclient)
+
+        barbicanclient = client.Client(
+            project_id=CONF.keymanager.project_id,
+            auth=self.auth,
+            interface=client._DEFAULT_SERVICE_INTERFACE,
+            service_type=client._DEFAULT_SERVICE_TYPE,
+            region_name='wrong-region-name',
+            version=client._DEFAULT_API_VERSION,
+            )
+
+        self.assert_client_cannot_get_endpoint(barbicanclient)
+
+    def test_client_cannot_access_server_if_nonexistent_version_specified(self):
+        barbicanclient = client.Client(
+            project_id=CONF.keymanager.project_id,
+            auth=self.auth,
+            interface=client._DEFAULT_SERVICE_INTERFACE,
+            service_type=client._DEFAULT_SERVICE_TYPE,
+            version='wrong-version',
+            )
+
+        self.assertRaises(TypeError, barbicanclient.containers.list)
 
     def test_client_cannot_access_server_if_nonexistent_version_specified(self):
         barbicanclient = client.Client(

@@ -14,6 +14,7 @@
 # limitations under the License.
 import six
 
+from barbicanclient import client
 from barbicanclient import barbican as barb
 from barbicanclient.tests import keystone_client_fixtures
 from barbicanclient.tests import test_client
@@ -155,6 +156,39 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
         args = ''
         response = barb.main(args)
         self.assertEqual(1, response)
+
+    def test_default_endpoint_filter_kwargs_set_correctly(self):
+        auth_args = ('--no-auth --endpoint http://barbican_endpoint:9311/v1 '
+                     '--os-project-id project1')
+        argv, remainder = self.parser.parse_known_args(auth_args.split())
+        barbican_client = self.barbican.create_client(argv)
+        httpclient = barbican_client.secrets._api
+
+        self.assertEqual(client._DEFAULT_SERVICE_INTERFACE,
+                         httpclient.interface)
+        self.assertEqual(client._DEFAULT_SERVICE_TYPE, httpclient.service_type)
+        self.assertEqual(client._DEFAULT_API_VERSION, httpclient.version)
+        self.assertEqual(None, httpclient.service_name)
+
+    def test_endpoint_filter_kwargs_set_correctly(self):
+        from testtools.content import text_content
+        auth_args = ('--no-auth --endpoint http://barbican_endpoint:9311/v1 '
+                     '--os-project-id project1')
+        endpoint_filter_args = ('--interface private '
+                                '--service-type custom-type '
+                                '--service-name Burrbican '
+                                '--region-name RegionTwo '
+                                '--barbican-api-version v2')
+        args = auth_args + ' ' + endpoint_filter_args
+        argv, remainder = self.parser.parse_known_args(args.split())
+        barbican_client = self.barbican.create_client(argv)
+        httpclient = barbican_client.secrets._api
+
+        self.assertEqual('private', httpclient.interface)
+        self.assertEqual('custom-type', httpclient.service_type)
+        self.assertEqual('Burrbican', httpclient.service_name)
+        self.assertEqual('RegionTwo', httpclient.region_name)
+        self.assertEqual('v2', httpclient.version)
 
 
 class TestBarbicanWithKeystonePasswordAuth(

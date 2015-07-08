@@ -121,6 +121,7 @@ class Barbican(app.App):
 
     def create_client(self, args):
         created_client = None
+        endpoint_filter_kwargs = self._get_endpoint_filter_kwargs(args)
 
         api_version = args.os_identity_api_version
         if args.no_auth and args.os_auth_url:
@@ -138,7 +139,8 @@ class Barbican(app.App):
             created_client = client.Client(
                 endpoint=args.endpoint,
                 project_id=args.os_tenant_id or args.os_project_id,
-                verify=not args.insecure
+                verify=not args.insecure,
+                **endpoint_filter_kwargs
             )
         # Token-based authentication
         elif args.os_auth_token:
@@ -153,7 +155,8 @@ class Barbican(app.App):
             )
             created_client = client.Client(
                 session=session,
-                endpoint=args.endpoint
+                endpoint=args.endpoint,
+                **endpoint_filter_kwargs
             )
 
         # Password-based authentication
@@ -169,12 +172,22 @@ class Barbican(app.App):
             )
             created_client = client.Client(
                 session=session,
-                endpoint=args.endpoint
+                endpoint=args.endpoint,
+                **endpoint_filter_kwargs
             )
         else:
             raise Exception('ERROR: please specify authentication credentials')
 
         return created_client
+
+    def _get_endpoint_filter_kwargs(self, args):
+        endpoint_filter_keys = ('interface', 'service_type', 'service_name',
+                                'barbican_api_version', 'region_name')
+        kwargs = dict((key, getattr(args, key)) for key in endpoint_filter_keys
+                      if getattr(args, key, None))
+        if 'barbican_api_version' in kwargs:
+            kwargs['version'] = kwargs.pop('barbican_api_version')
+        return kwargs
 
     def build_option_parser(self, description, version, argparse_kwargs=None):
         """Introduces global arguments for the application.
@@ -252,6 +265,26 @@ class Barbican(app.App):
                             metavar='<barbican-url>',
                             default=client.env('BARBICAN_ENDPOINT'),
                             help='Defaults to env[BARBICAN_ENDPOINT].')
+        parser.add_argument('--interface',
+                            metavar='<barbican-interface>',
+                            default=client.env('BARBICAN_INTERFACE'),
+                            help='Defaults to env[BARBICAN_INTERFACE].')
+        parser.add_argument('--service-type',
+                            metavar='<barbican-service-type>',
+                            default=client.env('BARBICAN_SERVICE_TYPE'),
+                            help='Defaults to env[BARBICAN_SERVICE_TYPE].')
+        parser.add_argument('--service-name',
+                            metavar='<barbican-service-name>',
+                            default=client.env('BARBICAN_SERVICE_NAME'),
+                            help='Defaults to env[BARBICAN_SERVICE_NAME].')
+        parser.add_argument('--region-name',
+                            metavar='<barbican-region-name>',
+                            default=client.env('BARBICAN_REGION_NAME'),
+                            help='Defaults to env[BARBICAN_REGION_NAME].')
+        parser.add_argument('--barbican-api-version',
+                            metavar='<barbican-api-version>',
+                            default=client.env('BARBICAN_API_VERSION'),
+                            help='Defaults to env[BARBICAN_API_VERSION].')
         session.Session.register_cli_options(parser)
         return parser
 
