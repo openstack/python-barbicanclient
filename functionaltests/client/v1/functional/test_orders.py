@@ -57,7 +57,6 @@ class OrdersTestCase(base.TestCase):
         self.cleanup.delete_all_entities()
         super(OrdersTestCase, self).tearDown()
 
-    @testcase.skip('Launchpad 1425667')
     @testcase.attr('positive')
     def test_create_order_defaults_wout_name(self):
         """Create an order without the name attribute."""
@@ -69,7 +68,6 @@ class OrdersTestCase(base.TestCase):
         order_resp = self.barbicanclient.orders.get(order_ref)
         self.assertEqual(order.name, order.name)
 
-    @testcase.skip('Launchpad 1420444')
     @testcase.attr('positive')
     def test_create_order_defaults_w_empty_name(self):
         """Create an order the name attribute an empty string."""
@@ -81,7 +79,6 @@ class OrdersTestCase(base.TestCase):
         order_resp = self.barbicanclient.orders.get(order_ref)
         self.assertEqual(order_resp.name, order.name)
 
-    @testcase.skip('Launchpad 1425667')
     @testcase.attr('positive')
     def test_create_order_defaults_payload_content_type_none(self):
         """Covers creating orders with various valid payload content types."""
