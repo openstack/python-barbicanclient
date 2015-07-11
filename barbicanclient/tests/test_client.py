@@ -105,7 +105,7 @@ class WhenTestingClientPost(TestClient):
     def test_post_checks_status_code(self):
         self.httpclient._check_status_code = mock.MagicMock()
         self.httpclient.post(path='secrets', json={'test_data': 'test'})
-        self.httpclient._check_status_code.assert_called()
+        self.assertTrue(self.httpclient._check_status_code.called)
 
 
 class WhenTestingClientGet(TestClient):
@@ -144,7 +144,7 @@ class WhenTestingClientGet(TestClient):
     def test_get_checks_status_code(self):
         self.httpclient._check_status_code = mock.MagicMock()
         self.httpclient.get(self.href)
-        self.httpclient._check_status_code.assert_called()
+        self.assertTrue(self.httpclient._check_status_code.called)
 
     def test_get_raw_uses_href_as_is(self):
         self.httpclient._get_raw(self.href, headers=self.headers)
@@ -163,7 +163,7 @@ class WhenTestingClientGet(TestClient):
     def test_get_raw_checks_status_code(self):
         self.httpclient._check_status_code = mock.MagicMock()
         self.httpclient._get_raw(self.href, headers=self.headers)
-        self.httpclient._check_status_code.assert_called()
+        self.assertTrue(self.httpclient._check_status_code.called)
 
 
 class WhenTestingClientDelete(TestClient):
@@ -194,7 +194,7 @@ class WhenTestingClientDelete(TestClient):
     def test_delete_checks_status_code(self):
         self.httpclient._check_status_code = mock.MagicMock()
         self.httpclient.delete(self.href)
-        self.httpclient._check_status_code.assert_called()
+        self.assertTrue(self.httpclient._check_status_code.called)
 
 
 class WhenTestingCheckStatusCodes(TestClient):
