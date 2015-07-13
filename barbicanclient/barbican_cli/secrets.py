@@ -119,6 +119,10 @@ class StoreSecret(show.ShowOne):
                             help='the unencrypted secret; if provided, '
                                  'you must also provide a '
                                  'payload_content_type')
+        parser.add_argument('--secret-type', '-s', default='opaque',
+                            help='the secret type; must be one of symmetric, '
+                                 'public, private, certificate, passphrase, '
+                                 'opaque (default)')
         parser.add_argument('--payload-content-type', '-t',
                             help='the type/format of the provided '
                                  'secret data; "text/plain" is assumed to be '
@@ -148,6 +152,7 @@ class StoreSecret(show.ShowOne):
             payload_content_type=args.payload_content_type,
             payload_content_encoding=args.payload_content_encoding,
             algorithm=args.algorithm, bit_length=args.bit_length,
-            mode=args.mode, expiration=args.expiration)
+            mode=args.mode, expiration=args.expiration,
+            secret_type=args.secret_type)
         entity.store()
         return entity._get_formatted_entity()

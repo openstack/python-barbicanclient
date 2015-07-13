@@ -18,6 +18,7 @@ import sys
 
 from functionaltests.client import base
 from functionaltests.client.v1.behaviors import secret_behaviors
+from functionaltests.common import keys
 from functionaltests import utils
 from testtools import testcase
 
@@ -311,6 +312,65 @@ class SecretsTestCase(base.TestCase):
 
         # We are currently testing for exception with http_code
         # launchpad bug 1431514 will address the change to this functionality
+        e = self.assertRaises(
+            exceptions.HTTPClientError,
+            self.behaviors.store_secret,
+            test_model
+        )
+
+        self.assertEqual(e.status_code, 400)
+
+    @utils.parameterized_dataset({
+        'symmetric': ['symmetric',
+                      'aes',
+                      128,
+                      ('\x00\x01\x02\x03\x04\x05\x06\x07'
+                       '\x00\x01\x02\x03\x04\x05\x06\x07')],
+        'private': ['private',
+                    'rsa',
+                    2048,
+                    keys.get_private_key_pem()],
+        'public': ['public',
+                   'rsa',
+                   2048,
+                   keys.get_public_key_pem()],
+        'certificate': ['certificate',
+                        'rsa',
+                        2048,
+                        keys.get_certificate_pem()],
+        'opaque': ['opaque',
+                   None,
+                   None,
+                   (b'\x00\x01\x02\x03\x04\x05\x06\x07')],
+        'passphrase': ['passphrase',
+                       None,
+                       None,
+                       keys.get_passphrase_txt()],
+    })
+    @testcase.attr('positive')
+    def test_secret_create_defaults_valid_secret_type(
+            self, secret_type, algorithm, bit_length, secret):
+        """Covers cases of creating secrets with valid secret types."""
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.secret_type = secret_type
+        test_model.algorithm = algorithm
+        test_model.bit_length = bit_length
+        test_model.payload = base64.b64encode(secret)
+
+        secret_ref = self.behaviors.store_secret(test_model)
+        self.assertIsNotNone(secret_ref)
+
+        get_resp = self.behaviors.get_secret(secret_ref)
+        self.assertEqual(get_resp.secret_type, secret_type)
+
+    @testcase.attr('negative')
+    def test_secret_create_defaults_invalid_secret_type(self):
+        """Covers cases of creating secrets with invalid secret types."""
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.secret_type = 'not a valid secret type'
+
         e = self.assertRaises(
             exceptions.HTTPClientError,
             self.behaviors.store_secret,
@@ -654,3 +714,47 @@ class SecretsTestCase(base.TestCase):
         self.assertEqual(get_resp.mode, test_model.mode)
         self.assertEqual(get_resp.algorithm, test_model.algorithm)
         self.assertEqual(get_resp.bit_length, test_model.bit_length)
+
+    @utils.parameterized_dataset({
+        'symmetric': ['symmetric',
+                      'aes',
+                      128,
+                      ('\x00\x01\x02\x03\x04\x05\x06\x07'
+                       '\x00\x01\x02\x03\x04\x05\x06\x07')],
+        'private': ['private',
+                    'rsa',
+                    2048,
+                    keys.get_private_key_pem()],
+        'public': ['public',
+                   'rsa',
+                   2048,
+                   keys.get_public_key_pem()],
+        'certificate': ['certificate',
+                        'rsa',
+                        2048,
+                        keys.get_certificate_pem()],
+        'opaque': ['opaque',
+                   None,
+                   None,
+                   (b'\x00\x01\x02\x03\x04\x05\x06\x07')],
+        'passphrase': ['passphrase',
+                       None,
+                       None,
+                       keys.get_passphrase_txt()],
+    })
+    @testcase.attr('positive')
+    def test_secret_get_defaults_secret_type(self, secret_type, algorithm,
+                                             bit_length, secret):
+        """Covers getting and checking a secret's metadata."""
+        test_model = self.behaviors.create_secret(secret_create_defaults_data)
+        test_model.secret_type = secret_type
+        test_model.algorithm = algorithm
+        test_model.bit_length = bit_length
+        test_model.payload = base64.b64encode(secret)
+
+        secret_ref = self.behaviors.store_secret(test_model)
+        self.assertIsNotNone(secret_ref)
+
+        get_resp = self.behaviors.get_secret(secret_ref)
+        self.assertEqual(get_resp.status, "ACTIVE")
+        self.assertEqual(get_resp.secret_type, secret_type)

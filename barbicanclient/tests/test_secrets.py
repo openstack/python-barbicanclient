@@ -196,7 +196,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         # Verify that attributes are immutable after store.
         attributes = [
             "name", "expiration", "algorithm", "bit_length", "mode", "payload",
-            "payload_content_type", "payload_content_encoding"
+            "payload_content_type", "payload_content_encoding", "secret_type"
         ]
         for attr in attributes:
             try:

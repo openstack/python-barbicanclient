@@ -53,6 +53,7 @@ class SecretFormatter(formatter.EntityFormatter):
                "Content types",
                "Algorithm",
                "Bit length",
+               "Secret type",
                "Mode",
                "Expiration",
                )
@@ -65,6 +66,7 @@ class SecretFormatter(formatter.EntityFormatter):
                 self.content_types,
                 self.algorithm,
                 self.bit_length,
+                self.secret_type,
                 self.mode,
                 self.expiration,
                 )
@@ -96,6 +98,7 @@ class Secret(SecretFormatter):
             expiration=expiration,
             algorithm=algorithm,
             bit_length=bit_length,
+            secret_type=secret_type,
             mode=mode,
             payload=payload,
             payload_content_type=payload_content_type,
@@ -130,6 +133,11 @@ class Secret(SecretFormatter):
     @lazy
     def bit_length(self):
         return self._bit_length
+
+    @property
+    @lazy
+    def secret_type(self):
+        return self._secret_type
 
     @property
     @lazy
@@ -200,6 +208,11 @@ class Secret(SecretFormatter):
     def bit_length(self, value):
         self._bit_length = value
 
+    @secret_type.setter
+    @immutable_after_save
+    def secret_type(self, value):
+        self._secret_type = value
+
     @mode.setter
     @immutable_after_save
     def mode(self, value):
@@ -262,6 +275,7 @@ class Secret(SecretFormatter):
             'algorithm': self.algorithm,
             'mode': self.mode,
             'bit_length': self.bit_length,
+            'secret_type': self.secret_type,
             'expiration': self.expiration
         }
 
@@ -319,8 +333,8 @@ class Secret(SecretFormatter):
             raise LookupError("Secret is not yet stored.")
 
     def _fill_from_data(self, name=None, expiration=None, algorithm=None,
-                        bit_length=None, mode=None, payload=None,
-                        payload_content_type=None,
+                        bit_length=None, secret_type=None, mode=None,
+                        payload=None, payload_content_type=None,
                         payload_content_encoding=None, created=None,
                         updated=None, content_types=None, status=None,
                         creator_id=None):
@@ -328,10 +342,13 @@ class Secret(SecretFormatter):
         self._algorithm = algorithm
         self._bit_length = bit_length
         self._mode = mode
+        self._secret_type = secret_type
         self._payload = payload
         self._payload_content_encoding = payload_content_encoding
         self._expiration = expiration
         self._creator_id = creator_id
+        if not self._secret_type:
+            self._secret_type = "opaque"
         if self._expiration:
             self._expiration = parse_isotime(self._expiration)
         if self._secret_ref:
@@ -363,6 +380,7 @@ class Secret(SecretFormatter):
                 expiration=result.get('expiration'),
                 algorithm=result.get('algorithm'),
                 bit_length=result.get('bit_length'),
+                secret_type=result.get('secret_type'),
                 mode=result.get('mode'),
                 payload_content_type=result.get('payload_content_type'),
                 payload_content_encoding=result.get(
@@ -410,7 +428,8 @@ class SecretManager(base.BaseEntityManager):
 
     def create(self, name=None, payload=None,
                payload_content_type=None, payload_content_encoding=None,
-               algorithm=None, bit_length=None, mode=None, expiration=None):
+               algorithm=None, bit_length=None, secret_type=None,
+               mode=None, expiration=None):
         """
         Factory method for creating new `Secret` objects
 
@@ -428,6 +447,7 @@ class SecretManager(base.BaseEntityManager):
         :param algorithm: The algorithm associated with this secret key
         :param bit_length: The bit length of this secret key
         :param mode: The algorithm mode used with this secret key
+        :param secret_type: The secret type for this secret key
         :param expiration: The expiration time of the secret in ISO 8601 format
         :returns: A new Secret object
         :rtype: :class:`barbicanclient.secrets.Secret`
@@ -439,7 +459,7 @@ class SecretManager(base.BaseEntityManager):
                       payload_content_type=payload_content_type,
                       payload_content_encoding=payload_content_encoding,
                       algorithm=algorithm, bit_length=bit_length, mode=mode,
-                      expiration=expiration)
+                      secret_type=secret_type, expiration=expiration)
 
     def delete(self, secret_ref):
         """
