@@ -10,7 +10,7 @@ mock>=1.1;python_version!='2.6'
 mock==1.0.1;python_version=='2.6'
 testrepository>=0.0.18
 testtools>=1.4.0
-oslotest>=1.5.1 # Apache-2.0
+oslotest>=1.7.0 # Apache-2.0
 nose
 
 # Documentation build requirements
