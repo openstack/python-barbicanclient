@@ -38,15 +38,22 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
 
         self.secret_hrefs_to_delete.remove(secret_href)
 
-    def store_secret(self, payload="Payload for testing"):
+    def store_secret(self, payload="Payload for testing", store_argv=[]):
         """ Store (aka create) a secret
-        :param payload The payload to use when storing the secret.
+
+        The store_argv paramater allows additional command line parameters for
+        the store operation to be specified. This can be used to specify -a for
+        algorithm as an example.
+
+        :param payload The payload to use when storing the secret
+        :param store_argv The store command line parameters
 
         :return: the href to the newly created secret
         """
         argv = ['secret', 'store']
         self.add_auth_and_endpoint(argv)
         argv.extend(['--payload', payload])
+        argv.extend(store_argv)
 
         stdout, stderr = self.issue_barbican_command(argv)
 

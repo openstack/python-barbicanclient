@@ -12,9 +12,12 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import base64
+
 from testtools import testcase
 from functionaltests.client import base
 from functionaltests.client.v1.behaviors import secret_behaviors
+from functionaltests.common import keys
 from functionaltests import utils
 
 secret_create_defaults_data = {
@@ -58,6 +61,47 @@ class SecretsTestCase(base.TestCase):
         self.assertIsNotNone(secret_ref)
 
     @testcase.attr('positive')
+    @utils.parameterized_dataset({
+        'symmetric': ['symmetric',
+                      'aes',
+                      128,
+                      ('\x00\x01\x02\x03\x04\x05\x06\x07'
+                       '\x00\x01\x02\x03\x04\x05\x06\x07')],
+        'private': ['private',
+                    'rsa',
+                    2048,
+                    keys.get_private_key_pem()],
+        'public': ['public',
+                   'rsa',
+                   2048,
+                   keys.get_public_key_pem()],
+        'certificate': ['certificate',
+                        'rsa',
+                        2048,
+                        keys.get_certificate_pem()],
+        'opaque': ['opaque',
+                   None,
+                   None,
+                   (b'\x00\x01\x02\x03\x04\x05\x06\x07')],
+        'passphrase': ['passphrase',
+                       None,
+                       None,
+                       keys.get_passphrase_txt()],
+    })
+    def test_create_secret_with_type(self, secret_type, algorithm, bit_length,
+                                     secret):
+        """Creates a secret with default values"""
+        secret_data = secret_create_defaults_data
+        secret_data['secret_type'] = secret_type
+        secret_data['algorithm'] = algorithm
+        secret_data['bit_length'] = bit_length
+        secret_data['payload'] = base64.b64encode(secret)
+        test_model = self.behaviors.create_secret(secret_create_defaults_data)
+
+        secret_ref = self.behaviors.store_secret(test_model)
+        self.assertIsNotNone(secret_ref)
+
+    @testcase.attr('positive')
     def test_secret_create_defaults_no_expiration(self):
         """Covers creating a secret without an expiration."""
         test_model = self.behaviors.create_secret(secret_create_defaults_data)
@@ -95,7 +139,7 @@ class SecretsTestCase(base.TestCase):
 
         get_resp = self.behaviors.get_secret(
             secret_ref
-            )
+        )
         self.assertEqual(test_model.payload, get_resp.payload)
 
     @testcase.attr('positive')

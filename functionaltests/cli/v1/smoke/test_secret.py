@@ -13,11 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import base64
+
 from functionaltests.cli.base import CmdLineTestCase
 from functionaltests.cli.v1.behaviors.secret_behaviors import SecretBehaviors
+from functionaltests.common import keys
+from functionaltests import utils
 from testtools import testcase
 
 
+@utils.parameterized_test_case
 class SecretTestCase(CmdLineTestCase):
 
     def setUp(self):
@@ -28,6 +33,48 @@ class SecretTestCase(CmdLineTestCase):
     def tearDown(self):
         super(SecretTestCase, self).tearDown()
         self.secret_behaviors.delete_all_created_secrets()
+
+    @utils.parameterized_dataset({
+        'symmetric': ['symmetric',
+                      'aes',
+                      '128',
+                      ('\x00\x01\x02\x03\x04\x05\x06\x07'
+                       '\x00\x01\x02\x03\x04\x05\x06\x07')],
+        'private': ['private',
+                    'rsa',
+                    '2048',
+                    keys.get_private_key_pem()],
+        'public': ['public',
+                   'rsa',
+                   '2048',
+                   keys.get_public_key_pem()],
+        'certificate': ['certificate',
+                        'rsa',
+                        '2048',
+                        keys.get_certificate_pem()],
+        'opaque': ['opaque',
+                   None,
+                   None,
+                   (b'\x00\x01\x02\x03\x04\x05\x06\x07')],
+        'passphrase': ['passphrase',
+                       None,
+                       None,
+                       keys.get_passphrase_txt()],
+    })
+    @testcase.attr('positive')
+    def test_secret_store_with_secret_type(self, secret_type, algorithm,
+                                           bit_length, secret):
+        payload = base64.b64encode(secret)
+        secret_argv = ['--secret-type', secret_type]
+        if algorithm:
+            secret_argv.extend(['--algorithm', algorithm])
+        if bit_length:
+            secret_argv.extend(['--bit-length', bit_length])
+        secret_href = self.secret_behaviors.store_secret(payload, secret_argv)
+        self.assertIsNotNone(secret_href)
+
+        secret = self.secret_behaviors.get_secret(secret_href)
+        self.assertEqual(secret_href, secret['Secret href'])
 
     @testcase.attr('positive')
     def test_secret_store(self):
