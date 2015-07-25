@@ -21,6 +21,7 @@ Contents:
    cli_usage
    reference
    contributing
+   functional_tests
 
 Indices and tables
 ==================
