@@ -20,6 +20,7 @@ from keystoneclient import adapter
 from keystoneclient.auth.base import BaseAuthPlugin
 from keystoneclient import session as ks_session
 
+from barbicanclient import acls
 from barbicanclient import cas
 from barbicanclient import containers
 from barbicanclient import exceptions
@@ -173,6 +174,7 @@ class Client(object):
         self.orders = orders.OrderManager(httpclient)
         self.containers = containers.ContainerManager(httpclient)
         self.cas = cas.CAManager(httpclient)
+        self.acls = acls.ACLManager(httpclient)
 
 
 def env(*vars, **kwargs):
