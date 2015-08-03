@@ -99,6 +99,23 @@ class SecretsTestCase(base.TestCase):
         self.assertEqual(resp.algorithm, secret.algorithm)
 
     @testcase.attr('positive')
+    def test_secret_read_with_acls(self):
+        """Access default ACL settings data on recently created secret.
+
+        By default, 'read' ACL settings are there for a secret.
+         """
+        test_model = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+
+        secret_ref = self.cleanup.add_entity(test_model)
+        self.assertIsNotNone(secret_ref)
+
+        secret_entity = self.barbicanclient.secrets.get(secret_ref)
+        self.assertIsNotNone(secret_entity.acls)
+        self.assertIsNotNone(secret_entity.acls.read)
+        self.assertEqual([], secret_entity.acls.read.users)
+
+    @testcase.attr('positive')
     def test_secret_create_defaults_non_standard_mode(self):
         """Create a secret with a non standard mode.
 

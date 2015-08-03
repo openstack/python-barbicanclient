@@ -234,6 +234,23 @@ class GenericContainersTestCase(BaseContainersTestCase):
         container_resp = self.barbicanclient.containers.get(container_ref)
         self.assertIsNotNone(container_resp.secret_refs.get(name))
 
+    @testcase.attr('positive')
+    def test_container_read_with_acls(self):
+        """Access default ACL settings data on recently created container.
+
+        By default, 'read' ACL settings are there for a container.
+         """
+        test_model = self.barbicanclient.containers.create(
+            **create_container_defaults_data)
+
+        container_ref = self.cleanup.add_entity(test_model)
+        self.assertIsNotNone(container_ref)
+
+        container_entity = self.barbicanclient.containers.get(container_ref)
+        self.assertIsNotNone(container_entity.acls)
+        self.assertIsNotNone(container_entity.acls.read)
+        self.assertEqual([], container_entity.acls.read.users)
+
 
 @utils.parameterized_test_case
 class RSAContainersTestCase(BaseContainersTestCase):
