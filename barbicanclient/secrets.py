@@ -19,6 +19,7 @@ import logging
 from oslo_utils.timeutils import parse_isotime
 import six
 
+from barbicanclient import acls as acl_manager
 from barbicanclient import base
 from barbicanclient import exceptions
 from barbicanclient import formatter
@@ -109,6 +110,8 @@ class Secret(SecretFormatter):
             status=status,
             creator_id=creator_id
         )
+        self._acl_manager = acl_manager.ACLManager(api)
+        self._acls = None
 
     @property
     def secret_ref(self):
@@ -191,6 +194,13 @@ class Secret(SecretFormatter):
                 LOG.warning("Secret does not contain a payload")
                 return None
         return self._payload
+
+    @property
+    def acls(self):
+        """Get ACL settings for this secret."""
+        if self.secret_ref and not self._acls:
+            self._acls = self._acl_manager.get(self.secret_ref)
+        return self._acls
 
     @name.setter
     @immutable_after_save

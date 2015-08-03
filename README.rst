@@ -8,7 +8,9 @@ Key Management API.  There is a Python library for accessing the API
 Installation
 ------------
 
-The client is `pip installable <https://pypi.python.org/pypi/python-barbicanclient>`__ as follows:
+The client is
+`pip installable <https://pypi.python.org/pypi/python-barbicanclient>`__ as
+follows:
 
 .. code:: console
 
@@ -18,7 +20,8 @@ The client is `pip installable <https://pypi.python.org/pypi/python-barbicanclie
 barbicanclient - Python Library
 -------------------------------
 
-The full api is `documented in the official OpenStack documentation site <http://docs.openstack.org/developer/python-barbicanclient>`__.
+The full api is
+`documented in the official OpenStack documentation site <http://docs.openstack.org/developer/python-barbicanclient>`__.
 
 
 Here's an example of storing a secret in barbican using the python library
@@ -76,7 +79,8 @@ with keystone authentication:
 barbican - Command Line Client
 ------------------------------
 
-The command line client is self-documenting. Use the --help flag to access the usage options
+The command line client is self-documenting. Use the --help flag to access the
+usage options
 
 .. code:: console
 
@@ -158,21 +162,26 @@ The command line client is self-documenting. Use the --help flag to access the u
     See "barbican help COMMAND" for help on a specific command.
 
     Commands:
-      complete       print bash completion command
+      acl get           Retrieve ACLs for a secret or container by providing its href.
+      acl delete        Delete ACLs for a secret or container as identified by its href.
+      acl submit        Submit ACL on a secret or container as identified by its href.
+      acl user add      Add ACL users to a secret or container as identified by its href.
+      acl user remove   Remove ACL users from a secret or container as identified by its href.
+      complete          print bash completion command
       container create  Store a container in Barbican.
       container delete  Delete a container by providing its href.
-      container get  Retrieve a container by providing its URI.
-      container list  List containers.
-      help           print detailed help for another command
-      order create   Create a new order.
-      order delete   Delete an order by providing its href.
-      order get      Retrieve an order by providing its URI.
-      order list     List orders.
-      secret delete  Delete an secret by providing its href.
-      secret get     Retrieve a secret by providing its URI.
-      secret list    List secrets.
-      secret store   Store a secret in Barbican.
-      secret update  Update a secret with no payload in Barbican.
+      container get     Retrieve a container by providing its URI.
+      container list    List containers.
+      help              print detailed help for another command
+      order create      Create a new order.
+      order delete      Delete an order by providing its href.
+      order get         Retrieve an order by providing its URI.
+      order list        List orders.
+      secret delete     Delete an secret by providing its href.
+      secret get        Retrieve a secret by providing its URI.
+      secret list       List secrets.
+      secret store      Store a secret in Barbican
+      secret update     Update a secret with no payload in Barbican.
 
 * License: Apache License, Version 2.0
 * Documentation: http://docs.openstack.org/developer/python-barbicanclient

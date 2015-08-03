@@ -6,9 +6,9 @@ To use barbicanclient, you must first create an instance of the
 :class:`barbicanclient.client.Client` class.
 
 The client uses Keystone Sessions for both authentication and for handling HTTP
-requests.  You can provide authentication credentials to the client by creating
-a Keystone Session with the appropriate auth plugin and then passing that
-session to the new Client.
+requests.  You can provide authentication credentials to the client by
+creating a Keystone Session with the appropriate auth plugin and then passing
+that session to the new Client.
 
 See :doc:`authentication` for more details.
 
@@ -25,10 +25,11 @@ service:  Secrets, Orders and Containers.
 Secrets
 =======
 
-Secrets represent keys, credentials, and other sensitive data that is stored
-by the Barbican service.  To store or retrieve a secret in the Barbican
-service you should use the different methods of the :class:`barbicanclient.secrets.SecretManager`
-class that is exposed as the `secrets` attribute of the Client.
+Secrets represent keys, credentials, and other sensitive data that is stored by
+the Barbican service.  To store or retrieve a secret in the Barbican service
+you should use the different methods of the
+:class:`barbicanclient.secrets.SecretManager` class that is exposed as the
+`secrets` attribute of the Client.
 
 Example::
 
@@ -52,8 +53,9 @@ Example::
 
     my_secret_ref = my_secret.store()
 
-The secret reference returned by :meth:`barbicanclient.secrets.SecretManager.store`
-can later be used to retrieve the secret data from barbican.
+The secret reference returned by
+:meth:`barbicanclient.secrets.SecretManager.store` can later be used to
+retrieve the secret data from barbican.
 
 Example::
 
@@ -65,17 +67,17 @@ Example::
 Secret Content Types
 --------------------
 
-The Barbican service defines a Secret Content Type.  The client will choose
-the correct Content Type based on the type of the data that is set on the
+The Barbican service defines a Secret Content Type.  The client will choose the
+correct Content Type based on the type of the data that is set on the
 `Secret.payload` property.  The following table summarizes the mapping of
 Python types to Barbican Secret Content Types:
 
 +-----------------+---------------+---------------+--------------------------+
-|    six Type     | Python 2 Type | Python 3 Type |  Barbican Content Type   |
+| six Type        | Python 2 Type | Python 3 Type | Barbican Content Type    |
 +=================+===============+===============+==========================+
-| six.binary_type |      str      |     bytes     | application/octet-stream |
+| six.binary_type | str           | bytes         | application/octet-stream |
 +-----------------+---------------+---------------+--------------------------+
-| six.text_type   |    unicode    |      str      |        text/plain        |
+| six.text_type   | unicode       | str           | text/plain               |
 +-----------------+---------------+---------------+--------------------------+
 
 .. WARNING::
@@ -94,8 +96,8 @@ Orders are used to request secret material to be created by the Barbican
 service.  Submitting an order will result in a Secret being created on your
 behalf.  The Secret can then be used like any Secret you may have uploaded
 yourself.  Orders should be created using the factory methods in the
-:class:`barbicanclient.orders.OrderManager` instance in the `orders`
-attribute of the `Client`.
+:class:`barbicanclient.orders.OrderManager` instance in the `orders` attribute
+of the `Client`.
 
 Example::
 
@@ -112,8 +114,8 @@ Example::
 
     my_order_ref = my_order.submit()
 
-The order reference returned by :meth:`barbicanclient.orders.Order.submit`
-can later be used to retrieve the order from Barbican.
+The order reference returned by :meth:`barbicanclient.orders.Order.submit` can
+later be used to retrieve the order from Barbican.
 
 Example::
 
@@ -121,8 +123,8 @@ Example::
 
     retrieved_order = barbican.orders.get(my_order_ref)
 
-Once your order has been processed by Barbican, the order status will be set
-to `'ACTIVE'`.  An active order will contain the reference to the requested
+Once your order has been processed by Barbican, the order status will be set to
+`'ACTIVE'`.  An active order will contain the reference to the requested
 secret (or container).
 
 Example::
@@ -133,17 +135,19 @@ Example::
     key = generated_secret.payload
 
 Currently the client can submit :class:`barbicanclient.orders.KeyOrder` orders
-for Keys suitable for symmetric encryption, and :class:`barbicanclient.orders.AsymmetricOrder`
-for Asymmetric keys such as RSA keys.
+for Keys suitable for symmetric encryption, and
+:class:`barbicanclient.orders.AsymmetricOrder` for Asymmetric keys such as RSA
+keys.
 
 Containers
 ==========
 
-Containers can be either arbitrary groupings of `Secrets` or a strict
-grouping of Secrets, such as the Public and Private keys of an RSA keypair.
+Containers can be either arbitrary groupings of `Secrets` or a strict grouping
+of Secrets, such as the Public and Private keys of an RSA keypair.
 
-Containers should be managed using the :class:`barbicanclient.containers.ContainerManager`
-instance in the `containers` attribute of the `Client`
+Containers should be managed using the
+:class:`barbicanclient.containers.ContainerManager` instance in the
+`containers` attribute of the `Client`
 
 Example::
 
@@ -156,8 +160,9 @@ Example::
 
     my_container_ref = my_container.store()
 
-The container reference returned by :meth:`barbicanclient.containers.Container.store`
-can later be used to retrieve the container from Barbican.
+The container reference returned by
+:meth:`barbicanclient.containers.Container.store` can later be used to
+retrieve the container from Barbican.
 
 Example::
 
@@ -165,3 +170,165 @@ Example::
 
     retrieved_container = barbican.containers.get(my_container_ref)
 
+
+ACLs
+====
+
+Access Control List (ACL) feature in Barbican provides user level access
+control for secrets and containers. By default Barbican manages access to its
+resources (secrets, containers) on a per project level and authorization is
+granted based on the roles a user has in that project.
+
+ACLs should be managed using the :class:`barbicanclient.acls.ACLManager`
+instance in the `acls` attribute of the `Client`.
+
+Example::
+
+    # Submits ACLs on an existing Secret with URI as 'secret_ref'
+
+    # create ACL entity object with needed settings
+    acl_entity = barbican.acls.create(entity_ref=secret_ref, users=[u1, u2],
+                                      project_access=False)
+
+    acl_ref = acl_entity.submit()  # submits ACL setting to server at this point.
+
+The secret or container URI can be used to read all of its ACL setting.
+Returned value is instance of either :class:`barbicanclient.acls.SecretACL` or
+:class:`barbicanclient.acls.ContainerACL`. Refer to respective class for its
+available APIs.
+
+Example::
+
+    # Get ACL entity for a Secret
+    # Returned entity will be either SecretACL or ContainerACL.
+    # This entity has ACL settings per operation type (e.g. 'read')
+
+    secret_acl = barbican.acls.get(secret_ref)
+
+    # To retrieve (load) ACL using existing ACL entity e.g. container_acl
+    container_acl.load_acls_data()
+
+ACLs setting can also be retrieved directly from secret or container entity.
+Its data is lazy loaded i.e. related ACL settings are not read till `acls`
+attribute is accessed on secret or container entity.
+
+Example::
+
+    # Get secret entity for a given ref
+    secret = barbican.secrets.get(secret_ref)
+
+    # To get project access flag or users for 'read' operation
+    project_access_flag = secret.acls.read.project_access
+    read_acl_users = secret.acls.read.users
+
+
+    # Get container entity for a given ref
+    container = barbican.containers.get(container_ref)
+
+    # To get project access flag or users for 'read' operation
+    project_access_flag = container.acls.read.project_access
+    read_acl_users = container.acls.read.users
+
+
+If need to add users to existing 'read' ACL settings on a secret or container,
+above mentioned get and submit methods can be used.
+
+Example::
+
+    # Every Barbican secret and container has default ACL setting which
+    # reflects default project access behavior.
+
+    # ACL settings is modified via submit operation on ACL entity.
+
+    # provide users to be added as list.
+    add_users = ['user1', 'user2', 'users3']
+
+    # Case 1 - Add users to 'read' operation ACL setting
+    # --------------------------------------------------
+
+    # Get ACL entity from server
+    acl_entity = barbican.acls.get(entity_ref=secret_ref)
+
+    # add new users to existing users for 'read' operation
+    acl_entity.read.users.extend(add_users)
+    # OR
+    # acl_entity.get('read').users.extend(add_users)
+
+    acl_ref = acl_entity.submit() # here submits ACL changes to server.
+
+    # Case 2 - Add same users to ACL settings for each operation type
+    # ---------------------------------------------------------------
+
+    # Get ACL entity from server
+    acl_entity = barbican.acls.get(entity_ref=secret_ref)
+
+    # Go through each operation ACL setting and add users to existing list
+    for op_acl in acl_entity.operation_acls
+        op_acl.users.extend(add_users)
+
+    acl_ref = acl_entity.submit() # here submits ACL changes to server.
+
+If need to remove some users from existing ACL settings on a secret or
+container, similar approach can be used as mentioned above for `add` example.
+
+Example::
+
+    # provide users to be removed as list.
+    remove_users = ['user1', 'user2', 'users3']
+
+    # Case 1 - Remove users from 'read' operation ACL setting
+    # -------------------------------------------------------
+
+    # Get ACL entity from server
+    acl_entity = barbican.acls.get(entity_ref=container_ref)
+
+    existing_users = acl_entity.read.users
+    # OR
+    # existing users = acl_entity.get('read').users
+
+    # remove matching users from existing users list
+    updated_users = set(existing_users).difference(remove_users)
+
+    # set back updated users to operation specific acl setting
+    acl_entity.read.users = updated_users
+    # OR
+    # acl_entity.get('read').users = updated_users
+
+    acl_ref = acl_entity.submit() # here submits ACL changes to server.
+
+    # Case 2 - Remove same users from ACL settings for each operation type
+    # --------------------------------------------------------------------
+
+    # Get ACL entity from server
+    acl_entity = barbican.acls.get(secret_ref)
+
+    # Go through each operation ACL setting and remove users from existing list
+    for op_acl in acl_entity.operation_acls
+        existing_users = op_acl.users
+
+        # remove matching users from existing users list
+        updated_users = set(existing_users).difference(remove_users)
+
+        # set back updated users to operation specific acl setting
+        op_acl.users = updated_users
+
+    acl_ref = acl_entity.submit() # here submits ACL changes to server.
+
+
+If need to unset or delete ACL settings on a secret or container,
+:meth:`barbicanclient.acls.SecretACL.remove` or
+:meth:`barbicanclient.acls.ContainerACL.remove` can be used.
+
+Example::
+
+    # create ACL entity object with secret or container ref
+    blank_acl_entity = barbican.acls.create(entity_ref=secret_ref)
+
+    # removes all ACL settings for the secret on server
+    blank_acl_entity.remove()
+
+    # To remove 'read' operation specific ACL setting
+    acl_entity = barbican.acls.get(entity_ref=secret_ref)
+    acl_entity.read.remove()
+    # OR
+    # acl_entity.get('read').remove()

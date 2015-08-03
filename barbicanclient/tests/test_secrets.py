@@ -18,6 +18,7 @@ import json
 from oslo_utils import timeutils
 
 from barbicanclient.tests import test_client
+from barbicanclient import acls
 from barbicanclient import secrets, base, exceptions
 
 
@@ -234,6 +235,30 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
         # Verify the correct URL was used to make the GET call
         self.assertEqual(self.entity_href, m.last_request.url)
+
+    def test_should_get_acls_lazy(self):
+        data = self.secret.get_dict(self.entity_href)
+        m = self.responses.get(self.entity_href, json=data)
+
+        acl_data = {'read': {'project-access': True, 'users': ['u1']}}
+        acl_ref = self.entity_href + '/acl'
+        n = self.responses.get(acl_ref, json=acl_data)
+
+        secret = self.manager.get(secret_ref=self.entity_href)
+        self.assertIsNotNone(secret)
+
+        self.assertEqual(self.secret.name, secret.name)
+        # Verify GET was called for secret but for acl it was not called
+        self.assertTrue(m.called)
+        self.assertFalse(n.called)
+
+        # Check an attribute to trigger lazy-load
+        self.assertEqual(['u1'], secret.acls.read.users)
+        self.assertTrue(secret.acls.read.project_access)
+        self.assertIsInstance(secret.acls, acls.SecretACL)
+
+        # Verify the correct URL was used to make the GET call
+        self.assertEqual(acl_ref, n.last_request.url)
 
     def test_should_get_payload_only_when_content_type_is_set(self):
         """
