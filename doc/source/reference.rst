@@ -47,6 +47,15 @@ Containers
 .. autoclass:: barbicanclient.containers.CertificateContainer
    :members:
 
+Certificate Authorities
+=======================
+
+.. autoclass:: barbicanclient.cas.CAManager
+   :members:
+
+.. autoclass:: barbicanclient.cas.CA
+   :members:
+
 Exceptions
 ==========
 
