@@ -336,7 +336,7 @@ class Secret(SecretFormatter):
         """
 
         if not self.payload:
-            raise exceptions.PayloadException("Missing Payload")
+            raise exceptions.PayloadException("Invalid or Missing Payload")
         if not self.secret_ref:
             raise LookupError("Secret is not yet stored.")
 
