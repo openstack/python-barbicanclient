@@ -16,13 +16,13 @@
 import base64
 import sys
 
+from barbicanclient import exceptions
 from functionaltests.client import base
-from functionaltests.client.v1.behaviors import secret_behaviors
+from functionaltests.common import cleanup
 from functionaltests.common import keys
 from functionaltests import utils
 from testtools import testcase
 
-from barbicanclient import exceptions
 
 secret_create_defaults_data = {
     "name": "AES key",
@@ -61,22 +61,22 @@ class SecretsTestCase(base.TestCase):
 
     def setUp(self):
         super(SecretsTestCase, self).setUp()
-        self.behaviors = secret_behaviors.SecretBehaviors(self.barbicanclient)
+        self.cleanup = cleanup.CleanUp(self.barbicanclient)
 
     def tearDown(self):
-        self.behaviors.delete_all_created_secrets()
+        self.cleanup.delete_all_entities()
         super(SecretsTestCase, self).tearDown()
 
     @testcase.attr('positive')
     def test_secret_create_defaults_check_content_types(self):
         """Check that set content-type attribute is retained in metadata."""
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
-        resp = self.behaviors.get_secret(secret_ref)
+        resp = self.barbicanclient.secrets.get(secret_ref)
         content_types = resp.content_types
         self.assertIsNotNone(content_types)
         self.assertIn('default', content_types)
@@ -88,15 +88,15 @@ class SecretsTestCase(base.TestCase):
 
          Currently the client will accept any string for the algorithm.
          """
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.algorithm = "not-an-algorithm"
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.algorithm = "not-an-algorithm"
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
-        get_resp = self.behaviors.get_secret(secret_ref)
-        self.assertEqual(get_resp.algorithm, test_model.algorithm)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertEqual(resp.algorithm, secret.algorithm)
 
     @testcase.attr('positive')
     def test_secret_create_defaults_non_standard_mode(self):
@@ -104,15 +104,15 @@ class SecretsTestCase(base.TestCase):
 
         Currently the client will accept any string for the mode.
         """
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.mode = 'not-a-mode'
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.mode = 'not-a-mode'
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
-        get_resp = self.behaviors.get_secret(secret_ref)
-        self.assertEqual(get_resp.mode, test_model.mode)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertEqual(resp.mode, secret.mode)
 
     @testcase.attr('negative')
     def test_secret_delete_doesnt_exist(self):
@@ -120,9 +120,10 @@ class SecretsTestCase(base.TestCase):
 
         This delete uses a reference with an invalid UUID format
         """
-        url = self.behaviors.base_url + '/secrets/notauuid'
+        url = self.barbicanclient.secrets._api.endpoint_override + \
+            '/secrets/notauuid'
 
-        e = self.assertRaises(ValueError, self.behaviors.delete_secret,
+        e = self.assertRaises(ValueError, self.barbicanclient.secrets.delete,
                               url)
 
         self.assertEqual(e.message, 'Secret incorrectly specified.')
@@ -135,99 +136,16 @@ class SecretsTestCase(base.TestCase):
         associated with this UUID
         """
         uuid = 'de20ad54-85b4-421b-adb2-eb7b9e546013'
-        url = self.behaviors.base_url + '/secrets/' + uuid
+        url = self.barbicanclient.secrets._api.endpoint_override + \
+            '/secrets/' + uuid
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.delete_secret,
+            self.barbicanclient.secrets.delete,
             url
         )
 
         self.assertEqual(e.status_code, 404)
-
-    @utils.parameterized_dataset({
-        'text/plain_payload': {
-            'payload': 'time for an ice cold!!'},
-        'application/octet-stream_payload': {
-            'payload': 'abcdefg=='}
-    })
-    @testcase.attr('positive')
-    def test_secret_update_nones_content_type(self,
-                                              payload):
-        """Update secret, secret will start with payload of None.
-
-        Secret will be created with even though
-        the payload is None, then it will be updated.
-        """
-
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.payload = None
-
-        secret_ref = self.behaviors.store_secret(test_model)
-        self.assertIsNotNone(secret_ref)
-
-        test_model.payload = payload
-        resp = self.behaviors.update_secret(secret_ref, payload)
-
-        secret = self.behaviors.get_secret(secret_ref)
-        payload = secret.payload
-        payload_content_type = secret.payload_content_type
-        self.assertEqual(secret.payload, payload)
-        self.assertEqual(secret.payload_content_type, payload_content_type)
-
-    @utils.parameterized_dataset({
-        'text/plain_payload': {
-            'payload_update': 'time for the Texas heat!!!',
-            'payload': 'time for an ice cold!!!'},
-        'application/octet-stream_payload': {
-            'payload_update': 'hijklmn==',
-            'payload': 'abcdefg=='}
-    })
-    @testcase.attr('negative')
-    def test_secret_update_provided_content_type(self,
-                                                 payload_update,
-                                                 payload):
-        """Update secret, secret will start with a payload that is not None.
-
-        Secret will be created with a not None payload, then it
-        will try to update. Update will fail.
-        """
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.payload = payload
-
-        secret_ref = self.behaviors.store_secret(test_model)
-        self.assertIsNotNone(secret_ref)
-
-        self.assertRaises(exceptions.HTTPClientError,
-                          self.behaviors.update_secret,
-                          secret_ref,
-                          payload_update)
-
-    @testcase.attr('positive')
-    def test_secret_create_nones_content_type(self):
-        """Create secret with valid content type but no payload.
-
-        Secret will be created with valid content even though
-        the payload is None.
-        """
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.payload = None
-
-        self.assertEqual(test_model.payload, None)
-
-    @testcase.attr('positive')
-    def test_secret_create_nones(self):
-        """Cover case of posting with all nones in the Secret object."""
-        test_model = self.behaviors.create_secret(
-            secret_create_nones_data)
-        test_model.payload = None
-        test_model.payload_content_encoding = None
-        test_model.payload_content_type = None
-
-        self.assertEqual(test_model.payload, None)
 
     @testcase.attr('negative')
     def test_secret_get_secret_doesnt_exist(self):
@@ -236,10 +154,11 @@ class SecretsTestCase(base.TestCase):
         Will get value error secret incorrectly specified since "notauuid"
         is not a properly formatted uuid.
         """
-        url = self.behaviors.base_url + '/secrets/notauuid'
+        url = self.barbicanclient.secrets._api.endpoint_override + \
+            '/secrets/notauuid'
 
-        e = self.assertRaises(ValueError, self.behaviors.get_secret,
-                              url)
+        e = self.assertRaises(ValueError, self.barbicanclient.secrets.get,
+                              url, 'text/plain')
 
         self.assertIn("Secret incorrectly specified", e.message)
 
@@ -249,14 +168,13 @@ class SecretsTestCase(base.TestCase):
 
         Returns a 400.
         """
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.expiration = '2000-01-10T14:58:52.546795'
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.expiration = '2000-01-10T14:58:52.546795'
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_secret,
-            test_model
+            secret.store
         )
         self.assertEqual(e.status_code, 400)
 
@@ -266,13 +184,12 @@ class SecretsTestCase(base.TestCase):
 
         Fails with a value error, Payload incorrectly specified.
         """
-        test_model = self.behaviors.create_secret(
-            secret_create_emptystrings_data)
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_emptystrings_data)
 
         self.assertRaises(
             exceptions.PayloadException,
-            self.behaviors.store_secret,
-            test_model
+            secret.store
         )
 
     @testcase.attr('negative')
@@ -282,14 +199,13 @@ class SecretsTestCase(base.TestCase):
         Should return a 413 if the secret size is greater than the
         maximum allowed size.
         """
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.payload = str(self.oversized_payload)
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.payload = str(self.oversized_payload)
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_secret,
-            test_model
+            secret.store
         )
         self.assertEqual(e.status_code, 413)
 
@@ -304,15 +220,15 @@ class SecretsTestCase(base.TestCase):
     @testcase.attr('positive')
     def test_secret_create_defaults_valid_name(self, name):
         """Covers cases of creating secrets with valid names."""
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.name = name
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.name = name
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
-        get_resp = self.behaviors.get_secret(secret_ref)
-        self.assertEqual(get_resp.name, test_model.name)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertEqual(resp.name, secret.name)
 
     @utils.parameterized_dataset({
         'int': [400]
@@ -323,14 +239,13 @@ class SecretsTestCase(base.TestCase):
 
         Should return 400.
         """
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.name = name
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.name = name
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_secret,
-            test_model
+            secret.store
         )
 
         self.assertEqual(e.status_code, 400)
@@ -341,15 +256,15 @@ class SecretsTestCase(base.TestCase):
     @testcase.attr('positive')
     def test_secret_create_defaults_valid_algorithms(self, algorithm):
         """Creates secrets with various valid algorithms."""
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.algorithm = algorithm
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.algorithm = algorithm
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
-        get_resp = self.behaviors.get_secret(secret_ref)
-        self.assertEqual(get_resp.algorithm, test_model.algorithm)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertEqual(resp.algorithm, secret.algorithm)
 
     @utils.parameterized_dataset({
         'int': [400]
@@ -358,16 +273,15 @@ class SecretsTestCase(base.TestCase):
     def test_secret_create_defaults_invalid_algorithms(self, algorithm):
         """Creates secrets with various invalid algorithms."""
 
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.algorithm = algorithm
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.algorithm = algorithm
 
         # We are currently testing for exception with http_code
         # launchpad bug 1431514 will address the change to this functionality
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_secret,
-            test_model
+            secret.store
         )
 
         self.assertEqual(e.status_code, 400)
@@ -401,32 +315,31 @@ class SecretsTestCase(base.TestCase):
     })
     @testcase.attr('positive')
     def test_secret_create_defaults_valid_secret_type(
-            self, secret_type, algorithm, bit_length, secret):
+            self, secret_type, algorithm, bit_length, payload):
         """Covers cases of creating secrets with valid secret types."""
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.secret_type = secret_type
-        test_model.algorithm = algorithm
-        test_model.bit_length = bit_length
-        test_model.payload = base64.b64encode(secret)
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.secret_type = secret_type
+        secret.algorithm = algorithm
+        secret.bit_length = bit_length
+        secret.payload = base64.b64encode(payload)
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
-        get_resp = self.behaviors.get_secret(secret_ref)
-        self.assertEqual(get_resp.secret_type, secret_type)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertEqual(resp.secret_type, secret_type)
 
     @testcase.attr('negative')
     def test_secret_create_defaults_invalid_secret_type(self):
         """Covers cases of creating secrets with invalid secret types."""
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.secret_type = 'not a valid secret type'
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.secret_type = 'not a valid secret type'
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_secret,
-            test_model
+            secret.store
         )
 
         self.assertEqual(e.status_code, 400)
@@ -443,15 +356,15 @@ class SecretsTestCase(base.TestCase):
     @testcase.attr('positive')
     def test_secret_create_defaults_valid_bit_length(self, bit_length):
         """Covers cases of creating secrets with valid bit lengths."""
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.bit_length = bit_length
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.bit_length = bit_length
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
-        get_resp = self.behaviors.get_secret(secret_ref)
-        self.assertEqual(get_resp.bit_length, test_model.bit_length)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertEqual(resp.bit_length, secret.bit_length)
 
     @utils.parameterized_dataset({
         'str_type': ['not-an-int'],
@@ -464,14 +377,13 @@ class SecretsTestCase(base.TestCase):
     @testcase.attr('negative')
     def test_secret_create_defaults_invalid_bit_length(self, bit_length):
         """Covers cases of creating secrets with invalid bit lengths."""
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.bit_length = bit_length
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.bit_length = bit_length
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_secret,
-            test_model
+            secret.store
         )
 
         self.assertEqual(e.status_code, 400)
@@ -482,15 +394,15 @@ class SecretsTestCase(base.TestCase):
     @testcase.attr('positive')
     def test_secret_create_defaults_valid_mode(self, mode):
         """Covers cases of creating secrets with valid modes."""
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.mode = mode
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.mode = mode
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
-        get_resp = self.behaviors.get_secret(secret_ref)
-        self.assertEqual(get_resp.mode, test_model.mode)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertEqual(resp.mode, secret.mode)
 
     @utils.parameterized_dataset({
         'zero': [0],
@@ -500,14 +412,13 @@ class SecretsTestCase(base.TestCase):
     @testcase.attr('negative')
     def test_secret_create_defaults_invalid_mode(self, mode):
         """Covers cases of creating secrets with invalid modes."""
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.mode = mode
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.mode = mode
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_secret,
-            test_model
+            secret.store
         )
 
         self.assertEqual(e.status_code, 400)
@@ -535,23 +446,22 @@ class SecretsTestCase(base.TestCase):
             payload_content_type,
             payload_content_encoding):
         """Creates secrets with various content types and encodings."""
-        test_model = self.behaviors.create_secret(secret_create_defaults_data)
-        test_model.payload_content_encoding = payload_content_encoding
-        test_model.payload_content_type = payload_content_type
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.payload_content_type = payload_content_type
+        secret.payload_content_encoding = payload_content_encoding
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
-        get_resp = self.behaviors.get_secret(
-            secret_ref,
-            payload_content_type=test_model.payload_content_type)
-        if test_model.payload_content_encoding == 'base64':
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        if secret.payload_content_encoding == 'base64':
             self.assertEqual(
-                base64.b64decode(test_model.payload),
-                get_resp.payload
+                base64.b64decode(secret.payload),
+                resp.payload
             )
         else:
-            self.assertEqual(test_model.payload, str(get_resp.payload))
+            self.assertEqual(secret.payload, str(resp.payload))
 
     @utils.parameterized_dataset({
         'large_string_content_type_and_encoding': {
@@ -617,17 +527,16 @@ class SecretsTestCase(base.TestCase):
     @testcase.attr('negative')
     def test_secret_create_defaults_invalid_types_and_encoding(self, **kwargs):
         """Creating secrets with invalid payload types and encodings."""
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.payload_content_encoding = kwargs[
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.payload_content_encoding = kwargs[
             'payload_content_encoding']
-        test_model.payload_content_type = kwargs[
+        secret.payload_content_type = kwargs[
             'payload_content_type']
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_secret,
-            test_model
+            secret.store
         )
 
         self.assertEqual(e.status_code, 400)
@@ -639,14 +548,15 @@ class SecretsTestCase(base.TestCase):
     def test_secret_create_defaults_valid_payload(self, payload):
         """Create secrets with a various valid payloads."""
 
-        test_model = self.behaviors.create_secret(secret_create_defaults_data)
-        test_model.payload = payload
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.payload = payload
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
-        get_resp = self.behaviors.get_secret(secret_ref)
-        self.assertEqual(test_model.payload, get_resp.payload)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertEqual(secret.payload, resp.payload)
 
     @utils.parameterized_dataset({
         'list': [['boom']],
@@ -658,14 +568,13 @@ class SecretsTestCase(base.TestCase):
 
         Tests the negative cases of invalid types (list and int).
         """
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.payload = payload
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.payload = payload
 
         self.assertRaises(
             exceptions.PayloadException,
-            self.behaviors.store_secret,
-            test_model
+            secret.store
         )
 
     @utils.parameterized_dataset({
@@ -678,14 +587,13 @@ class SecretsTestCase(base.TestCase):
 
         These requests will fail with a value error before the request to the
         server is made"""
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.payload = payload
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.payload = payload
 
         self.assertRaises(
             exceptions.PayloadException,
-            self.behaviors.store_secret,
-            test_model
+            secret.store
         )
 
     @utils.parameterized_dataset({
@@ -710,16 +618,16 @@ class SecretsTestCase(base.TestCase):
         """Create secrets with a various valid expiration data."""
 
         timestamp = utils.create_timestamp_w_tz_and_offset(**kwargs)
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.expiration = timestamp
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.expiration = timestamp
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
-        get_resp = self.behaviors.get_secret(secret_ref)
-        self.assertIsNotNone(get_resp)
-        self.assertEqual(get_resp.name, test_model.name)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertIsNotNone(resp)
+        self.assertEqual(resp.name, secret.name)
 
     @utils.parameterized_dataset({
         'malformed_timezone': {
@@ -730,14 +638,13 @@ class SecretsTestCase(base.TestCase):
     def test_secret_create_defaults_invalid_expiration(self, **kwargs):
         """Create secrets with various invalid expiration data."""
         timestamp = utils.create_timestamp_w_tz_and_offset(**kwargs)
-        test_model = self.behaviors.create_secret(
-            secret_create_defaults_data)
-        test_model.expiration = timestamp
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.expiration = timestamp
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_secret,
-            test_model
+            secret.store
         )
 
         self.assertEqual(e.status_code, 400)
@@ -753,18 +660,19 @@ class SecretsTestCase(base.TestCase):
     @testcase.attr('positive')
     def test_secret_get_defaults_metadata_w_valid_name(self, name):
         """Covers getting and checking a secret's metadata."""
-        test_model = self.behaviors.create_secret(secret_create_defaults_data)
-        test_model.name = name
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.name = name
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
-        get_resp = self.behaviors.get_secret(secret_ref)
-        self.assertEqual(get_resp.status, "ACTIVE")
-        self.assertEqual(get_resp.name, name)
-        self.assertEqual(get_resp.mode, test_model.mode)
-        self.assertEqual(get_resp.algorithm, test_model.algorithm)
-        self.assertEqual(get_resp.bit_length, test_model.bit_length)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertEqual(resp.status, "ACTIVE")
+        self.assertEqual(resp.name, name)
+        self.assertEqual(resp.mode, secret.mode)
+        self.assertEqual(resp.algorithm, secret.algorithm)
+        self.assertEqual(resp.bit_length, secret.bit_length)
 
     @utils.parameterized_dataset({
         'symmetric': ['symmetric',
@@ -795,17 +703,18 @@ class SecretsTestCase(base.TestCase):
     })
     @testcase.attr('positive')
     def test_secret_get_defaults_secret_type(self, secret_type, algorithm,
-                                             bit_length, secret):
+                                             bit_length, payload):
         """Covers getting and checking a secret's metadata."""
-        test_model = self.behaviors.create_secret(secret_create_defaults_data)
-        test_model.secret_type = secret_type
-        test_model.algorithm = algorithm
-        test_model.bit_length = bit_length
-        test_model.payload = base64.b64encode(secret)
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.secret_type = secret_type
+        secret.algorithm = algorithm
+        secret.bit_length = bit_length
+        secret.payload = base64.b64encode(payload)
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
-        get_resp = self.behaviors.get_secret(secret_ref)
-        self.assertEqual(get_resp.status, "ACTIVE")
-        self.assertEqual(get_resp.secret_type, secret_type)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertEqual(resp.status, "ACTIVE")
+        self.assertEqual(resp.secret_type, secret_type)
