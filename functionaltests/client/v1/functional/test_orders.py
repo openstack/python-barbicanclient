@@ -18,8 +18,7 @@ import sys
 from testtools import testcase
 from functionaltests import utils
 from functionaltests.client import base
-from functionaltests.client.v1.behaviors import order_behaviors
-from functionaltests.client.v1.behaviors import secret_behaviors
+from functionaltests.common import cleanup
 from oslo_utils import timeutils
 
 from barbicanclient import exceptions
@@ -52,49 +51,44 @@ class OrdersTestCase(base.TestCase):
 
     def setUp(self):
         super(OrdersTestCase, self).setUp()
-        self.behaviors = order_behaviors.OrderBehaviors(
-            self.barbicanclient)
-        self.secret_behaviors = secret_behaviors.SecretBehaviors(
-            self.barbicanclient)
+        self.cleanup = cleanup.CleanUp(self.barbicanclient)
 
     def tearDown(self):
-        self.behaviors.delete_all_created_orders()
+        self.cleanup.delete_all_entities()
         super(OrdersTestCase, self).tearDown()
 
     @testcase.skip('Launchpad 1425667')
     @testcase.attr('positive')
     def test_create_order_defaults_wout_name(self):
         """Create an order without the name attribute."""
-
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.name = None
-        order_ref = self.behaviors.store_order(test_model)
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.name = None
+        order_ref = self.cleanup.add_entity(order)
         self.assertIsNotNone(order_ref)
 
-        get_resp = self.behaviors.get_order(order_ref)
-        self.assertEqual(get_resp.name, test_model.name)
+        order_resp = self.barbicanclient.orders.get(order_ref)
+        self.assertEqual(order.name, order.name)
 
     @testcase.skip('Launchpad 1420444')
     @testcase.attr('positive')
     def test_create_order_defaults_w_empty_name(self):
         """Create an order the name attribute an empty string."""
-
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.name = ""
-        order_ref = self.behaviors.store_order(test_model)
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.name = ""
+        order_ref = self.cleanup.add_entity(order)
         self.assertIsNotNone(order_ref)
 
-        get_resp = self.behaviors.get_order(order_ref)
-        self.assertEqual(get_resp.name, test_model.name)
+        order_resp = self.barbicanclient.orders.get(order_ref)
+        self.assertEqual(order_resp.name, order.name)
 
     @testcase.skip('Launchpad 1425667')
     @testcase.attr('positive')
     def test_create_order_defaults_payload_content_type_none(self):
         """Covers creating orders with various valid payload content types."""
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.payload_content_type = None
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.payload_content_type = None
 
-        order_ref = self.behaviors.store_order(test_model)
+        order_ref = self.cleanup.add_entity(order)
         self.assertIsNotNone(order_ref)
 
     @testcase.attr('positive')
@@ -105,16 +99,16 @@ class OrdersTestCase(base.TestCase):
         """
 
         # first create an order with defaults
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.name = ""
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.name = ""
 
-        order_ref = self.behaviors.store_order(test_model)
+        order_ref = self.cleanup.add_entity(order)
 
         # verify that the order was created successfully
         self.assertIsNotNone(order_ref)
 
         # given the order href, retrieve the order
-        order_resp = self.behaviors.get_order(order_ref)
+        order_resp = self.barbicanclient.orders.get(order_ref)
 
         # verify that the get was successful
         self.assertTrue(order_resp.status == "ACTIVE" or
@@ -122,9 +116,8 @@ class OrdersTestCase(base.TestCase):
 
         # verify the new secret's name matches the name in the secret ref
         # in the newly created order.
-        secret_resp = self.secret_behaviors.get_secret(
-            order_resp.secret_ref)
-        self.assertEqual(secret_resp.name, test_model.name)
+        secret_resp = self.barbicanclient.secrets.get(order_resp.secret_ref)
+        self.assertEqual(secret_resp.name, order.name)
 
     @testcase.attr('positive')
     def test_order_and_secret_metadata_same(self):
@@ -134,16 +127,15 @@ class OrdersTestCase(base.TestCase):
         secret metadata from a get on the secret are the same. Assumes
         that the order status will be active and not pending.
         """
-        test_model = self.behaviors.create_key_order(order_create_key_data)
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
 
-        order_ref = self.behaviors.store_order(test_model)
+        order_ref = self.cleanup.add_entity(order)
         self.assertIsNotNone(order_ref)
 
-        order_resp = self.behaviors.get_order(order_ref)
+        order_resp = self.barbicanclient.orders.get(order_ref)
         self.assertIsNotNone(order_resp.secret_ref)
-        secret_ref = order_resp.secret_ref
 
-        secret_resp = self.secret_behaviors.get_secret(secret_ref)
+        secret_resp = self.barbicanclient.secrets.get(order_resp.secret_ref)
 
         self.assertEqual(order_resp.name,
                          secret_resp.name,
@@ -164,9 +156,10 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('negative')
     def test_get_order_defaults_that_doesnt_exist(self):
         """Covers case of getting a non-existent order."""
-        ref = self.behaviors.base_url + '/orders/notauuid'
+        ref = self.barbicanclient.orders._api.endpoint_override + \
+            '/orders/notauuid'
         # try to get a non-existent order
-        e = self.assertRaises(ValueError, self.behaviors.get_order, ref)
+        e = self.assertRaises(ValueError, self.barbicanclient.orders.get, ref)
 
         # verify that the order get failed
         self.assertEqual(e.message, 'Order incorrectly specified.')
@@ -175,12 +168,13 @@ class OrdersTestCase(base.TestCase):
     def test_get_order_defaults_that_doesnt_exist_valid_uuid(self):
         """Covers case of getting a non-existent order with a valid UUID"""
         uuid = '54262d9d-4bc7-4821-8df0-dc2ca8e112bb'
-        ref = self.behaviors.base_url + '/orders/' + uuid
+        ref = self.barbicanclient.orders._api.endpoint_override + \
+            '/orders/' + uuid
 
         # try to get a non-existent order
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.get_order,
+            self.barbicanclient.orders.get,
             ref
         )
 
@@ -190,13 +184,12 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('negative')
     def test_create_order_nones(self):
         """Covers order creation with empty JSON."""
-
-        test_model = self.behaviors.create_key_order(order_create_nones_data)
+        order = self.barbicanclient.orders.create_key(
+            **order_create_nones_data)
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_order,
-            test_model
+            order.submit
         )
 
         self.assertEqual(e.status_code, 400)
@@ -204,18 +197,17 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('negative')
     def test_create_order_empty_entries(self):
         """Covers order creation with empty JSON."""
-
-        test_model = self.behaviors.create_key_order(order_create_nones_data)
-        test_model.name = ""
-        test_model.algorithm = ""
-        test_model.mode = ""
-        test_model.bit_length = ""
-        test_model.payload_content_type = ""
+        order = self.barbicanclient.orders.create_key(
+            **order_create_nones_data)
+        order.name = ""
+        order.algorithm = ""
+        order.mode = ""
+        order.bit_length = ""
+        order.payload_content_type = ""
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_order,
-            test_model
+            order.submit
         )
 
         self.assertEqual(e.status_code, 400)
@@ -223,16 +215,14 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('negative')
     def test_create_order_defaults_oversized_strings(self):
         """Covers order creation with empty JSON."""
-
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.name = base.TestCase.oversized_field
-        test_model.algorithm = base.TestCase.oversized_field
-        test_model.mode = base.TestCase.oversized_field
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.name = base.TestCase.oversized_field
+        order.algorithm = base.TestCase.oversized_field
+        order.mode = base.TestCase.oversized_field
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_order,
-            test_model
+            order.submit
         )
 
         self.assertEqual(e.status_code, 400)
@@ -250,14 +240,14 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('positive')
     def test_create_order_defaults_valid_bit_length(self, bit_length):
         """Covers creating orders with various valid bit lengths."""
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.bit_length = bit_length
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.bit_length = bit_length
 
-        order_ref = self.behaviors.store_order(test_model)
+        order_ref = self.cleanup.add_entity(order)
         self.assertIsNotNone(order_ref)
 
-        get_resp = self.behaviors.get_order(order_ref)
-        self.assertEqual(get_resp.bit_length, test_model.bit_length)
+        order_resp = self.barbicanclient.orders.get(order_ref)
+        self.assertEqual(order_resp.bit_length, order.bit_length)
 
     @utils.parameterized_dataset({
         'negative_maxint': [-sys.maxint],
@@ -275,13 +265,12 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('negative')
     def test_create_order_defaults_invalid_bit_length(self, bit_length):
         """Covers creating orders with various invalid bit lengths."""
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.bit_length = bit_length
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.bit_length = bit_length
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_order,
-            test_model
+            order.submit
         )
         self.assertEqual(e.status_code, 400)
 
@@ -294,14 +283,14 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('positive')
     def test_create_order_defaults_valid_name(self, name):
         """Covers creating orders with various valid names."""
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.name = name
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.name = name
 
-        order_ref = self.behaviors.store_order(test_model)
+        order_ref = self.cleanup.add_entity(order)
         self.assertIsNotNone(order_ref)
 
-        get_resp = self.behaviors.get_order(order_ref)
-        self.assertEqual(get_resp.name, test_model.name)
+        order_resp = self.barbicanclient.orders.get(order_ref)
+        self.assertEqual(order_resp.name, order.name)
 
     @utils.parameterized_dataset({
         'int': [123]
@@ -309,13 +298,12 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('negative')
     def test_create_order_defaults_invalid_name(self, name):
         """Covers creating orders with various invalid names."""
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.name = name
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.name = name
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_order,
-            test_model
+            order.submit
         )
 
         self.assertEqual(e.status_code, 400)
@@ -326,14 +314,14 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('positive')
     def test_create_order_defaults_valid_mode(self, mode):
         """Covers creating orders with various valid modes."""
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.mode = mode
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.mode = mode
 
-        order_ref = self.behaviors.store_order(test_model)
+        order_ref = self.cleanup.add_entity(order)
         self.assertIsNotNone(order_ref)
 
-        get_resp = self.behaviors.get_order(order_ref)
-        self.assertEqual(get_resp.mode, test_model.mode)
+        order_resp = self.barbicanclient.orders.get(order_ref)
+        self.assertEqual(order_resp.mode, order.mode)
 
     @utils.parameterized_dataset({
         'int': [123]
@@ -341,13 +329,12 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('negative')
     def test_create_order_defaults_invalid_mode(self, mode):
         """Covers creating orders with various invalid modes."""
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.mode = mode
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.mode = mode
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_order,
-            test_model
+            order.submit
         )
         self.assertEqual(e.status_code, 400)
 
@@ -357,15 +344,14 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('positive')
     def test_create_order_defaults_valid_algorithm(self, algorithm):
         """Covers creating orders with various valid algorithms."""
-        test_model = self.behaviors.create_key_order(
-            order_create_key_data)
-        test_model.algorithm = algorithm
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.algorithm = algorithm
 
-        order_ref = self.behaviors.store_order(test_model)
+        order_ref = self.cleanup.add_entity(order)
         self.assertIsNotNone(order_ref)
 
-        get_resp = self.behaviors.get_order(order_ref)
-        self.assertEqual(get_resp.algorithm, test_model.algorithm)
+        order_resp = self.barbicanclient.orders.get(order_ref)
+        self.assertEqual(order_resp.algorithm, order.algorithm)
 
     @utils.parameterized_dataset({
         'int': [123]
@@ -373,13 +359,12 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('negative')
     def test_create_order_defaults_invalid_algorithm(self, algorithm):
         """Covers creating orders with various invalid algorithms."""
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.algorithm = algorithm
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.algorithm = algorithm
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_order,
-            test_model
+            order.submit
         )
 
         self.assertEqual(e.status_code, 400)
@@ -392,15 +377,15 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('positive')
     def test_create_order_defaults_valid_payload_content_type(self, pct):
         """Covers order creation with various valid payload content types."""
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.payload_content_type = pct
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.payload_content_type = pct
 
-        order_ref = self.behaviors.store_order(test_model)
+        order_ref = self.cleanup.add_entity(order)
         self.assertIsNotNone(order_ref)
 
-        get_resp = self.behaviors.get_order(order_ref)
-        self.assertEqual(get_resp.payload_content_type,
-                         test_model.payload_content_type)
+        order_resp = self.barbicanclient.orders.get(order_ref)
+        self.assertEqual(order_resp.payload_content_type,
+                         order.payload_content_type)
 
     @utils.parameterized_dataset({
         'int': [123],
@@ -412,13 +397,12 @@ class OrdersTestCase(base.TestCase):
     @testcase.attr('negative')
     def test_create_order_defaults_invalid_payload_content_type(self, pct):
         """Covers order creation with various invalid payload content types."""
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.payload_content_type = pct
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.payload_content_type = pct
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_order,
-            test_model
+            order.submit
         )
 
         self.assertEqual(e.status_code, 400)
@@ -448,15 +432,15 @@ class OrdersTestCase(base.TestCase):
         date = timeutils.parse_isotime(timestamp)
         date = date.astimezone(pytz.utc)
 
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.expiration = timestamp
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.expiration = timestamp
 
-        order_ref = self.behaviors.store_order(test_model)
+        order_ref = self.cleanup.add_entity(order)
         self.assertIsNotNone(order_ref)
 
-        get_resp = self.behaviors.get_order(order_ref)
-        self.assertIsNotNone(get_resp)
-        self.assertEqual(date, get_resp.expiration)
+        order_resp = self.barbicanclient.orders.get(order_ref)
+        self.assertIsNotNone(order_resp)
+        self.assertEqual(date, order_resp.expiration)
 
     @utils.parameterized_dataset({
         'malformed_timezone': {
@@ -467,13 +451,12 @@ class OrdersTestCase(base.TestCase):
     def test_create_order_defaults_invalid_expiration(self, **kwargs):
         """Covers creating orders with various invalid expiration data."""
         timestamp = utils.create_timestamp_w_tz_and_offset(**kwargs)
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        test_model.expiration = timestamp
+        order = self.barbicanclient.orders.create_key(**order_create_key_data)
+        order.expiration = timestamp
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_order,
-            test_model
+            order.submit
         )
 
         self.assertEqual(e.status_code, 400)
