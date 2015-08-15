@@ -15,8 +15,7 @@
 from testtools import testcase
 from functionaltests import utils
 from functionaltests.client import base
-from functionaltests.client.v1.behaviors import container_behaviors
-from functionaltests.client.v1.behaviors import secret_behaviors
+from functionaltests.common import cleanup
 
 from barbicanclient import exceptions
 
@@ -61,11 +60,7 @@ class BaseContainersTestCase(base.TestCase):
     def setUp(self):
         super(BaseContainersTestCase, self).setUp()
 
-        self.secret_behaviors = secret_behaviors.SecretBehaviors(
-            self.barbicanclient)
-
-        self.behaviors = container_behaviors.ContainerBehaviors(
-            self.barbicanclient)
+        self.cleanup = cleanup.CleanUp(self.barbicanclient)
 
         # Set up three secrets
         self.secret_ref_1, self.secret_1 = self._create_a_secret()
@@ -90,14 +85,13 @@ class BaseContainersTestCase(base.TestCase):
         It should be noted that delete all secrets must be called before
         delete containers.
         """
-        self.secret_behaviors.delete_all_created_secrets()
-        self.behaviors.delete_all_created_containers()
+        self.cleanup.delete_all_entities()
         super(BaseContainersTestCase, self).tearDown()
 
     def _create_a_secret(self):
-        secret = self.secret_behaviors.create_secret(
-            create_secret_defaults_data)
-        secret_ref = self.secret_behaviors.store_secret(secret)
+        secret = self.barbicanclient.secrets.create(
+            **create_secret_defaults_data)
+        secret_ref = self.cleanup.add_entity(secret)
 
         return secret_ref, secret
 
@@ -108,11 +102,11 @@ class GenericContainersTestCase(BaseContainersTestCase):
     @testcase.attr('positive')
     def test_create_container_defaults_none_secret_name(self):
         """Covers creating a container with None as a secret name."""
-        test_model = self.behaviors.create_generic_container(
-            create_container_defaults_data)
-        test_model.name = None
+        container = self.barbicanclient.containers.create(
+            **create_container_defaults_data)
+        container.name = None
 
-        container_ref = self.behaviors.store_container(test_model)
+        container_ref = self.cleanup.add_entity(container)
         self.assertIsNotNone(container_ref)
 
     @testcase.attr('negative')
@@ -122,13 +116,13 @@ class GenericContainersTestCase(BaseContainersTestCase):
                    'secret_2': self.secret_1,
                    'secret_3': self.secret_1}
 
-        test_model = self.behaviors.create_generic_container(
-            create_container_defaults_data, secrets=secrets)
+        create_container_defaults_data['secrets'] = secrets
+        container = self.barbicanclient.containers.create(
+            **create_container_defaults_data)
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_container,
-            test_model
+            container.store
         )
 
         self.assertEqual(e.status_code, 400)
@@ -140,9 +134,9 @@ class GenericContainersTestCase(BaseContainersTestCase):
         This should return a container incorrectly specified error since
         the container does not have a correctly formatted UUID
         """
-        base_url = self.behaviors.base_url
+        base_url = self.barbicanclient.containers._api.endpoint_override
         url = base_url + '/containers/notauuid'
-        e = self.assertRaises(ValueError, self.behaviors.get_container,
+        e = self.assertRaises(ValueError, self.barbicanclient.containers.get,
                               url)
 
         self.assertEqual(e.message, 'Container incorrectly specified.')
@@ -153,13 +147,13 @@ class GenericContainersTestCase(BaseContainersTestCase):
 
         This should return a 404.
         """
-        base_url = self.behaviors.base_url
+        base_url = self.barbicanclient.containers._api.endpoint_override
         uuid = 'de305d54-75b4-431b-cccc-eb6b9e546013'
         url = base_url + '/containers/' + uuid
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.get_container,
+            self.barbicanclient.containers.get,
             url
         )
 
@@ -172,9 +166,9 @@ class GenericContainersTestCase(BaseContainersTestCase):
         This should return a container incorrectly specified error since
         the container does not have a correctly formatted UUID
         """
-        base_url = self.behaviors.base_url
+        base_url = self.barbicanclient.containers._api.endpoint_override
         url = base_url + '/containers/notauuid'
-        e = self.assertRaises(ValueError, self.behaviors.get_container,
+        e = self.assertRaises(ValueError, self.barbicanclient.containers.get,
                               url)
 
         self.assertEqual(e.message, 'Container incorrectly specified.')
@@ -186,12 +180,12 @@ class GenericContainersTestCase(BaseContainersTestCase):
         This should return a 404.
         """
         uuid = 'de305d54-75b4-431b-cccc-eb6b9e546013'
-        base_url = self.behaviors.base_url
+        base_url = self.barbicanclient.containers._api.endpoint_override
         url = base_url + '/containers/' + uuid
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.get_container,
+            self.barbicanclient.containers.get,
             url
         )
 
@@ -206,22 +200,22 @@ class GenericContainersTestCase(BaseContainersTestCase):
             secret_ref, secret = self._create_a_secret()
             secrets['other_secret{0}'.format(i)] = secret
 
-        test_model = self.behaviors.create_generic_container(
-            create_container_defaults_data,
-            secrets=secrets)
+        create_container_defaults_data['secrets'] = secrets
+        container = self.barbicanclient.containers.create(
+            **create_container_defaults_data)
 
-        container_ref = self.behaviors.store_container(test_model)
+        container_ref = self.cleanup.add_entity(container)
         self.assertIsNotNone(container_ref)
 
     @utils.parameterized_dataset(accepted_str_values)
     @testcase.attr('positive')
     def test_create_container_defaults_name(self, name):
         """Covers creating generic containers with various names."""
-        test_model = self.behaviors.create_generic_container(
-            create_container_defaults_data)
-        test_model.name = name
+        container = self.barbicanclient.containers.create(
+            **create_container_defaults_data)
+        container.name = name
 
-        container_ref = self.behaviors.store_container(test_model)
+        container_ref = self.cleanup.add_entity(container)
         self.assertIsNotNone(container_ref)
 
     @utils.parameterized_dataset(accepted_str_values)
@@ -230,15 +224,15 @@ class GenericContainersTestCase(BaseContainersTestCase):
         """Covers creating containers with various secret ref names."""
         secrets = {name: self.secret_1}
 
-        test_model = self.behaviors.create_generic_container(
-            create_container_defaults_data,
-            secrets=secrets)
+        create_container_defaults_data['secrets'] = secrets
+        container = self.barbicanclient.containers.create(
+            **create_container_defaults_data)
 
-        container_ref = self.behaviors.store_container(test_model)
+        container_ref = self.cleanup.add_entity(container)
         self.assertIsNotNone(container_ref)
 
-        get_resp = self.behaviors.get_container(container_ref)
-        self.assertIsNotNone(get_resp.secret_refs.get(name))
+        container_resp = self.barbicanclient.containers.get(container_ref)
+        self.assertIsNotNone(container_resp.secret_refs.get(name))
 
 
 @utils.parameterized_test_case
@@ -246,31 +240,30 @@ class RSAContainersTestCase(BaseContainersTestCase):
     @testcase.attr('positive')
     def test_create_containers_rsa_no_passphrase(self):
         """Covers creating an rsa container without a passphrase."""
+        create_container_rsa_data['private_key_passphrase'] = None
+        container = self.barbicanclient.containers.create_rsa(
+            **create_container_rsa_data)
 
-        test_model = self.behaviors.create_rsa_container(
-            create_container_rsa_data,
-            disable_passphrase=True)
-
-        container_ref = self.behaviors.store_container(test_model)
+        container_ref = self.cleanup.add_entity(container)
         self.assertIsNotNone(container_ref)
 
-        get_resp = self.behaviors.get_container(container_ref)
-        self.assertIsNone(get_resp.private_key_passphrase)
-        self.assertEqual(len(get_resp.secrets), 2)
+        container_resp = self.barbicanclient.containers.get(container_ref)
+        self.assertIsNone(container_resp.private_key_passphrase)
+        self.assertEqual(len(container_resp.secrets), 2)
 
     @utils.parameterized_dataset(accepted_str_values)
     @testcase.attr('positive')
     def test_create_container_rsa_name(self, name):
         """Covers creating rsa containers with various names."""
-        test_model = self.behaviors.create_rsa_container(
-            create_container_rsa_data)
-        test_model.name = name
+        container = self.barbicanclient.containers.create_rsa(
+            **create_container_rsa_data)
+        container.name = name
 
-        container_ref = self.behaviors.store_container(test_model)
+        container_ref = self.cleanup.add_entity(container)
         self.assertIsNotNone(container_ref)
 
-        get_resp = self.behaviors.get_container(container_ref)
-        self.assertEqual(get_resp.name, name)
+        container_resp = self.barbicanclient.containers.get(container_ref)
+        self.assertEqual(container_resp.name, name)
 
     @testcase.attr('negative')
     def test_create_rsa_invalid_key_names(self):
@@ -282,8 +275,9 @@ class RSAContainersTestCase(BaseContainersTestCase):
             "secret3": self.secret_ref_3
         }
 
-        e = self.assertRaises(TypeError, self.behaviors.create_rsa_container,
-                              incorrect_names_rsa_container)
+        e = self.assertRaises(TypeError,
+                              self.barbicanclient.containers.create_rsa,
+                              **incorrect_names_rsa_container)
 
         self.assertIn('got an unexpected keyword argument', e.message)
 
@@ -298,13 +292,12 @@ class RSAContainersTestCase(BaseContainersTestCase):
                                        "private_key_passphrase": self.secret_2,
                                        }
 
-        test_model = self.behaviors.create_rsa_container(
-            no_public_key_rsa_container)
+        container = self.barbicanclient.containers.create_rsa(
+            **no_public_key_rsa_container)
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_container,
-            test_model
+            container.store
         )
 
         self.assertEqual(e.status_code, 400)
@@ -320,13 +313,12 @@ class RSAContainersTestCase(BaseContainersTestCase):
             "public_key": self.secret_1,
             "private_key_passphrase": self.secret_2}
 
-        test_model = self.behaviors.create_rsa_container(
-            no_private_key_rsa_container)
+        container = self.barbicanclient.containers.create_rsa(
+            **no_private_key_rsa_container)
 
         e = self.assertRaises(
             exceptions.HTTPClientError,
-            self.behaviors.store_container,
-            test_model
+            container.store
         )
 
         self.assertEqual(e.status_code, 400)
