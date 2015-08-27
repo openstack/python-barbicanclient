@@ -149,6 +149,8 @@ The command line client is self-documenting. Use the --help flag to access the u
       --os-key <key>        Defaults to env[OS_KEY].
       --timeout <seconds>   Set request timeout (in seconds).
 
+    See "barbican help COMMAND" for help on a specific command.
+
     Commands:
       complete       print bash completion command
       container create  Store a container in Barbican.

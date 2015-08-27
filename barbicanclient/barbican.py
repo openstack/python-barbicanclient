@@ -285,6 +285,8 @@ class Barbican(app.App):
                             metavar='<barbican-api-version>',
                             default=client.env('BARBICAN_API_VERSION'),
                             help='Defaults to env[BARBICAN_API_VERSION].')
+        parser.epilog = ('See "barbican help COMMAND" for help '
+                         'on a specific command.')
         session.Session.register_cli_options(parser)
         return parser
 
