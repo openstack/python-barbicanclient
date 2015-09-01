@@ -71,6 +71,21 @@ class GetSecret(show.ShowOne):
             return entity._get_formatted_entity()
 
 
+class UpdateSecret(show.ShowOne):
+    """Update a secret with no payload in Barbican."""
+
+    def get_parser(self, prog_name):
+        parser = super(UpdateSecret, self).get_parser(prog_name)
+        parser.add_argument('URI', help='The URI reference for the secret.')
+        parser.add_argument('payload', help='the unencrypted secret')
+
+        return parser
+
+    def take_action(self, args):
+        self.app.client.secrets.update(args.URI,
+                                       args.payload)
+
+
 class ListSecret(lister.Lister):
     """List secrets."""
 

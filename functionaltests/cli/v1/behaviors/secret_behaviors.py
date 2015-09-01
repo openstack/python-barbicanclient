@@ -25,6 +25,22 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
         self.LOG = logging.getLogger(type(self).__name__)
         self.secret_hrefs_to_delete = []
 
+    def update_secret(self,
+                      secret_href,
+                      payload):
+        """ Update a secret
+
+        :param secret_href the href to the secret to update.
+        :param payload the payload to put into the secret.
+        :param payload_content_type the payload content type.
+        """
+        argv = ['secret', 'update']
+        self.add_auth_and_endpoint(argv)
+        argv.extend([secret_href])
+        argv.extend([payload])
+
+        stdout, stderr = self.issue_barbican_command(argv)
+
     def delete_secret(self, secret_href):
         """ Delete a secret
 

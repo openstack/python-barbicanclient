@@ -29,6 +29,7 @@ class SecretTestCase(CmdLineTestCase):
         super(SecretTestCase, self).setUp()
         self.secret_behaviors = SecretBehaviors()
         self.expected_payload = "Top secret payload for secret smoke tests"
+        self.payload_content_type = "text/plain"
 
     def tearDown(self):
         super(SecretTestCase, self).tearDown()
@@ -83,6 +84,19 @@ class SecretTestCase(CmdLineTestCase):
 
         secret = self.secret_behaviors.get_secret(secret_href)
         self.assertEqual(secret_href, secret['Secret href'])
+
+    @testcase.attr('positive')
+    def test_secret_update(self):
+        secret_href = self.secret_behaviors.store_secret(
+            payload=None)
+
+        payload = 'time for an ice cold!!!'
+        self.assertIsNotNone(secret_href)
+        self.secret_behaviors.update_secret(secret_href,
+                                            payload)
+
+        payload_update = self.secret_behaviors.get_secret_payload(secret_href)
+        self.assertEqual(payload, payload_update)
 
     @testcase.attr('positive')
     def test_secret_list(self):

@@ -59,6 +59,17 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
 
         return resp
 
+    def update_secret(self, secret_ref, payload):
+        """Updates a secret.
+
+        :param secret_ref: HATEOS ref of the secret to be updated
+        :return: It will return a string
+        """
+
+        resp = self.client.secrets.update(secret_ref, payload)
+
+        return resp
+
     def get_secrets(self, limit=10, offset=0):
         """Handles getting a list of secrets.
 

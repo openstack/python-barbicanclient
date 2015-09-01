@@ -145,24 +145,80 @@ class SecretsTestCase(base.TestCase):
 
         self.assertEqual(e.status_code, 404)
 
+    @utils.parameterized_dataset({
+        'text/plain_payload': {
+            'payload': 'time for an ice cold!!'},
+        'application/octet-stream_payload': {
+            'payload': 'abcdefg=='}
+    })
+    @testcase.attr('positive')
+    def test_secret_update_nones_content_type(self,
+                                              payload):
+        """Update secret, secret will start with payload of None.
+
+        Secret will be created with even though
+        the payload is None, then it will be updated.
+        """
+
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.payload = None
+
+        secret_ref = self.behaviors.store_secret(test_model)
+        self.assertIsNotNone(secret_ref)
+
+        test_model.payload = payload
+        resp = self.behaviors.update_secret(secret_ref, payload)
+
+        secret = self.behaviors.get_secret(secret_ref)
+        payload = secret.payload
+        payload_content_type = secret.payload_content_type
+        self.assertEqual(secret.payload, payload)
+        self.assertEqual(secret.payload_content_type, payload_content_type)
+
+    @utils.parameterized_dataset({
+        'text/plain_payload': {
+            'payload_update': 'time for the Texas heat!!!',
+            'payload': 'time for an ice cold!!!'},
+        'application/octet-stream_payload': {
+            'payload_update': 'hijklmn==',
+            'payload': 'abcdefg=='}
+    })
     @testcase.attr('negative')
+    def test_secret_update_provided_content_type(self,
+                                                 payload_update,
+                                                 payload):
+        """Update secret, secret will start with a payload that is not None.
+
+        Secret will be created with a not None payload, then it
+        will try to update. Update will fail.
+        """
+        test_model = self.behaviors.create_secret(
+            secret_create_defaults_data)
+        test_model.payload = payload
+
+        secret_ref = self.behaviors.store_secret(test_model)
+        self.assertIsNotNone(secret_ref)
+
+        self.assertRaises(exceptions.HTTPClientError,
+                          self.behaviors.update_secret,
+                          secret_ref,
+                          payload_update)
+
+    @testcase.attr('positive')
     def test_secret_create_nones_content_type(self):
         """Create secret with valid content type but no payload.
 
-        Secret will not create due to None in the payload even if content
-        type is valid.
+        Secret will be created with valid content even though
+        the payload is None.
         """
         test_model = self.behaviors.create_secret(
             secret_create_defaults_data)
         test_model.payload = None
 
-        self.assertRaises(
-            exceptions.PayloadException,
-            self.behaviors.store_secret,
-            test_model
-        )
+        self.assertEqual(test_model.payload, None)
 
-    @testcase.attr('negative')
+    @testcase.attr('positive')
     def test_secret_create_nones(self):
         """Cover case of posting with all nones in the Secret object."""
         test_model = self.behaviors.create_secret(
@@ -171,11 +227,7 @@ class SecretsTestCase(base.TestCase):
         test_model.payload_content_encoding = None
         test_model.payload_content_type = None
 
-        self.assertRaises(
-            exceptions.PayloadException,
-            self.behaviors.store_secret,
-            test_model
-        )
+        self.assertEqual(test_model.payload, None)
 
     @testcase.attr('negative')
     def test_secret_get_secret_doesnt_exist(self):
@@ -618,7 +670,6 @@ class SecretsTestCase(base.TestCase):
 
     @utils.parameterized_dataset({
         'empty': [''],
-        'none': [None],
         'zero': [0]
     })
     @testcase.attr('negative')
