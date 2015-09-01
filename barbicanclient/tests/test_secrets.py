@@ -18,7 +18,7 @@ import json
 from oslo_utils import timeutils
 
 from barbicanclient.tests import test_client
-from barbicanclient import secrets, base
+from barbicanclient import secrets, base, exceptions
 
 
 class SecretData(object):
@@ -416,6 +416,30 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
     def test_should_fail_get_invalid_secret(self):
         self.assertRaises(ValueError, self.manager.get,
                           **{'secret_ref': '12345'})
+
+    def test_should_fail_update_zero(self):
+        data = {'secret_ref': self.entity_href}
+        self.responses.post(self.entity_base + '/', json=data)
+
+        secret = self.manager.create()
+        secret.payload = None
+        secret.store()
+
+        self.responses.put(self.entity_href, status_code=204)
+        secret.payload = 0
+
+        # Verify that an error is thrown
+        self.assertRaises(exceptions.PayloadException, secret.update)
+
+    def test_should_fail_store_zero(self):
+        data = {'secret_ref': self.entity_href}
+        self.responses.post(self.entity_base + '/', json=data)
+
+        secret = self.manager.create()
+        secret.name = self.secret.name
+        secret.payload = 0
+
+        self.assertRaises(exceptions.PayloadException, secret.store)
 
     def test_should_fail_decrypt_no_content_types(self):
         data = self.secret.get_dict(self.entity_href)
