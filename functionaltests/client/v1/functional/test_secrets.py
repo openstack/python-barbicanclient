@@ -650,6 +650,35 @@ class SecretsTestCase(base.TestCase):
         self.assertEqual(e.status_code, 400)
 
     @utils.parameterized_dataset({
+        'text/plain':
+            [
+                u'meowwwwwwwmeowwwwwww',
+                'text/plain'],
+        'application/octet-stream':
+            [
+                base64.b64encode(
+                    b'F\x130\x89f\x8e\xd9\xa1\x0e\x1f\r\xf67uu\x8b'),
+                'application/octet-stream'
+            ]
+    })
+    @testcase.attr('positive')
+    def test_secret_update_nones(self, payload, payload_content_type):
+        """Cover case of updating with all nones in the Secret object."""
+        secret = self.barbicanclient.secrets.create(**secret_create_nones_data)
+        secret.payload = None
+        secret.payload_content_type = None
+
+        secret_ref = self.cleanup.add_entity(secret)
+        self.assertIsNotNone(secret_ref)
+
+        secret.payload = payload
+        secret.update()
+
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertEqual(resp.payload, payload)
+        self.assertEqual(resp.payload_content_type, payload_content_type)
+
+    @utils.parameterized_dataset({
         'alphanumeric': ['1f34ds'],
         'punctuation': ['~!@#$%^&*()_+`-={}[]|:;<>,.?'],
         'uuid': ['54262d9d-4bc7-4821-8df0-dc2ca8e112bb'],
