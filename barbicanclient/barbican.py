@@ -34,7 +34,9 @@ from barbicanclient import client
 from barbicanclient import version
 
 
-_DEFAULT_IDENTITY_API_VERSION = '3.0'
+_DEFAULT_IDENTITY_API_VERSION = '3'
+_IDENTITY_API_VERSION_2 = ['2', '2.0']
+_IDENTITY_API_VERSION_3 = ['3']
 
 
 class Barbican(app.App):
@@ -125,10 +127,19 @@ class Barbican(app.App):
         kwargs = self.build_kwargs_based_on_version(args, api_version)
         kwargs.update(kwargs_dict)
 
-        if not api_version or api_version == _DEFAULT_IDENTITY_API_VERSION:
-            method = v3.Token if auth_type == 'token' else v3.Password
-        else:
+        if api_version in _IDENTITY_API_VERSION_2:
             method = v2.Token if auth_type == 'token' else v2.Password
+        else:
+            if not api_version or api_version not in _IDENTITY_API_VERSION_3:
+                self.stderr.write(
+                    "WARNING: The identity version <{0}> is not in supported "
+                    "versions <{1}>, falling back to <{2}>.".format(
+                        api_version,
+                        _IDENTITY_API_VERSION_2 + _IDENTITY_API_VERSION_3,
+                        _DEFAULT_IDENTITY_API_VERSION
+                    )
+                )
+            method = v3.Token if auth_type == 'token' else v3.Password
 
         auth = method(**kwargs)
 
@@ -217,7 +228,7 @@ class Barbican(app.App):
                             default=client.env('OS_IDENTITY_API_VERSION'),
                             help='Specify Identity API version to use. '
                             'Defaults to env[OS_IDENTITY_API_VERSION]'
-                            ' or 3.0.')
+                            ' or 3.')
         parser.add_argument('--os-auth-url', '-A',
                             metavar='<auth-url>',
                             default=client.env('OS_AUTH_URL'),

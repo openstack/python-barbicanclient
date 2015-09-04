@@ -109,7 +109,7 @@ The command line client is self-documenting. Use the --help flag to access the u
       --no-auth, -N         Do not use authentication.
       --os-identity-api-version <identity-api-version>
                             Specify Identity API version to use. Defaults to
-                            env[OS_IDENTITY_API_VERSION] or 3.0.
+                            env[OS_IDENTITY_API_VERSION] or 3.
 
       --os-auth-url <auth-url>, -A <auth-url>
                             Defaults to env[OS_AUTH_URL].

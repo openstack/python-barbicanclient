@@ -57,7 +57,7 @@ class BaseBehaviors(object):
             arg_list.extend(
                 ['--os-project-domain-name',
                  CONF.keymanager.project_domain_name])
-            arg_list.extend(['--os-identity-api-version', '3.0'])
+            arg_list.extend(['--os-identity-api-version', '3'])
         else:
             arg_list.extend(['--os-auth-url', CONF.identity.uri])
             arg_list.extend(['--os-tenant-name', CONF.keymanager.project_name])

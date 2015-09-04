@@ -47,7 +47,7 @@ V3_MEDIA_TYPES = [{'base': 'application/json',
                   {'base': 'application/xml',
                    'type': 'application/vnd.openstack.identity-v3+xml'}]
 
-V3_VERSION = {'id': 'v3.0',
+V3_VERSION = {'id': 'v3',
               'links': [{'href': V3_URL, 'rel': 'self'}],
               'media-types': V3_MEDIA_TYPES,
               'status': 'stable',
