@@ -24,7 +24,7 @@ The full api is `documented in the official OpenStack documentation site <http:/
 Here's an example of storing a secret in barbican using the python library
 with keystone authentication:
 
-.. code:: pycon
+.. code:: python
 
     >>> from keystoneclient.auth import identity
     >>> from keystoneclient import session
@@ -66,6 +66,12 @@ with keystone authentication:
     >>> print(retrieved_secret.payload)
     the magic words are squeamish ossifrage
 
+.. note::
+
+    In order for the example above to work Barbican must be running and
+    configured to use the Keystone Middleware. For more information on
+    setting this up please visit:
+    http://docs.openstack.org/developer/barbican/setup/keystone.html [1]_
 
 barbican - Command Line Client
 ------------------------------
@@ -172,3 +178,6 @@ The command line client is self-documenting. Use the --help flag to access the u
 * Documentation: http://docs.openstack.org/developer/python-barbicanclient
 * Source: http://git.openstack.org/cgit/openstack/python-barbicanclient
 * Bugs: http://bugs.launchpad.net/python-barbicanclient
+
+.. [1] Documentation in this link is currently incomplete. Please use the
+`devstack setup. <http://docs.openstack.org/developer/barbican/setup/devstack.html>`__
