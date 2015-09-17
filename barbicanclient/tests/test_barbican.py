@@ -48,7 +48,7 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
         return client
 
     def test_should_show_usage_with_help_flag(self):
-        e = self.assertRaises(SystemExit, self.parser.parse_known_args, ['-h'])
+        e = self.assertRaises(SystemExit, self.barbican.run, ['-h'])
         self.assertEqual(0, e.code)
         self.assertIn('usage', self.captured_stdout.getvalue())
 
