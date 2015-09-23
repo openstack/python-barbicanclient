@@ -16,7 +16,7 @@ import base64
 
 from testtools import testcase
 from functionaltests.client import base
-from functionaltests.client.v1.behaviors import secret_behaviors
+from functionaltests.common import cleanup
 from functionaltests.common import keys
 from functionaltests import utils
 
@@ -46,18 +46,19 @@ class SecretsTestCase(base.TestCase):
 
     def setUp(self):
         super(SecretsTestCase, self).setUp()
-        self.behaviors = secret_behaviors.SecretBehaviors(self.barbicanclient)
+        self.cleanup = cleanup.CleanUp(self.barbicanclient)
 
     def tearDown(self):
-        self.behaviors.delete_all_created_secrets()
+        self.cleanup.delete_all_entities()
         super(SecretsTestCase, self).tearDown()
 
     @testcase.attr('positive')
     def test_create_secret_defaults(self):
         """Creates a secret with default values"""
-        test_model = self.behaviors.create_secret(secret_create_defaults_data)
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
     @testcase.attr('positive')
@@ -96,51 +97,54 @@ class SecretsTestCase(base.TestCase):
         secret_data['algorithm'] = algorithm
         secret_data['bit_length'] = bit_length
         secret_data['payload'] = base64.b64encode(secret)
-        test_model = self.behaviors.create_secret(secret_create_defaults_data)
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
     @testcase.attr('positive')
     def test_secret_create_defaults_no_expiration(self):
         """Covers creating a secret without an expiration."""
-        test_model = self.behaviors.create_secret(secret_create_defaults_data)
-        test_model.expiration = None
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret.expiration = None
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
 
     @testcase.attr('positive')
     def test_secret_delete_defaults(self):
         """Covers deleting a secret."""
-        test_model = self.behaviors.create_secret(secret_create_defaults_data)
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = secret.store()
 
-        del_response = self.behaviors.delete_secret(secret_ref)
+        del_response = self.barbicanclient.secrets.delete(secret_ref)
         self.assertIsNone(del_response)
 
     @testcase.attr('positive')
     def test_secret_delete_minimal_secret_w_no_metadata(self):
         """Covers deleting a secret with nones data."""
-        test_model = self.behaviors.create_secret(secret_create_nones_data)
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_nones_data)
 
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret_ref = secret.store()
         self.assertIsNotNone(secret_ref)
 
-        del_resp = self.behaviors.delete_secret(secret_ref)
+        del_resp = self.barbicanclient.secrets.delete(secret_ref)
         self.assertIsNone(del_resp)
 
     @testcase.attr('positive')
     def test_secret_get_defaults_payload(self):
         """Covers getting a secret's payload data."""
-        test_model = self.behaviors.create_secret(secret_create_defaults_data)
-        secret_ref = self.behaviors.store_secret(test_model)
+        secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+        secret_ref = self.cleanup.add_entity(secret)
 
-        get_resp = self.behaviors.get_secret(
-            secret_ref
-        )
-        self.assertEqual(test_model.payload, get_resp.payload)
+        secret_resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertEqual(secret.payload, secret_resp.payload)
 
     @testcase.attr('positive')
     def test_secrets_get_defaults_multiple_secrets(self):
@@ -153,10 +157,11 @@ class SecretsTestCase(base.TestCase):
         total = 10
 
         for i in range(0, total + 1):
-            test_model = self.behaviors.create_secret(
-                secret_create_defaults_data)
-            self.behaviors.store_secret(test_model)
+            secret = self.barbicanclient.secrets.create(
+                **secret_create_defaults_data)
+            self.cleanup.add_entity(secret)
 
-        secret_list = self.behaviors.get_secrets(limit=limit,
-                                                 offset=offset)
+        secret_list = self.barbicanclient.secrets.list(limit=limit,
+                                                       offset=offset)
+
         self.assertEqual(len(secret_list), limit)
