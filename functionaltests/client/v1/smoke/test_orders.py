@@ -16,7 +16,7 @@ from testtools import testcase
 
 from functionaltests import utils
 from functionaltests.client import base
-from functionaltests.client.v1.behaviors import order_behaviors
+from functionaltests.common import cleanup
 
 
 order_create_key_data = {
@@ -50,19 +50,18 @@ class OrdersTestCase(base.TestCase):
 
     def setUp(self):
         super(OrdersTestCase, self).setUp()
-        self.behaviors = order_behaviors.OrderBehaviors(
-            self.barbicanclient)
+        self.cleanup = cleanup.CleanUp(self.barbicanclient)
 
     def tearDown(self):
-        self.behaviors.delete_all_created_orders()
+        self.cleanup.delete_all_entities()
         super(OrdersTestCase, self).tearDown()
 
     @testcase.attr('positive')
     def test_create_order_defaults(self):
         """Covers simple order creation."""
-
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        order_ref = self.behaviors.store_order(test_model)
+        order = self.barbicanclient.orders.create_key(
+            **order_create_key_data)
+        order_ref = self.cleanup.add_entity(order)
 
         self.assertIsNotNone(order_ref)
 
@@ -74,14 +73,15 @@ class OrdersTestCase(base.TestCase):
         """
 
         # first create an order
-        test_model = self.behaviors.create_key_order(order_create_key_data)
-        order_ref = self.behaviors.store_order(test_model)
+        order = self.barbicanclient.orders.create_key(
+            **order_create_key_data)
+        order_ref = self.cleanup.add_entity(order)
 
         # verify that the order was created successfully
         self.assertIsNotNone(order_ref)
 
         # given the order href, retrieve the order
-        order_resp = self.behaviors.get_order(order_ref)
+        order_resp = self.barbicanclient.orders.get(order_ref)
 
         # verify that the get was successful
         self.assertTrue(order_resp.status == "ACTIVE" or
@@ -89,13 +89,13 @@ class OrdersTestCase(base.TestCase):
 
         # verify the metadata
         self.assertEqual(order_resp.name,
-                         test_model.name)
+                         order.name)
         self.assertEqual(order_resp.mode,
-                         test_model.mode)
+                         order.mode)
         self.assertEqual(order_resp.algorithm,
-                         test_model.algorithm)
+                         order.algorithm)
         self.assertEqual(order_resp.bit_length,
-                         test_model.bit_length)
+                         order.bit_length)
 
     @testcase.attr('positive')
     def test_get_order_defaults(self):
@@ -105,13 +105,13 @@ class OrdersTestCase(base.TestCase):
         """
 
         # create an order
-        test_model = self.behaviors.create_key_order(
-            order_create_key_data)
-        order_ref = self.behaviors.store_order(test_model)
+        order = self.barbicanclient.orders.create_key(
+            **order_create_key_data)
+        order_ref = self.cleanup.add_entity(order)
         self.assertIsNotNone(order_ref)
 
         # get the order
-        order_resp = self.behaviors.get_order(order_ref)
+        order_resp = self.barbicanclient.orders.get(order_ref)
 
         # verify the order
         self.assertIsNotNone(order_resp.order_ref)
@@ -127,13 +127,17 @@ class OrdersTestCase(base.TestCase):
         """Covers simple order deletion."""
 
         # create an order
-        test_model = self.behaviors.create_key_order(
-            order_create_key_data)
-        order_ref = self.behaviors.store_order(test_model)
+        order = self.barbicanclient.orders.create_key(
+            **order_create_key_data)
+        order_ref = order.submit()
+        secret_ref = self.barbicanclient.orders.get(order_ref).secret_ref
 
         # delete the order
-        delete_resp = self.behaviors.delete_order(order_ref)
+        delete_resp = self.barbicanclient.orders.delete(order_ref)
         self.assertIsNone(delete_resp)
+
+        # delete the secret
+        self.barbicanclient.secrets.delete(secret_ref)
 
     @testcase.attr('positive')
     def test_get_orders_defaults(self):
@@ -144,14 +148,14 @@ class OrdersTestCase(base.TestCase):
 
         # create the orders
         for i in range(0, total + 1):
-            test_model = self.behaviors.create_key_order(
-                order_create_key_data)
-            order_ref = self.behaviors.store_order(test_model)
+            order = self.barbicanclient.orders.create_key(
+                **order_create_key_data)
+            order_ref = self.cleanup.add_entity(order)
             self.assertIsNotNone(order_ref)
 
         # get a list of orders
-        orders_list = self.behaviors.get_orders(
-            limit=limit, offset=offset)
+        orders_list = self.barbicanclient.orders.list(limit=limit,
+                                                      offset=offset)
 
-        # verify that the get for the list was successfu
+        # verify that the get for the list was successful
         self.assertEqual(len(orders_list), limit)
