@@ -15,8 +15,7 @@
 from testtools import testcase
 from functionaltests import utils
 from functionaltests.client import base
-from functionaltests.client.v1.behaviors import container_behaviors
-from functionaltests.client.v1.behaviors import secret_behaviors
+from functionaltests.common import cleanup
 
 
 create_secret_defaults_data = {
@@ -51,11 +50,7 @@ class ContainersTestCase(base.TestCase):
     def setUp(self):
         super(ContainersTestCase, self).setUp()
 
-        self.secret_behaviors = secret_behaviors.SecretBehaviors(
-            self.barbicanclient)
-
-        self.behaviors = container_behaviors.ContainerBehaviors(
-            self.barbicanclient)
+        self.cleanup = cleanup.CleanUp(self.barbicanclient)
 
         # Set up three secrets
         secret_ref_1, secret_1 = self._create_a_secret()
@@ -79,42 +74,41 @@ class ContainersTestCase(base.TestCase):
         It should be noted that delete all secrets must be called before
         delete containers.
         """
-        self.secret_behaviors.delete_all_created_secrets()
-        self.behaviors.delete_all_created_containers()
+        self.cleanup.delete_all_entities()
         super(ContainersTestCase, self).tearDown()
 
     def _create_a_secret(self):
-        secret = self.secret_behaviors.create_secret(
-            create_secret_defaults_data)
-        secret_ref = self.secret_behaviors.store_secret(secret)
+        secret = self.barbicanclient.secrets.create(
+            **create_secret_defaults_data)
+        secret_ref = self.cleanup.add_entity(secret)
 
         return secret_ref, secret
 
     @testcase.attr('positive')
     def test_container_create_empty(self):
         """Covers creating an empty generic container."""
-        test_model = self.behaviors.create_generic_container(
-            create_container_empty_data)
+        container = self.barbicanclient.containers.create(
+            **create_container_defaults_data)
 
-        container_ref = self.behaviors.store_container(test_model)
+        container_ref = self.cleanup.add_entity(container)
         self.assertIsNotNone(container_ref)
 
     @testcase.attr('positive')
     def test_container_create_defaults(self):
         """Covers creating a container with three secret refs."""
-        test_model = self.behaviors.create_generic_container(
-            create_container_defaults_data)
+        container = self.barbicanclient.containers.create(
+            **create_container_defaults_data)
 
-        container_ref = self.behaviors.store_container(test_model)
+        container_ref = self.cleanup.add_entity(container)
         self.assertIsNotNone(container_ref)
 
     @testcase.attr('positive')
     def test_container_create_rsa(self):
         """Create an RSA container with expected secret refs."""
-        test_model = self.behaviors.create_rsa_container(
-            create_container_rsa_data)
+        container = self.barbicanclient.containers.create_rsa(
+            **create_container_rsa_data)
 
-        container_ref = self.behaviors.store_container(test_model)
+        container_ref = self.cleanup.add_entity(container)
         self.assertIsNotNone(container_ref)
 
     @utils.parameterized_dataset({
@@ -127,27 +121,27 @@ class ContainersTestCase(base.TestCase):
     @testcase.attr('positive')
     def test_container_get_defaults_w_valid_name(self, name):
         """Covers getting a generic container with a three secrets."""
-        test_model = self.behaviors.create_generic_container(
-            create_container_defaults_data)
-        test_model.name = name
+        container = self.barbicanclient.containers.create(
+            **create_container_defaults_data)
+        container.name = name
 
         secret_refs = self.secret_list
 
-        container_ref = self.behaviors.store_container(test_model)
+        container_ref = self.cleanup.add_entity(container)
         self.assertIsNotNone(container_ref)
 
-        get_resp = self.behaviors.get_container(container_ref)
+        container_resp = self.barbicanclient.containers.get(container_ref)
 
         # Verify the response data
-        self.assertEqual(get_resp.name, test_model.name)
-        self.assertEqual(get_resp.container_ref, container_ref)
+        self.assertEqual(container_resp.name, container.name)
+        self.assertEqual(container_resp.container_ref, container_ref)
 
         get_resp_secret_refs = []
-        for name, ref in get_resp.secret_refs.iteritems():
+        for name, ref in container_resp.secret_refs.iteritems():
             get_resp_secret_refs.append(str(ref))
 
         # Verify the secret refs in the response
-        self.assertEqual(len(get_resp.secret_refs), 3)
+        self.assertEqual(len(container_resp.secret_refs), 3)
         self.assertIn(secret_refs[0], get_resp_secret_refs)
         self.assertIn(secret_refs[1], get_resp_secret_refs)
         self.assertIn(secret_refs[2], get_resp_secret_refs)
@@ -155,25 +149,25 @@ class ContainersTestCase(base.TestCase):
     @testcase.attr('positive')
     def test_container_get_rsa(self):
         """Covers getting an rsa container."""
-        test_model = self.behaviors.create_rsa_container(
-            create_container_rsa_data)
+        container = self.barbicanclient.containers.create_rsa(
+            **create_container_rsa_data)
 
         secret_refs = self.secret_list
 
-        container_ref = self.behaviors.store_container(test_model)
+        container_ref = self.cleanup.add_entity(container)
         self.assertIsNotNone(container_ref)
 
-        get_resp = self.behaviors.get_container(container_ref)
+        container_resp = self.barbicanclient.containers.get(container_ref)
 
         # Verify the response data
-        self.assertEqual(get_resp.name, "rsacontainer")
-        self.assertEqual(get_resp.container_ref, container_ref)
+        self.assertEqual(container_resp.name, "rsacontainer")
+        self.assertEqual(container_resp.container_ref, container_ref)
 
         get_resp_secret_refs = []
-        for name, ref in get_resp.secret_refs.iteritems():
+        for name, ref in container_resp.secret_refs.iteritems():
             get_resp_secret_refs.append(str(ref))
         # Verify the secret refs in the response
-        self.assertEqual(len(get_resp.secret_refs), 3)
+        self.assertEqual(len(container_resp.secret_refs), 3)
         self.assertIn(secret_refs[0], get_resp_secret_refs)
         self.assertIn(secret_refs[1], get_resp_secret_refs)
         self.assertIn(secret_refs[2], get_resp_secret_refs)
@@ -186,25 +180,23 @@ class ContainersTestCase(base.TestCase):
         total = 10
 
         for i in range(0, total + 1):
-            test_model = self.behaviors.create_generic_container(
-                create_container_defaults_data)
-            container_ref = self.behaviors.store_container(test_model)
+            container = self.barbicanclient.containers.create(
+                **create_container_defaults_data)
+            container_ref = self.cleanup.add_entity(container)
             self.assertIsNotNone(container_ref)
 
-        containers = self.behaviors.get_containers(
-            limit=limit,
-            offset=offset
-        )
+        containers = self.barbicanclient.containers.list(limit=limit,
+                                                         offset=offset)
 
         self.assertEqual(len(containers), limit)
 
     def test_container_delete_defaults(self):
         """Covers deleting a container."""
-        test_model = self.behaviors.create_generic_container(
-            create_container_defaults_data)
+        container = self.barbicanclient.containers.create(
+            **create_container_defaults_data)
 
-        container_ref = self.behaviors.store_container(test_model)
+        container_ref = container.store()
         self.assertIsNotNone(container_ref)
 
-        del_resp = self.behaviors.delete_container(container_ref)
+        del_resp = self.barbicanclient.containers.delete(container_ref)
         self.assertIsNone(del_resp)
