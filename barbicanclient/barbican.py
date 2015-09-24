@@ -20,7 +20,10 @@ Command-line interface to the Barbican API.
 import sys
 
 from cliff import app
+from cliff import command
 from cliff import commandmanager
+from cliff import complete
+from cliff import help
 from keystoneclient.auth.identity import v3
 from keystoneclient.auth.identity import v2
 from keystoneclient import session
@@ -37,10 +40,20 @@ class Barbican(app.App):
     """Barbican command line interface."""
 
     def __init__(self, **kwargs):
+        self.client = None
+
+        # Patch command.Command to add a default auth_required = True
+        command.Command.auth_required = True
+
+        # Some commands do not need authentication
+        help.HelpCommand.auth_required = False
+        complete.CompleteCommand.auth_required = False
+
         super(Barbican, self).__init__(
             description=__doc__.strip(),
             version=version.__version__,
             command_manager=commandmanager.CommandManager('barbican.client'),
+            deferred_help=True,
             **kwargs
         )
 
@@ -290,14 +303,14 @@ class Barbican(app.App):
         session.Session.register_cli_options(parser)
         return parser
 
-    def initialize_app(self, argv):
-        """Initializes the application.
-        Checks if the minimal parameters are provided and creates the client
-        interface.
+    def prepare_to_run_command(self, cmd):
+        """Prepares to run the command
+        Checks if the minimal parameters are provided and creates the
+        client interface.
         This is inherited from the framework.
         """
-        args = self.options
-        self.client = self.create_client(args)
+        if cmd.auth_required:
+            self.client = self.create_client(self.options)
 
     def run(self, argv):
         # If no arguments are provided, usage is displayed
