@@ -250,7 +250,7 @@ class Barbican(app.App):
                             help='Defaults to env[OS_TENANT_ID].')
         parser.add_argument('--os-project-id',
                             metavar='<auth-project-id>',
-                            default=client.env('OS_PROJECT__ID'),
+                            default=client.env('OS_PROJECT_ID'),
                             help='Another way to specify tenant ID. '
                                  'This option is mutually exclusive with '
                                  ' --os-tenant-id. '
