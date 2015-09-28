@@ -31,7 +31,7 @@ class DeleteContainer(command.Command):
         return parser
 
     def take_action(self, args):
-        self.app.client.containers.delete(args.URI)
+        self.app.client_manager.key_manager.containers.delete(args.URI)
 
 
 class GetContainer(show.ShowOne):
@@ -43,7 +43,8 @@ class GetContainer(show.ShowOne):
         return parser
 
     def take_action(self, args):
-        entity = self.app.client.containers.get(args.URI)
+        entity = self.app.client_manager.key_manager.containers.get(
+            args.URI)
         return entity._get_formatted_entity()
 
 
@@ -70,8 +71,8 @@ class ListContainer(lister.Lister):
         return parser
 
     def take_action(self, args):
-        obj_list = self.app.client.containers.list(args.limit, args.offset,
-                                                   args.name, args.type)
+        obj_list = self.app.client_manager.key_manager.containers.list(
+            args.limit, args.offset, args.name, args.type)
         return Container._list_objects(obj_list)
 
 
@@ -93,8 +94,8 @@ class CreateContainer(show.ShowOne):
         return parser
 
     def take_action(self, args):
-        container_type = self.app.client.containers._container_map.get(
-            args.type)
+        client = self.app.client_manager.key_manager
+        container_type = client.containers._container_map.get(args.type)
         if not container_type:
             raise ValueError('Invalid container type specified.')
         secret_refs = CreateContainer._parse_secrets(args.secret)
@@ -103,7 +104,7 @@ class CreateContainer(show.ShowOne):
             private_key_ref = secret_refs.get('private_key')
             private_key_pass_ref = secret_refs.get('private_key_passphrase')
             entity = RSAContainer(
-                api=self.app.client.containers._api,
+                api=client.containers._api,
                 name=args.name,
                 public_key_ref=public_key_ref,
                 private_key_ref=private_key_ref,
@@ -115,7 +116,7 @@ class CreateContainer(show.ShowOne):
             private_key_ref = secret_refs.get('private_key')
             private_key_pass_ref = secret_refs.get('private_key_passphrase')
             entity = CertificateContainer(
-                api=self.app.client.containers._api,
+                api=client.containers._api,
                 name=args.name,
                 certificate_ref=certificate_ref,
                 intermediates_ref=intermediates_ref,
@@ -123,7 +124,7 @@ class CreateContainer(show.ShowOne):
                 private_key_passphrase_ref=private_key_pass_ref,
             )
         else:
-            entity = container_type(api=self.app.client.containers._api,
+            entity = container_type(api=client.containers._api,
                                     name=args.name, secret_refs=secret_refs)
         entity.store()
         return entity._get_formatted_entity()
