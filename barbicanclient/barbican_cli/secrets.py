@@ -72,7 +72,7 @@ class GetSecret(show.ShowOne):
             return entity._get_formatted_entity()
 
 
-class UpdateSecret(show.ShowOne):
+class UpdateSecret(command.Command):
     """Update a secret with no payload in Barbican."""
 
     def get_parser(self, prog_name):
