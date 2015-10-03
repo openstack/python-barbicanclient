@@ -18,8 +18,10 @@ import six
 
 from oslo_utils.timeutils import parse_isotime
 
+from barbicanclient import acls as acl_manager
 from barbicanclient import base
 from barbicanclient import formatter
+
 from barbicanclient import secrets as secret_manager
 
 
@@ -92,6 +94,8 @@ class Container(ContainerFormatter):
             self._created = None
             self._updated = None
             self._status = None
+        self._acl_manager = acl_manager.ACLManager(api)
+        self._acls = None
 
     def _initialize_secrets(self, secrets):
         try:
@@ -137,6 +141,13 @@ class Container(ContainerFormatter):
         if self._container_ref and not self._status:
             self._reload()
         return self._status
+
+    @property
+    def acls(self):
+        """Get ACL settings for this container."""
+        if self._container_ref and not self._acls:
+            self._acls = self._acl_manager.get(self.container_ref)
+        return self._acls
 
     @property
     def secret_refs(self):

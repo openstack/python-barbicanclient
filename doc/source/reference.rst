@@ -56,6 +56,20 @@ Certificate Authorities
 .. autoclass:: barbicanclient.cas.CA
    :members:
 
+ACLs
+====
+
+.. autoclass:: barbicanclient.acls.ACLManager
+   :members:
+
+.. autoclass:: barbicanclient.acls.SecretACL
+   :members:
+   :inherited-members:
+
+.. autoclass:: barbicanclient.acls.ContainerACL
+   :members:
+   :inherited-members:
+
 Exceptions
 ==========
 
