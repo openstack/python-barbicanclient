@@ -136,6 +136,8 @@ class CA(CAFormatter):
     def _fill_from_data(self, meta=None, expiration=None,
                         plugin_name=None, plugin_ca_id=None, created=None,
                         updated=None, status=None, creator_id=None):
+        self._name = None
+        self._description = None
         if meta:
             for s in meta:
                 key = list(s.keys())[0]

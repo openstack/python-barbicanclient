@@ -19,9 +19,9 @@ from barbicanclient import cas
 
 
 class CAData(object):
-    def __init__(self):
+    def __init__(self, description=u'Test CA description'):
         self.name = u'Test CA'
-        self.description = u'Test CA description'
+        self.description = description
         self.plugin_name = u'Test CA Plugin'
         self.plugin_ca_id = 'plugin_uuid'
 
@@ -29,10 +29,10 @@ class CAData(object):
         self.expiration = str(now)
         self.created = str(now)
 
-        self.meta = [
-            {'name': self.name},
-            {'description': self.description}
-        ]
+        self.meta = []
+        self.meta.append({'name': self.name})
+        if self.description:
+            self.meta.append({'description': self.description})
 
         self.ca_dict = {'meta': self.meta,
                         'status': u'ACTIVE',
@@ -111,3 +111,23 @@ class WhenTestingCAs(test_client.BaseEntityResource):
     def test_should_fail_get_invalid_ca(self):
         self.assertRaises(ValueError, self.manager.get,
                           **{'ca_ref': '12345'})
+
+    def test_should_get_ca_that_has_no_meta_description(self):
+        self.ca = CAData(description=None)
+
+        data = self.ca.get_dict(self.entity_href)
+        m = self.responses.get(self.entity_href, json=data)
+
+        ca = self.manager.get(ca_ref=self.entity_href)
+        self.assertIsInstance(ca, cas.CA)
+        self.assertEqual(self.entity_href, ca._ca_ref)
+
+        # Verify GET wasn't called yet
+        self.assertFalse(m.called)
+
+        # Get description from CA, check it is None
+        self.assertIsNone(self.ca.description)
+        self.assertIsNone(ca.description)
+
+        # Verify the correct URL was used to make the GET call
+        self.assertEqual(self.entity_href, m.last_request.url)
