@@ -1,6 +1,14 @@
 python-barbicanclient
 =====================
 
+.. image:: https://img.shields.io/pypi/v/python-barbicanclient.svg
+    :target: https://pypi.python.org/pypi/python-barbicanclient/
+    :alt: Latest Version
+
+.. image:: https://img.shields.io/pypi/dm/python-barbicanclient.svg
+    :target: https://pypi.python.org/pypi/python-barbicanclient/
+    :alt: Downloads
+
 This is a client for the `Barbican <https://github.com/openstack/barbican>`__
 Key Management API.  There is a Python library for accessing the API
 (`barbicanclient` module), and a command-line script (`barbican`).
@@ -184,9 +192,24 @@ usage options
       secret update     Update a secret with no payload in Barbican.
 
 * License: Apache License, Version 2.0
-* Documentation: http://docs.openstack.org/developer/python-barbicanclient
-* Source: http://git.openstack.org/cgit/openstack/python-barbicanclient
-* Bugs: http://bugs.launchpad.net/python-barbicanclient
+* `PyPi`_ - package installation
+* `Online Documentation`_
+* `Launchpad project`_ - release management
+* `Blueprints`_ - feature specifications
+* `Bugs`_ - issue tracking
+* `Source`_
+* `Specs`_
+* `Getting involved`_
+
+.. _PyPi: https://pypi.python.org/pypi/python-barbicanclient/
+.. _Online Documentation: http://docs.openstack.org/developer/python-barbicanclient/
+.. _Launchpad project: https://launchpad.net/python-barbicanclient/
+.. _Blueprints: https://blueprints.launchpad.net/python-barbicanclient/
+.. _Bugs: https://bugs.launchpad.net/python-barbicanclient/
+.. _Source: https://git.openstack.org/cgit/openstack/python-barbicanclient/
+.. _Getting involved: http://docs.openstack.org/developer/barbican/contribute/getting_involved.html
+.. _Specs: http://specs.openstack.org/openstack/barbican-specs/
+
 
 .. [1] Documentation in this link is currently incomplete. Please use the
 `devstack setup. <http://docs.openstack.org/developer/barbican/setup/devstack.html>`__
