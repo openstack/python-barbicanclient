@@ -188,5 +188,4 @@ usage options
 * Source: http://git.openstack.org/cgit/openstack/python-barbicanclient
 * Bugs: http://bugs.launchpad.net/python-barbicanclient
 
-.. [1] Documentation in this link is currently incomplete. Please use the
-`devstack setup. <http://docs.openstack.org/developer/barbican/setup/devstack.html>`__
+.. [1] Documentation in this link is currently incomplete. Please use the `devstack setup <http://docs.openstack.org/developer/barbican/setup/devstack.html>`__.
