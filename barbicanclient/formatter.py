@@ -48,3 +48,7 @@ class EntityFormatter(object):
         for name, value in zip(self.columns, data):
             table.add_row((name, value))
         return table.get_string(fields=('Field', 'Value'))
+
+    def to_dict(self):
+        columns, data = self._get_formatted_entity()
+        return dict((key, value) for (key, value) in zip(columns, data))
