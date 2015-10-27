@@ -118,8 +118,8 @@ class ListSecret(lister.Lister):
 
     def take_action(self, args):
         obj_list = self.app.client_manager.key_manager.secrets.list(
-            args.limit, args.offset, args.name, args.mode, args.algorithm,
-            args.bit_length)
+            limit=args.limit, offset=args.offset, name=args.name,
+            algorithm=args.algorithm, mode=args.mode, bits=args.bit_length)
         return secrets.Secret._list_objects(obj_list)
 
 
