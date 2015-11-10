@@ -162,26 +162,28 @@ usage options
     See "barbican help COMMAND" for help on a specific command.
 
     Commands:
-      acl get           Retrieve ACLs for a secret or container by providing its href.
-      acl delete        Delete ACLs for a secret or container as identified by its href.
-      acl submit        Submit ACL on a secret or container as identified by its href.
-      acl user add      Add ACL users to a secret or container as identified by its href.
-      acl user remove   Remove ACL users from a secret or container as identified by its href.
-      complete          print bash completion command
-      container create  Store a container in Barbican.
-      container delete  Delete a container by providing its href.
-      container get     Retrieve a container by providing its URI.
-      container list    List containers.
-      help              print detailed help for another command
-      order create      Create a new order.
-      order delete      Delete an order by providing its href.
-      order get         Retrieve an order by providing its URI.
-      order list        List orders.
-      secret delete     Delete an secret by providing its href.
-      secret get        Retrieve a secret by providing its URI.
-      secret list       List secrets.
-      secret store      Store a secret in Barbican
-      secret update     Update a secret with no payload in Barbican.
+      acl get                  Retrieve ACLs for a secret or container by providing its href.
+      acl delete               Delete ACLs for a secret or container as identified by its href.
+      acl submit               Submit ACL on a secret or container as identified by its href.
+      acl user add             Add ACL users to a secret or container as identified by its href.
+      acl user remove          Remove ACL users from a secret or container as identified by its href.
+      ca get                   Retrieve a CA by providing its URI.
+      ca list                  List cas.
+      complete                 print bash completion command
+      secret container create  Store a container in Barbican.
+      secret container delete  Delete a container by providing its href.
+      secret container get     Retrieve a container by providing its URI.
+      secret container list    List containers.
+      help                     print detailed help for another command
+      secret order create      Create a new order.
+      secret order delete      Delete an order by providing its href.
+      secret order get         Retrieve an order by providing its URI.
+      secret order list        List orders.
+      secret delete            Delete an secret by providing its href.
+      secret get               Retrieve a secret by providing its URI.
+      secret list              List secrets.
+      secret store             Store a secret in Barbican
+      secret update            Update a secret with no payload in Barbican.
 
 * License: Apache License, Version 2.0
 * Documentation: http://docs.openstack.org/developer/python-barbicanclient
