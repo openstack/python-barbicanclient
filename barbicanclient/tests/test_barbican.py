@@ -168,7 +168,7 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
                          httpclient.interface)
         self.assertEqual(client._DEFAULT_SERVICE_TYPE, httpclient.service_type)
         self.assertEqual(client._DEFAULT_API_VERSION, httpclient.version)
-        self.assertEqual(None, httpclient.service_name)
+        self.assertIsNone(httpclient.service_name)
 
     def test_endpoint_filter_kwargs_set_correctly(self):
         from testtools.content import text_content
