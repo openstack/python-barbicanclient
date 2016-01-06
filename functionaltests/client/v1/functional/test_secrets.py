@@ -96,7 +96,7 @@ class SecretsTestCase(base.TestCase):
         self.assertIsNotNone(secret_ref)
 
         resp = self.barbicanclient.secrets.get(secret_ref)
-        self.assertEqual(resp.algorithm, secret.algorithm)
+        self.assertEqual(secret.algorithm, resp.algorithm)
 
     @testcase.attr('positive')
     def test_secret_read_with_acls(self):
@@ -129,7 +129,7 @@ class SecretsTestCase(base.TestCase):
         self.assertIsNotNone(secret_ref)
 
         resp = self.barbicanclient.secrets.get(secret_ref)
-        self.assertEqual(resp.mode, secret.mode)
+        self.assertEqual(secret.mode, resp.mode)
 
     @testcase.attr('negative')
     def test_secret_delete_doesnt_exist(self):
@@ -143,7 +143,7 @@ class SecretsTestCase(base.TestCase):
         e = self.assertRaises(ValueError, self.barbicanclient.secrets.delete,
                               url)
 
-        self.assertEqual(e.message, 'Secret incorrectly specified.')
+        self.assertEqual('Secret incorrectly specified.', e.message)
 
     @testcase.attr('negative')
     def test_secret_delete_doesnt_exist_valid_uuid_format(self):
@@ -162,7 +162,7 @@ class SecretsTestCase(base.TestCase):
             url
         )
 
-        self.assertEqual(e.status_code, 404)
+        self.assertEqual(404, e.status_code)
 
     @testcase.attr('negative')
     def test_secret_get_secret_doesnt_exist(self):
@@ -193,7 +193,7 @@ class SecretsTestCase(base.TestCase):
             exceptions.HTTPClientError,
             secret.store
         )
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @testcase.attr('negative')
     def test_secret_create_emptystrings(self):
@@ -224,7 +224,7 @@ class SecretsTestCase(base.TestCase):
             exceptions.HTTPClientError,
             secret.store
         )
-        self.assertEqual(e.status_code, 413)
+        self.assertEqual(413, e.status_code)
 
     @utils.parameterized_dataset({
         'alphanumeric': ['1f34ds'],
@@ -245,7 +245,7 @@ class SecretsTestCase(base.TestCase):
         self.assertIsNotNone(secret_ref)
 
         resp = self.barbicanclient.secrets.get(secret_ref)
-        self.assertEqual(resp.name, secret.name)
+        self.assertEqual(secret.name, resp.name)
 
     @utils.parameterized_dataset({
         'int': [400]
@@ -265,7 +265,7 @@ class SecretsTestCase(base.TestCase):
             secret.store
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @utils.parameterized_dataset({
         'aes': ['aes']
@@ -281,7 +281,7 @@ class SecretsTestCase(base.TestCase):
         self.assertIsNotNone(secret_ref)
 
         resp = self.barbicanclient.secrets.get(secret_ref)
-        self.assertEqual(resp.algorithm, secret.algorithm)
+        self.assertEqual(secret.algorithm, resp.algorithm)
 
     @utils.parameterized_dataset({
         'int': [400]
@@ -301,7 +301,7 @@ class SecretsTestCase(base.TestCase):
             secret.store
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @utils.parameterized_dataset({
         'symmetric': ['symmetric',
@@ -345,7 +345,7 @@ class SecretsTestCase(base.TestCase):
         self.assertIsNotNone(secret_ref)
 
         resp = self.barbicanclient.secrets.get(secret_ref)
-        self.assertEqual(resp.secret_type, secret_type)
+        self.assertEqual(secret_type, resp.secret_type)
 
     @testcase.attr('negative')
     def test_secret_create_defaults_invalid_secret_type(self):
@@ -359,7 +359,7 @@ class SecretsTestCase(base.TestCase):
             secret.store
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @utils.parameterized_dataset({
         '512': [512],
@@ -381,7 +381,7 @@ class SecretsTestCase(base.TestCase):
         self.assertIsNotNone(secret_ref)
 
         resp = self.barbicanclient.secrets.get(secret_ref)
-        self.assertEqual(resp.bit_length, secret.bit_length)
+        self.assertEqual(secret.bit_length, resp.bit_length)
 
     @utils.parameterized_dataset({
         'str_type': ['not-an-int'],
@@ -403,7 +403,7 @@ class SecretsTestCase(base.TestCase):
             secret.store
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @utils.parameterized_dataset({
         'cbc': ['cbc']
@@ -419,7 +419,7 @@ class SecretsTestCase(base.TestCase):
         self.assertIsNotNone(secret_ref)
 
         resp = self.barbicanclient.secrets.get(secret_ref)
-        self.assertEqual(resp.mode, secret.mode)
+        self.assertEqual(secret.mode, resp.mode)
 
     @utils.parameterized_dataset({
         'zero': [0],
@@ -438,7 +438,7 @@ class SecretsTestCase(base.TestCase):
             secret.store
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @utils.parameterized_dataset({
         'text_content_type_none_encoding': {
@@ -556,7 +556,7 @@ class SecretsTestCase(base.TestCase):
             secret.store
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @utils.parameterized_dataset({
         'max_payload_string': [base.TestCase.max_sized_payload]
@@ -644,7 +644,7 @@ class SecretsTestCase(base.TestCase):
 
         resp = self.barbicanclient.secrets.get(secret_ref)
         self.assertIsNotNone(resp)
-        self.assertEqual(resp.name, secret.name)
+        self.assertEqual(secret.name, resp.name)
 
     @utils.parameterized_dataset({
         'malformed_timezone': {
@@ -664,7 +664,7 @@ class SecretsTestCase(base.TestCase):
             secret.store
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @utils.parameterized_dataset({
         'text/plain':
@@ -692,8 +692,8 @@ class SecretsTestCase(base.TestCase):
         secret.update()
 
         resp = self.barbicanclient.secrets.get(secret_ref)
-        self.assertEqual(resp.payload, payload)
-        self.assertEqual(resp.payload_content_type, payload_content_type)
+        self.assertEqual(payload, resp.payload)
+        self.assertEqual(payload_content_type, resp.payload_content_type)
 
     @utils.parameterized_dataset({
         'alphanumeric': ['1f34ds'],
@@ -714,11 +714,11 @@ class SecretsTestCase(base.TestCase):
         self.assertIsNotNone(secret_ref)
 
         resp = self.barbicanclient.secrets.get(secret_ref)
-        self.assertEqual(resp.status, "ACTIVE")
-        self.assertEqual(resp.name, name)
-        self.assertEqual(resp.mode, secret.mode)
-        self.assertEqual(resp.algorithm, secret.algorithm)
-        self.assertEqual(resp.bit_length, secret.bit_length)
+        self.assertEqual("ACTIVE", resp.status)
+        self.assertEqual(name, resp.name)
+        self.assertEqual(secret.mode, resp.mode)
+        self.assertEqual(secret.algorithm, resp.algorithm)
+        self.assertEqual(secret.bit_length, resp.bit_length)
 
     @utils.parameterized_dataset({
         'symmetric': ['symmetric',
@@ -762,5 +762,5 @@ class SecretsTestCase(base.TestCase):
         self.assertIsNotNone(secret_ref)
 
         resp = self.barbicanclient.secrets.get(secret_ref)
-        self.assertEqual(resp.status, "ACTIVE")
-        self.assertEqual(resp.secret_type, secret_type)
+        self.assertEqual("ACTIVE", resp.status)
+        self.assertEqual(secret_type, resp.secret_type)

@@ -66,7 +66,7 @@ class OrdersTestCase(base.TestCase):
         self.assertIsNotNone(order_ref)
 
         order_resp = self.barbicanclient.orders.get(order_ref)
-        self.assertEqual(order.name, order.name)
+        self.assertEqual(order.name, order_resp.name)
 
     @testcase.attr('positive')
     def test_create_order_defaults_w_empty_name(self):
@@ -77,7 +77,7 @@ class OrdersTestCase(base.TestCase):
         self.assertIsNotNone(order_ref)
 
         order_resp = self.barbicanclient.orders.get(order_ref)
-        self.assertEqual(order_resp.name, order.name)
+        self.assertEqual(order.name, order_resp.name)
 
     @testcase.attr('positive')
     def test_create_order_defaults_payload_content_type_none(self):
@@ -114,7 +114,7 @@ class OrdersTestCase(base.TestCase):
         # verify the new secret's name matches the name in the secret ref
         # in the newly created order.
         secret_resp = self.barbicanclient.secrets.get(order_resp.secret_ref)
-        self.assertEqual(secret_resp.name, order.name)
+        self.assertEqual(order.name, secret_resp.name)
 
     @testcase.attr('positive')
     def test_order_and_secret_metadata_same(self):
@@ -134,20 +134,20 @@ class OrdersTestCase(base.TestCase):
 
         secret_resp = self.barbicanclient.secrets.get(order_resp.secret_ref)
 
-        self.assertEqual(order_resp.name,
-                         secret_resp.name,
+        self.assertEqual(secret_resp.name,
+                         order_resp.name,
                          'Names were not the same')
-        self.assertEqual(order_resp.algorithm,
-                         secret_resp.algorithm,
+        self.assertEqual(secret_resp.algorithm,
+                         order_resp.algorithm,
                          'Algorithms were not the same')
-        self.assertEqual(order_resp.bit_length,
-                         secret_resp.bit_length,
+        self.assertEqual(secret_resp.bit_length,
+                         order_resp.bit_length,
                          'Bit lengths were not the same')
-        self.assertEqual(order_resp.expiration,
-                         secret_resp.expiration,
+        self.assertEqual(secret_resp.expiration,
+                         order_resp.expiration,
                          'Expirations were not the same')
-        self.assertEqual(order_resp.mode,
-                         secret_resp.mode,
+        self.assertEqual(secret_resp.mode,
+                         order_resp.mode,
                          'Modes were not the same')
 
     @testcase.attr('negative')
@@ -159,7 +159,7 @@ class OrdersTestCase(base.TestCase):
         e = self.assertRaises(ValueError, self.barbicanclient.orders.get, ref)
 
         # verify that the order get failed
-        self.assertEqual(e.message, 'Order incorrectly specified.')
+        self.assertEqual('Order incorrectly specified.', e.message)
 
     @testcase.attr('negative')
     def test_get_order_defaults_that_doesnt_exist_valid_uuid(self):
@@ -176,7 +176,7 @@ class OrdersTestCase(base.TestCase):
         )
 
         # verify that the order get failed
-        self.assertEqual(e.status_code, 404)
+        self.assertEqual(404, e.status_code)
 
     @testcase.attr('negative')
     def test_create_order_nones(self):
@@ -189,7 +189,7 @@ class OrdersTestCase(base.TestCase):
             order.submit
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @testcase.attr('negative')
     def test_create_order_empty_entries(self):
@@ -207,7 +207,7 @@ class OrdersTestCase(base.TestCase):
             order.submit
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @testcase.attr('negative')
     def test_create_order_defaults_oversized_strings(self):
@@ -222,7 +222,7 @@ class OrdersTestCase(base.TestCase):
             order.submit
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @utils.parameterized_dataset({
         '8': [8],
@@ -244,7 +244,7 @@ class OrdersTestCase(base.TestCase):
         self.assertIsNotNone(order_ref)
 
         order_resp = self.barbicanclient.orders.get(order_ref)
-        self.assertEqual(order_resp.bit_length, order.bit_length)
+        self.assertEqual(order.bit_length, order_resp.bit_length)
 
     @utils.parameterized_dataset({
         'negative_maxint': [-sys.maxint],
@@ -269,7 +269,7 @@ class OrdersTestCase(base.TestCase):
             exceptions.HTTPClientError,
             order.submit
         )
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @utils.parameterized_dataset({
         'alphanumeric': ['1f34ds'],
@@ -287,7 +287,7 @@ class OrdersTestCase(base.TestCase):
         self.assertIsNotNone(order_ref)
 
         order_resp = self.barbicanclient.orders.get(order_ref)
-        self.assertEqual(order_resp.name, order.name)
+        self.assertEqual(order.name, order_resp.name)
 
     @utils.parameterized_dataset({
         'int': [123]
@@ -303,7 +303,7 @@ class OrdersTestCase(base.TestCase):
             order.submit
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @utils.parameterized_dataset({
         'cbc': ['cbc']
@@ -318,7 +318,7 @@ class OrdersTestCase(base.TestCase):
         self.assertIsNotNone(order_ref)
 
         order_resp = self.barbicanclient.orders.get(order_ref)
-        self.assertEqual(order_resp.mode, order.mode)
+        self.assertEqual(order.mode, order_resp.mode)
 
     @utils.parameterized_dataset({
         'int': [123]
@@ -333,7 +333,7 @@ class OrdersTestCase(base.TestCase):
             exceptions.HTTPClientError,
             order.submit
         )
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @utils.parameterized_dataset({
         'aes': ['aes']
@@ -348,7 +348,7 @@ class OrdersTestCase(base.TestCase):
         self.assertIsNotNone(order_ref)
 
         order_resp = self.barbicanclient.orders.get(order_ref)
-        self.assertEqual(order_resp.algorithm, order.algorithm)
+        self.assertEqual(order.algorithm, order_resp.algorithm)
 
     @utils.parameterized_dataset({
         'int': [123]
@@ -364,7 +364,7 @@ class OrdersTestCase(base.TestCase):
             order.submit
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     # TODO(tdink) Add empty after Launchpad 1420444 is resolved
     @utils.parameterized_dataset({
@@ -381,8 +381,8 @@ class OrdersTestCase(base.TestCase):
         self.assertIsNotNone(order_ref)
 
         order_resp = self.barbicanclient.orders.get(order_ref)
-        self.assertEqual(order_resp.payload_content_type,
-                         order.payload_content_type)
+        self.assertEqual(order.payload_content_type,
+                         order_resp.payload_content_type)
 
     @utils.parameterized_dataset({
         'int': [123],
@@ -402,7 +402,7 @@ class OrdersTestCase(base.TestCase):
             order.submit
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @utils.parameterized_dataset({
         'negative_five_long_expire': {
@@ -456,4 +456,4 @@ class OrdersTestCase(base.TestCase):
             order.submit
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)

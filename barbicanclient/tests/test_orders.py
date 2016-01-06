@@ -320,6 +320,6 @@ class WhenTestingCertificateOrders(test_client.BaseEntityResource):
         self.responses.get(self.entity_base, json=data)
 
         orders_list = self.manager.list(limit=10, offset=5)
-        self.assertEqual(len(orders_list), 3)
+        self.assertEqual(3, len(orders_list))
         self.assertIsInstance(orders_list[0], orders.CertificateOrder)
         self.assertEqual(self.entity_href, orders_list[0].order_ref)

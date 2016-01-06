@@ -271,7 +271,7 @@ class ACLsTestCase(BaseACLsTestCase):
             url
         )
 
-        self.assertEqual(e.status_code, 404)
+        self.assertEqual(404, e.status_code)
 
     @testcase.attr('negative')
     def test_delete_non_existent_secret_valid_uuid(self):

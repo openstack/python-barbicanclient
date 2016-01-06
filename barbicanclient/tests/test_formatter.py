@@ -30,30 +30,30 @@ class TestFormatter(testtools.TestCase):
         entity_1 = Entity('test_attr_a_1', 'test_attr_b_1', 'test_attr_c_1')
         entity_2 = Entity('test_attr_a_2', 'test_attr_b_2', 'test_attr_c_2')
         columns, data = EntityFormatter._list_objects([entity_1, entity_2])
-        self.assertEqual(columns, ('Column A', 'Column B', 'Column C'))
-        self.assertEqual([e for e in data],
-                         [('test_attr_a_1', 'test_attr_b_1', 'test_attr_c_1'),
-                          ('test_attr_a_2', 'test_attr_b_2', 'test_attr_c_2')])
+        self.assertEqual(('Column A', 'Column B', 'Column C'), columns)
+        self.assertEqual([('test_attr_a_1', 'test_attr_b_1', 'test_attr_c_1'),
+                          ('test_attr_a_2', 'test_attr_b_2', 'test_attr_c_2')],
+                         [e for e in data])
 
     def test_should_get_list_objects_empty(self):
         columns, data = EntityFormatter._list_objects([])
-        self.assertEqual(columns, [])
-        self.assertEqual([e for e in data], [])
+        self.assertEqual([], columns)
+        self.assertEqual([], [e for e in data])
 
     def test_should_get_str(self):
         entity = Entity('test_attr_a_1', 'test_attr_b_1', 'test_attr_c_1')
-        self.assertEqual(str(entity),
-                         '+----------+---------------+\n'
+        self.assertEqual('+----------+---------------+\n'
                          '| Field    | Value         |\n'
                          '+----------+---------------+\n'
                          '| Column A | test_attr_a_1 |\n'
                          '| Column B | test_attr_b_1 |\n'
                          '| Column C | test_attr_c_1 |\n'
-                         '+----------+---------------+')
+                         '+----------+---------------+',
+                         str(entity))
 
     def test_should_to_dict(self):
         entity = Entity('test_attr_a_1', 'test_attr_b_1', 'test_attr_c_1')
-        self.assertEqual(entity.to_dict(),
-                         {'Column A': 'test_attr_a_1',
+        self.assertEqual({'Column A': 'test_attr_a_1',
                           'Column B': 'test_attr_b_1',
-                          'Column C': 'test_attr_c_1'})
+                          'Column C': 'test_attr_c_1'},
+                         entity.to_dict())

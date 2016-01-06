@@ -125,7 +125,7 @@ class GenericContainersTestCase(BaseContainersTestCase):
             container.store
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @testcase.attr('negative')
     def test_get_non_existent_container(self):
@@ -139,7 +139,7 @@ class GenericContainersTestCase(BaseContainersTestCase):
         e = self.assertRaises(ValueError, self.barbicanclient.containers.get,
                               url)
 
-        self.assertEqual(e.message, 'Container incorrectly specified.')
+        self.assertEqual('Container incorrectly specified.', e.message)
 
     @testcase.attr('negative')
     def test_get_non_existent_container_valid_uuid(self):
@@ -157,7 +157,7 @@ class GenericContainersTestCase(BaseContainersTestCase):
             url
         )
 
-        self.assertEqual(e.status_code, 404)
+        self.assertEqual(404, e.status_code)
 
     @testcase.attr('negative')
     def test_delete_non_existent_container(self):
@@ -171,7 +171,7 @@ class GenericContainersTestCase(BaseContainersTestCase):
         e = self.assertRaises(ValueError, self.barbicanclient.containers.get,
                               url)
 
-        self.assertEqual(e.message, 'Container incorrectly specified.')
+        self.assertEqual('Container incorrectly specified.', e.message)
 
     @testcase.attr('negative')
     def test_delete_non_existent_container_valid_uuid(self):
@@ -189,7 +189,7 @@ class GenericContainersTestCase(BaseContainersTestCase):
             url
         )
 
-        self.assertEqual(e.status_code, 404)
+        self.assertEqual(404, e.status_code)
 
     @utils.parameterized_dataset({'0': [0], '1': [1], '50': [50]})
     @testcase.attr('positive')
@@ -266,7 +266,7 @@ class RSAContainersTestCase(BaseContainersTestCase):
 
         container_resp = self.barbicanclient.containers.get(container_ref)
         self.assertIsNone(container_resp.private_key_passphrase)
-        self.assertEqual(len(container_resp.secrets), 2)
+        self.assertEqual(2, len(container_resp.secrets))
 
     @utils.parameterized_dataset(accepted_str_values)
     @testcase.attr('positive')
@@ -280,7 +280,7 @@ class RSAContainersTestCase(BaseContainersTestCase):
         self.assertIsNotNone(container_ref)
 
         container_resp = self.barbicanclient.containers.get(container_ref)
-        self.assertEqual(container_resp.name, name)
+        self.assertEqual(name, container_resp.name)
 
     @testcase.attr('negative')
     def test_create_rsa_invalid_key_names(self):
@@ -317,7 +317,7 @@ class RSAContainersTestCase(BaseContainersTestCase):
             container.store
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)
 
     @testcase.attr('negative')
     def test_create_rsa_no_private_key(self):
@@ -338,4 +338,4 @@ class RSAContainersTestCase(BaseContainersTestCase):
             container.store
         )
 
-        self.assertEqual(e.status_code, 400)
+        self.assertEqual(400, e.status_code)

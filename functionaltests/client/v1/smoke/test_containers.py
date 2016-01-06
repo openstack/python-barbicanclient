@@ -133,15 +133,15 @@ class ContainersTestCase(base.TestCase):
         container_resp = self.barbicanclient.containers.get(container_ref)
 
         # Verify the response data
-        self.assertEqual(container_resp.name, container.name)
-        self.assertEqual(container_resp.container_ref, container_ref)
+        self.assertEqual(container.name, container_resp.name)
+        self.assertEqual(container_ref, container_resp.container_ref)
 
         get_resp_secret_refs = []
         for name, ref in container_resp.secret_refs.iteritems():
             get_resp_secret_refs.append(str(ref))
 
         # Verify the secret refs in the response
-        self.assertEqual(len(container_resp.secret_refs), 3)
+        self.assertEqual(3, len(container_resp.secret_refs))
         self.assertIn(secret_refs[0], get_resp_secret_refs)
         self.assertIn(secret_refs[1], get_resp_secret_refs)
         self.assertIn(secret_refs[2], get_resp_secret_refs)
@@ -160,14 +160,14 @@ class ContainersTestCase(base.TestCase):
         container_resp = self.barbicanclient.containers.get(container_ref)
 
         # Verify the response data
-        self.assertEqual(container_resp.name, "rsacontainer")
-        self.assertEqual(container_resp.container_ref, container_ref)
+        self.assertEqual("rsacontainer", container_resp.name)
+        self.assertEqual(container_ref, container_resp.container_ref)
 
         get_resp_secret_refs = []
         for name, ref in container_resp.secret_refs.iteritems():
             get_resp_secret_refs.append(str(ref))
         # Verify the secret refs in the response
-        self.assertEqual(len(container_resp.secret_refs), 3)
+        self.assertEqual(3, len(container_resp.secret_refs))
         self.assertIn(secret_refs[0], get_resp_secret_refs)
         self.assertIn(secret_refs[1], get_resp_secret_refs)
         self.assertIn(secret_refs[2], get_resp_secret_refs)
@@ -188,7 +188,7 @@ class ContainersTestCase(base.TestCase):
         containers = self.barbicanclient.containers.list(limit=limit,
                                                          offset=offset)
 
-        self.assertEqual(len(containers), limit)
+        self.assertEqual(limit, len(containers))
 
     def test_container_delete_defaults(self):
         """Covers deleting a container."""

@@ -88,14 +88,16 @@ class OrdersTestCase(base.TestCase):
                         order_resp.status == "PENDING")
 
         # verify the metadata
-        self.assertEqual(order_resp.name,
-                         order.name)
-        self.assertEqual(order_resp.mode,
-                         order.mode)
-        self.assertEqual(order_resp.algorithm,
-                         order.algorithm)
-        self.assertEqual(order_resp.bit_length,
-                         order.bit_length)
+        self.assertEqual(order.name,
+                         order_resp.name)
+        self.assertEqual(order.mode,
+                         order_resp.mode)
+        self.assertEqual(order.algorithm,
+                         order_resp.algorithm)
+        self.assertEqual(order.bit_length,
+                         order_resp.bit_length)
+        self.assertEqual(order.payload_content_type,
+                         order_resp.payload_content_type)
 
     @testcase.attr('positive')
     def test_get_order_defaults(self):
@@ -115,7 +117,7 @@ class OrdersTestCase(base.TestCase):
 
         # verify the order
         self.assertIsNotNone(order_resp.order_ref)
-        self.assertEqual(order_resp._type, 'key')
+        self.assertEqual('key', order_resp._type)
         self.assertTrue(order_resp.status == "ACTIVE" or
                         order_resp.status == "PENDING")
 
@@ -158,4 +160,4 @@ class OrdersTestCase(base.TestCase):
                                                       offset=offset)
 
         # verify that the get for the list was successful
-        self.assertEqual(len(orders_list), limit)
+        self.assertEqual(limit, len(orders_list))

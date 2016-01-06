@@ -41,7 +41,7 @@ class WhenTestingClientInit(TestClient):
         c = client._HTTPClient(session=self.session,
                                endpoint=self.endpoint,
                                project_id=self.project_id)
-        self.assertEqual(c.endpoint_override, 'http://localhost:9311/v1')
+        self.assertEqual('http://localhost:9311/v1', c.endpoint_override)
 
     def test_default_headers_are_empty(self):
         c = client._HTTPClient(session=self.session, endpoint=self.endpoint)
@@ -53,7 +53,7 @@ class WhenTestingClientInit(TestClient):
                                endpoint=self.endpoint,
                                project_id=self.project_id)
         self.assertIn('X-Project-Id', c._default_headers.keys())
-        self.assertEqual(c._default_headers['X-Project-Id'], self.project_id)
+        self.assertEqual(self.project_id, c._default_headers['X-Project-Id'])
 
     def test_error_thrown_when_no_session_and_no_endpoint(self):
         self.assertRaises(ValueError, client.Client,
@@ -124,7 +124,7 @@ class WhenTestingClientPut(TestClient):
     def test_put_passes_data(self):
         data = "test"
         self.httpclient.put(self.href, data=data)
-        self.assertEqual(self.put_mock.last_request.text, "test")
+        self.assertEqual("test", self.put_mock.last_request.text)
 
     def test_put_includes_default_headers(self):
         self.httpclient._default_headers = {'Test-Default-Header': 'test'}
@@ -213,7 +213,7 @@ class WhenTestingClientDelete(TestClient):
     def test_delete_passes_json(self):
         json = {"test": "test"}
         self.httpclient.delete(self.href, json=json)
-        self.assertEqual(self.del_mock.last_request.text, '{"test": "test"}')
+        self.assertEqual('{"test": "test"}', self.del_mock.last_request.text)
 
     def test_delete_includes_default_headers(self):
         self.httpclient._default_headers = {'Test-Default-Header': 'test'}
@@ -256,7 +256,7 @@ class WhenTestingGetErrorMessage(TestClient):
         resp = mock.MagicMock()
         resp.json.return_value = {'title': 'test_text'}
         msg = self.httpclient._get_error_message(resp)
-        self.assertEqual(msg, 'test_text')
+        self.assertEqual('test_text', msg)
 
     def test_gets_error_message_from_content_when_no_json(self):
         resp = mock.MagicMock()

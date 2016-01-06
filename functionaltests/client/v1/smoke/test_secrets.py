@@ -164,4 +164,4 @@ class SecretsTestCase(base.TestCase):
         secret_list = self.barbicanclient.secrets.list(limit=limit,
                                                        offset=offset)
 
-        self.assertEqual(len(secret_list), limit)
+        self.assertEqual(limit, len(secret_list))

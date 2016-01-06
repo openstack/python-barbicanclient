@@ -487,4 +487,4 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
     def test_should_get_total(self):
         self.responses.get(self.entity_base, json={'total': 1})
         total = self.manager.total()
-        self.assertEqual(total, 1)
+        self.assertEqual(1, total)
