@@ -53,7 +53,7 @@ class ContainerFormatter(formatter.EntityFormatter):
         formatted_consumers = None
         if self.secrets:
             formatted_secrets = '\n'.join((
-                '='.join((name, secret_ref))
+                '='.join((name, secret_ref)) if name else secret_ref
                 for name, secret_ref in six.iteritems(self.secret_refs)
             ))
         if self.consumers:
@@ -114,7 +114,8 @@ class Container(ContainerFormatter):
     def _fill_secrets_from_secret_refs(self):
         if self._secret_refs:
             self._cached_secrets = dict(
-                (name.lower(), self._secret_manager.get(secret_ref=secret_ref))
+                (name.lower() if name else "",
+                 self._secret_manager.get(secret_ref=secret_ref))
                 for name, secret_ref in six.iteritems(self._secret_refs)
             )
 

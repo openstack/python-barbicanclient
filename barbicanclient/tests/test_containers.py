@@ -17,6 +17,7 @@ import json
 
 import mock
 from oslo_utils import timeutils
+import six
 
 from barbicanclient import acls
 from barbicanclient.tests import test_client
@@ -465,7 +466,6 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         container_resp = self.container.get_dict(self.entity_href)
         data = {"containers": [container_resp for v in range(3)]}
         self.responses.get(self.entity_base, json=data)
-
         containers_list = self.manager.list(limit=10, offset=5)
         self.assertTrue(len(containers_list) == 3)
         self.assertIsInstance(containers_list[0], containers.Container)
@@ -474,10 +474,29 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         # Verify the correct URL was used to make the call.
         self.assertEqual(self.entity_base,
                          self.responses.last_request.url.split('?')[0])
-
         # Verify that correct information was sent in the call.
         self.assertEqual(['10'], self.responses.last_request.qs['limit'])
         self.assertEqual(['5'], self.responses.last_request.qs['offset'])
+
+    def test_should_get_list_when_secret_ref_without_name(self):
+        container_resp = self.container.get_dict(self.entity_href)
+        del container_resp.get("secret_refs")[0]["name"]
+        data = {"containers": [container_resp for v in range(3)]}
+        self.responses.get(self.entity_base, json=data)
+        containers_list = self.manager.list(limit=10, offset=5)
+
+        self.assertTrue(len(containers_list) == 3)
+        self.assertIsInstance(containers_list[0], containers.Container)
+        self.assertEqual(self.entity_href, containers_list[0].container_ref)
+
+        # Verify the correct URL was used to make the call.
+        self.assertEqual(self.entity_base,
+                         self.responses.last_request.url.split('?')[0])
+
+        # Verify that the names of the secret_refs in the containers are None
+        for container in containers_list:
+            for name in six.iterkeys(container._secret_refs):
+                self.assertIsNone(name)
 
     def test_should_fail_get_invalid_container(self):
         self.assertRaises(ValueError, self.manager.get,
