@@ -57,7 +57,7 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
     def store_secret(self, payload="Payload for testing", store_argv=[]):
         """ Store (aka create) a secret
 
-        The store_argv paramater allows additional command line parameters for
+        The store_argv parameter allows additional command line parameters for
         the store operation to be specified. This can be used to specify -a for
         algorithm as an example.
 

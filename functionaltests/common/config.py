@@ -69,7 +69,7 @@ def setup_config(config_file=''):
 
     # Actually parse config
     TEST_CONF(
-        (),  # Required to load a anonymous config
+        (),  # Required to load an anonymous config
         default_config_files=config_to_load
     )
 

@@ -275,7 +275,7 @@ class ACLsTestCase(BaseACLsTestCase):
 
     @testcase.attr('negative')
     def test_delete_non_existent_secret_valid_uuid(self):
-        """A delete on a ACL when secret with a valid UUID does not exist
+        """A delete on an ACL when secret with a valid UUID does not exist
 
         This should return a 404.
         """
