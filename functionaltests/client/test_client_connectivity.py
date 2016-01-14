@@ -20,7 +20,7 @@ from barbicanclient import client
 from barbicanclient import exceptions
 from keystoneclient.auth import identity
 from keystoneclient import session
-import keystoneclient.openstack.common.apiclient.exceptions as ks_exceptions
+from keystoneclient import exceptions as ks_exceptions
 
 CONF = config.get_config()
 
