@@ -17,11 +17,10 @@ import functools
 from os import path
 import time
 import types
-import urlparse
 
 import oslotest.base as oslotest
 import six
-
+import six.moves.urllib.parse as urlparse
 
 class BaseTestCase(oslotest.BaseTestCase):
     def setUp(self):
