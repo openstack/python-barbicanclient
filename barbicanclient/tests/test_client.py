@@ -265,6 +265,13 @@ class WhenTestingGetErrorMessage(TestClient):
         msg = self.httpclient._get_error_message(resp)
         self.assertEqual(msg, content)
 
+    def test_gets_error_message_from_description_in_json(self):
+        resp = mock.MagicMock()
+        resp.json.return_value = {'title': 'test_text',
+                                  'description': 'oopsie'}
+        msg = self.httpclient._get_error_message(resp)
+        self.assertEqual(msg, 'test_text: oopsie')
+
 
 class BaseEntityResource(testtools.TestCase):
 

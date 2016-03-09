@@ -113,6 +113,9 @@ class _HTTPClient(adapter.Adapter):
         try:
             response_data = resp.json()
             message = response_data['title']
+            description = response_data.get('description')
+            if description:
+                message = '{0}: {1}'.format(message, description)
         except ValueError:
             message = resp.content
         return message
