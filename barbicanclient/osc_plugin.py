@@ -10,11 +10,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import logging
-
 from barbicanclient import client
 
-LOG = logging.getLogger(__name__)
 
 DEFAULT_API_VERSION = '1'
 API_VERSION_OPTION = 'os_key_manager_api_version'
