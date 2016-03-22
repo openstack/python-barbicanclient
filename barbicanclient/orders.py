@@ -296,7 +296,7 @@ class AsymmetricOrder(Order, AsymmetricOrderFormatter):
     _type = 'asymmetric'
 
     def __init__(self, api, name=None, algorithm=None, bit_length=None,
-                 mode=None, pass_phrase=None, expiration=None,
+                 mode=None, passphrase=None, expiration=None,
                  payload_content_type=None, status=None, created=None,
                  updated=None, order_ref=None, container_ref=None,
                  error_status_code=None, error_reason=None, sub_status=None,
@@ -311,8 +311,8 @@ class AsymmetricOrder(Order, AsymmetricOrderFormatter):
             error_reason=error_reason, sub_status=sub_status,
             sub_status_message=sub_status_message, creator_id=creator_id)
         self._container_ref = container_ref
-        if pass_phrase:
-            self._meta['pass_phrase'] = pass_phrase
+        if passphrase:
+            self._meta['pass_phrase'] = passphrase
 
     @property
     def container_ref(self):
@@ -471,7 +471,7 @@ class OrderManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         return AsymmetricOrder(api=self._api, name=name, algorithm=algorithm,
-                               bit_length=bit_length, pass_phrase=pass_phrase,
+                               bit_length=bit_length, passphrase=pass_phrase,
                                payload_content_type=payload_content_type,
                                expiration=expiration)
 
