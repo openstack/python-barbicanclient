@@ -221,7 +221,8 @@ class Container(ContainerFormatter):
 
     def _get_secrets_and_store_them_if_necessary(self):
         # Save all secrets if they are not yet saved
-        LOG.debug("Storing secrets: {0}".format(self.secrets))
+        LOG.debug("Storing secrets: {0}".format(base.censored_copy(
+                                                self.secrets, ['payload'])))
         secret_refs = []
         for name, secret in six.iteritems(self.secrets):
             if secret and not secret.secret_ref:
