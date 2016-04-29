@@ -17,8 +17,9 @@
 Command-line interface to the Barbican API.
 """
 
-import sys
 from collections import namedtuple
+import logging
+import sys
 
 from cliff import app
 from cliff import command
@@ -32,6 +33,9 @@ import six
 
 from barbicanclient import client
 from barbicanclient import version
+
+
+LOG = logging.getLogger(__name__)
 
 
 _DEFAULT_IDENTITY_API_VERSION = '3'
@@ -335,6 +339,10 @@ class Barbican(app.App):
 
 
 def main(argv=sys.argv[1:]):
+    logging.basicConfig()
+    LOG.warning("This Barbican CLI interface has been deprecated and will be "
+                "removed in the O release. Please use the openstack unified "
+                "client instead.")
     barbican_app = Barbican()
     return barbican_app.run(argv)
 
