@@ -331,8 +331,8 @@ class Secret(SecretFormatter):
             secret_dict['payload_content_type'] = u'text/plain'
 
         secret_dict = base.filter_null_keys(secret_dict)
-
-        LOG.debug("Request body: {0}".format(secret_dict))
+        LOG.debug("Request body: {0}".format(base.censored_copy(secret_dict,
+                                                                ['payload'])))
 
         # Save, store secret_ref and return
         response = self._api.post(self._entity, json=secret_dict)

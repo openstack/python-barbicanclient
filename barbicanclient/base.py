@@ -22,6 +22,14 @@ def filter_null_keys(dictionary):
     return dict(((k, v) for k, v in dictionary.items() if v is not None))
 
 
+def censored_copy(data_dict, censor_keys):
+    '''Returns redacted dict copy for censored keys'''
+    if censor_keys is None:
+        censor_keys = []
+    return {k: v if k not in censor_keys else '<redacted>' for k, v in
+            data_dict.items()}
+
+
 def validate_ref(ref, entity):
     """Verifies that there is a real uuid at the end of the uri
 
