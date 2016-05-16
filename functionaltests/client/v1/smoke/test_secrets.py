@@ -96,7 +96,8 @@ class SecretsTestCase(base.TestCase):
         secret_data['secret_type'] = secret_type
         secret_data['algorithm'] = algorithm
         secret_data['bit_length'] = bit_length
-        secret_data['payload'] = base64.b64encode(secret)
+        # payload should not be encoded.
+        secret_data['payload'] = secret
         secret = self.barbicanclient.secrets.create(
             **secret_create_defaults_data)
 
