@@ -16,8 +16,8 @@ import json
 import logging
 import os
 
-from keystoneclient import adapter
-from keystoneclient import session as ks_session
+from keystoneauth1 import adapter
+from keystoneauth1 import session as ks_session
 
 from barbicanclient import acls
 from barbicanclient import cas

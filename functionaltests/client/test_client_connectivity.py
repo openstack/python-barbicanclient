@@ -18,9 +18,9 @@ from functionaltests.base import BaseTestCase
 from functionaltests.common import config
 from barbicanclient import client
 from barbicanclient import exceptions
-from keystoneclient.auth import identity
-from keystoneclient import session
-from keystoneclient import exceptions as ks_exceptions
+from keystoneauth1 import identity
+from keystoneauth1 import session
+from keystoneauth1 import exceptions as ks_exceptions
 
 CONF = config.get_config()
 

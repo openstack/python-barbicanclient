@@ -18,8 +18,8 @@ import logging
 from functionaltests.base import BaseTestCase
 from functionaltests.common import config
 from barbicanclient import client
-from keystoneclient.auth import identity
-from keystoneclient import session
+from keystoneauth1 import identity
+from keystoneauth1 import session
 
 CONF = config.get_config()
 
