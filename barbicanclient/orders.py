@@ -251,6 +251,8 @@ class KeyOrder(Order, KeyOrderFormatter):
     KeyOrders can be used to request random key material from Barbican
     """
     _type = 'key'
+    _validMeta = (u'name', u'algorithm', u'mode', u'bit_length', u'expiration',
+                  u'payload_content_type')
 
     def __init__(self, api, name=None, algorithm=None, bit_length=None,
                  mode=None, expiration=None, payload_content_type=None,
@@ -407,6 +409,16 @@ class OrderManager(base.BaseEntityManager):
                 'container_ref' in response.get('meta', ())):
             response['source_container_ref'] = response['meta'].pop(
                 'container_ref')
+
+        # validate key_order meta fields.
+        if resp_type == 'key' and (
+           set(response['meta'].keys()) - set(KeyOrder._validMeta)):
+                invalidFields = ', '.join(
+                                map(str, set(
+                                    response['meta'].keys()) -
+                                    set(KeyOrder._validMeta)))
+                raise TypeError(
+                    'Invalid KeyOrder meta field: [%s]' % invalidFields)
 
         response.update(response.pop('meta'))
 

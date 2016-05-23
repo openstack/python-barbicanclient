@@ -47,6 +47,24 @@ class OrdersTestCase(test_client.BaseEntityResource):
             "order_ref": "{1}"
         }}""".format(self.secret_ref, self.entity_href)
 
+        self.key_order_invalid_data = """{{
+            "status": "ACTIVE",
+            "secret_ref": "{0}",
+            "updated": "2014-10-21T17:15:50.871596",
+            "meta": {{
+                "name": "secretname",
+                "algorithm": "aes",
+                "request_type":"invalid",
+                "payload_content_type": "application/octet-stream",
+                "mode": "cbc",
+                "bit_length": 256,
+                "expiration": "2015-02-28T19:14:44.180394"
+            }},
+            "created": "2014-10-21T17:15:50.824202",
+            "type": "key",
+            "order_ref": "{1}"
+        }}""".format(self.secret_ref, self.entity_href)
+
         self.manager = self.client.orders
 
     def _get_order_args(self, order_data):
@@ -84,7 +102,6 @@ class WhenTestingKeyOrders(OrdersTestCase):
         order_href = order.submit()
 
         self.assertEqual(self.entity_href, order_href)
-
         # Verify that attributes are immutable after store.
         attributes = [
             "name", "expiration", "algorithm", "bit_length", "mode",
@@ -205,6 +222,16 @@ class WhenTestingOrderManager(OrdersTestCase):
 
         # Verify the correct URL was used to make the call.
         self.assertEqual(self.entity_href, self.responses.last_request.url)
+
+    def test_should_get_invalid_meta(self):
+        self.responses.get(self.entity_href, text=self.key_order_invalid_data)
+
+        try:
+            # Verify checking for invalid meta fields.
+            order = self.manager.get(order_ref=self.entity_href)
+            self.fail("Didn't raise an TypeError exception")
+        except TypeError:
+            pass
 
     def test_should_get_list(self):
         data = {"orders": [json.loads(self.key_order_data) for _ in range(3)]}
