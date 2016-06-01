@@ -17,7 +17,6 @@ import logging
 import os
 
 from keystoneclient import adapter
-from keystoneclient.auth.base import BaseAuthPlugin
 from keystoneclient import session as ks_session
 
 from barbicanclient import acls
