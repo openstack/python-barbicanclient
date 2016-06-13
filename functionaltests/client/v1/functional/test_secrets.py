@@ -339,7 +339,8 @@ class SecretsTestCase(base.TestCase):
         secret.secret_type = secret_type
         secret.algorithm = algorithm
         secret.bit_length = bit_length
-        secret.payload = base64.b64encode(payload)
+        # payload should not be encoded.
+        secret.payload = payload
 
         secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)
@@ -756,7 +757,8 @@ class SecretsTestCase(base.TestCase):
         secret.secret_type = secret_type
         secret.algorithm = algorithm
         secret.bit_length = bit_length
-        secret.payload = base64.b64encode(payload)
+        # payload should not be encoded.
+        secret.payload = payload
 
         secret_ref = self.cleanup.add_entity(secret)
         self.assertIsNotNone(secret_ref)

@@ -65,7 +65,7 @@ class SecretTestCase(CmdLineTestCase):
     @testcase.attr('positive')
     def test_secret_store_with_secret_type(self, secret_type, algorithm,
                                            bit_length, secret):
-        payload = base64.b64encode(secret)
+        payload = secret
         secret_argv = ['--secret-type', secret_type]
         if algorithm:
             secret_argv.extend(['--algorithm', algorithm])
