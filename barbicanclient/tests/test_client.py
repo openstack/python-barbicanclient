@@ -151,13 +151,13 @@ class WhenTestingClientGet(TestClient):
 
     def test_get_uses_href_as_is(self):
         self.httpclient.get(self.href)
-        self.assertEqual(self.get_mock.last_request.url, self.href)
+        self.assertEqual(self.href, self.get_mock.last_request.url)
 
     def test_get_passes_params(self):
         params = {'test': 'test1'}
         self.httpclient.get(self.href, params=params)
-        self.assertEqual(self.get_mock.last_request.url.split('?')[0],
-                         self.href)
+        self.assertEqual(self.href,
+                         self.get_mock.last_request.url.split('?')[0])
         self.assertEqual(['test1'], self.get_mock.last_request.qs['test'])
 
     def test_get_includes_accept_header_of_application_json(self):
@@ -179,7 +179,7 @@ class WhenTestingClientGet(TestClient):
 
     def test_get_raw_uses_href_as_is(self):
         self.httpclient._get_raw(self.href, headers=self.headers)
-        self.assertEqual(self.get_mock.last_request.url, self.href)
+        self.assertEqual(self.href, self.get_mock.last_request.url)
 
     def test_get_raw_passes_headers(self):
         self.httpclient._get_raw(self.href, headers={'test': 'test'})
@@ -263,14 +263,14 @@ class WhenTestingGetErrorMessage(TestClient):
         resp.json.side_effect = ValueError()
         resp.content = content = 'content'
         msg = self.httpclient._get_error_message(resp)
-        self.assertEqual(msg, content)
+        self.assertEqual(content, msg)
 
     def test_gets_error_message_from_description_in_json(self):
         resp = mock.MagicMock()
         resp.json.return_value = {'title': 'test_text',
                                   'description': 'oopsie'}
         msg = self.httpclient._get_error_message(resp)
-        self.assertEqual(msg, 'test_text: oopsie')
+        self.assertEqual('test_text: oopsie', msg)
 
 
 class BaseEntityResource(testtools.TestCase):
