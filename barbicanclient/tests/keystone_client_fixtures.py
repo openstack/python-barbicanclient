@@ -236,7 +236,7 @@ class KeystoneClientFixture(testtools.TestCase):
 
         try:
             self.barbican.run(argv=argv)
-        except:
+        except Exception:
             self.fail('failed to delete secret')
 
     def test_v2_auth(self):
