@@ -503,7 +503,8 @@ class ACLsTestCase(BaseACLsTestCase):
         acl_users = server_acl.read.users
         if acl_users and remove_users:
             acl_users = set(acl_users).difference(remove_users)
-            server_acl.read.users = acl_users
+            # Python sets are not JSON serializable. Cast acl_users to a list.
+            server_acl.read.users = list(acl_users)
 
         if kwargs.get('remove_project_access') is not None:
             server_acl.read.project_access = \
@@ -554,7 +555,8 @@ class ACLsTestCase(BaseACLsTestCase):
         acl_users = server_acl.read.users
         if acl_users and remove_users:
             acl_users = set(acl_users).difference(remove_users)
-            server_acl.read.users = acl_users
+            # Python sets are not JSON serializable. Cast acl_users to a list.
+            server_acl.read.users = list(acl_users)
 
         if kwargs.get('remove_project_access') is not None:
             server_acl.read.project_access = \

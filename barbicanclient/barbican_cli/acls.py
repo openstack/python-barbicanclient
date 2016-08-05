@@ -253,7 +253,9 @@ class RemoveACLUsers(lister.Lister, ArgMixin):
                     acl_users = server_acl.users
                     acl_users = set(acl_users).difference(input_acl.users)
                     del server_acl.users[:]
-                    server_acl.users = acl_users
+                    # Python sets are not JSON serializable.
+                    # Cast acl_users to a list.
+                    server_acl.users = list(acl_users)
 
         server_entity.submit()  # apply changes to server
         server_entity.load_acls_data()
