@@ -32,6 +32,7 @@ from keystoneclient import session
 import six
 
 from barbicanclient import client
+from barbicanclient._i18n import _LW
 from barbicanclient import version
 
 
@@ -340,9 +341,9 @@ class Barbican(app.App):
 
 def main(argv=sys.argv[1:]):
     logging.basicConfig()
-    LOG.warning("This Barbican CLI interface has been deprecated and will be "
-                "removed in the O release. Please use the openstack unified "
-                "client instead.")
+    LOG.warning(_LW("This Barbican CLI interface has been deprecated and "
+                    "will be removed in the O release. Please use the "
+                    "openstack unified client instead."))
     barbican_app = Barbican()
     return barbican_app.run(argv)
 
