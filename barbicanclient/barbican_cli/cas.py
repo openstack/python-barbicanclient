@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Command-line interface sub-commands related to secrets.
+Command-line interface sub-commands related to cas.
 """
 from cliff import lister
 from cliff import show
@@ -47,7 +47,7 @@ class ListCA(lister.Lister):
                                  '(default: %(default)s)',
                             type=int)
         parser.add_argument('--name', '-n', default=None,
-                            help='specify the secret name '
+                            help='specify the ca name '
                                  '(default: %(default)s)')
         return parser
 
