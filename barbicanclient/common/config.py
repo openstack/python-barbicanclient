@@ -17,9 +17,6 @@
 Configuration setup for Barbican Client.
 """
 
-import os
-import sys
-
 from barbicanclient.version import __version__
 from oslo_config import cfg
 
