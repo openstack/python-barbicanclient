@@ -54,7 +54,7 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
 
     def test_should_show_usage_with_no_args(self):
         exit_code = self.barbican.run([])
-        self.assertEquals(1, exit_code)
+        self.assertEqual(1, exit_code)
         self.assertIn('usage', self.captured_stderr.getvalue())
 
     def test_should_error_if_noauth_and_authurl_both_specified(self):
