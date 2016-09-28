@@ -31,7 +31,7 @@ class BaseBehaviors(object):
         self.cmdline_client = barbican.Barbican()
 
     def add_auth_and_endpoint(self, arg_list):
-        """ Update an argument list with authentication and endpoint data
+        """Update an argument list with authentication and endpoint data
 
         Keystone v3 introduced the concept of a domain, so only the v3
         flavor will include domain names.
@@ -70,7 +70,7 @@ class BaseBehaviors(object):
         self.LOG.info('updated command string: %s', arg_list)
 
     def issue_barbican_command(self, argv):
-        """ Issue the barbican command and return its output.
+        """Issue the barbican command and return its output.
 
         The barbican command sometimes raises SystemExit, but not always, so
         we will handle either situation here.
@@ -97,7 +97,7 @@ class BaseBehaviors(object):
         return outstr, errstr
 
     def _prettytable_to_dict(self, str):
-        """ Create a dict from the values in a PrettyTable string.
+        """Create a dict from the values in a PrettyTable string.
 
         :param str: a string representing a PrettyTable output from a
         barbican secret store or get command.
@@ -116,7 +116,7 @@ class BaseBehaviors(object):
         return retval
 
     def _prettytable_to_list(self, str):
-        """ Create a list from the values in a PrettyTable string.
+        """Create a list from the values in a PrettyTable string.
 
         :param str: a string representing a PrettyTable output from a
         barbican secret list command.
