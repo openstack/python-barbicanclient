@@ -349,7 +349,7 @@ class ACLsTestCase(BaseACLsTestCase):
             entity.submit
         )
         if hasattr(e, 'status_code'):
-            self.assertEqual(e.status_code, kwargs.get('error_code'))
+            self.assertEqual(kwargs.get('error_code'), e.status_code)
 
     @utils.parameterized_dataset(ACL_DELETE_DATA)
     def test_acl_delete(self, users, project_access, entity_ref_method,
@@ -476,7 +476,7 @@ class ACLsTestCase(BaseACLsTestCase):
             server_acl.submit
         )
         if hasattr(e, 'status_code'):
-            self.assertEqual(e.status_code, kwargs.get('error_code'))
+            self.assertEqual(kwargs.get('error_code'), e.status_code)
 
     @utils.parameterized_dataset(ACL_REMOVE_USERS_DATA_POSITIVE)
     @testcase.attr('positive')
@@ -568,4 +568,4 @@ class ACLsTestCase(BaseACLsTestCase):
             server_acl.submit
         )
         if hasattr(e, 'status_code'):
-            self.assertEqual(e.status_code, kwargs.get('error_code'))
+            self.assertEqual(kwargs.get('error_code'), e.status_code)
