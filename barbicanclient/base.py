@@ -39,7 +39,7 @@ def validate_ref(ref, entity):
     try:
         _, entity_uuid = ref.rstrip('/').rsplit('/', 1)
         uuid.UUID(entity_uuid)
-    except:
+    except Exception:
         raise ValueError('{0} incorrectly specified.'.format(entity))
 
     return True
