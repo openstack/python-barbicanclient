@@ -284,8 +284,8 @@ class WhenTestingContainers(test_client.BaseEntityResource):
             secrets=self.container.generic_secrets
         )
 
-        self.assertEqual(container.secret_refs,
-                         self.container.generic_secret_refs)
+        self.assertEqual(self.container.generic_secret_refs,
+                         container.secret_refs)
 
     def test_should_reload_attributes_after_store(self):
         data = {'container_ref': self.entity_href}

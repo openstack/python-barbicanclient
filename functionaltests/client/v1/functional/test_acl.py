@@ -291,7 +291,7 @@ class ACLsTestCase(BaseACLsTestCase):
             entity.remove
         )
 
-        self.assertEqual(e.status_code, 404)
+        self.assertEqual(404, e.status_code)
 
     @utils.parameterized_dataset(ACL_SUBMIT_DATA_POSITIVE)
     @testcase.attr('positive')
