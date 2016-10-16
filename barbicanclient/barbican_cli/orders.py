@@ -25,7 +25,9 @@ class CreateOrder(show.ShowOne):
 
     def get_parser(self, prog_name):
         parser = super(CreateOrder, self).get_parser(prog_name)
-        parser.add_argument('type', help='the type of the order to create.')
+        parser.add_argument('type', help='the type of the order '
+                                         '(key, asymmetric, certificate)'
+                                         ' to create.')
         parser.add_argument('--name', '-n',
                             help='a human-friendly name.')
         parser.add_argument('--algorithm', '-a', default='aes',
