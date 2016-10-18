@@ -26,9 +26,10 @@ from cliff import command
 from cliff import commandmanager
 from cliff import complete
 from cliff import help
-from keystoneclient.auth.identity import v3
-from keystoneclient.auth.identity import v2
-from keystoneclient import session
+from keystoneauth1.identity import v2
+from keystoneauth1.identity import v3
+from keystoneauth1 import loading
+from keystoneauth1 import session
 import six
 
 from barbicanclient import client
@@ -318,7 +319,7 @@ class Barbican(app.App):
                             help='Defaults to env[BARBICAN_API_VERSION].')
         parser.epilog = ('See "barbican help COMMAND" for help '
                          'on a specific command.')
-        session.Session.register_cli_options(parser)
+        loading.register_session_argparse_arguments(parser)
         return parser
 
     def prepare_to_run_command(self, cmd):
