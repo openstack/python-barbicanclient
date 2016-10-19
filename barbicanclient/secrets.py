@@ -169,7 +169,7 @@ class Secret(SecretFormatter):
         if self._content_types:
             return self._content_types
         elif self._payload_content_type:
-            return {u'default': six.u(self.payload_content_type)}
+            return {u'default': self.payload_content_type}
         return None
 
     @property
