@@ -93,22 +93,26 @@ directory.
 
 .. code-block:: bash
 
-    export OS_PROJECT_NAME=admin
+    export OS_PROJECT_NAME=<YourProjectName>
 
-    # Either Project ID or Project Name is required
-    export OS_PROJECT_DOMAIN_ID=<YourProjectID>
-    export OS_PROJECT_DOMAIN_NAME=<YourProjectName>
+    # Either Project Domain ID or Project Domain Name is required
+    export OS_PROJECT_DOMAIN_ID=<YourProjectDomainID>
+    export OS_PROJECT_DOMAIN_NAME=<YourProjectDomainName>
 
-    # Either User ID or User Name is required
+    # Either User Domain ID or User Domain Name is required
     export OS_USER_DOMAIN_ID=<YourUserDomainID>
     export OS_USER_DOMAIN_NAME=<YourUserDomainName>
-    export OS_USERNAME=admin
-    export OS_PASSWORD=password
+
+    # Either User ID or Username can be used
+    export OS_USER_ID =<YourUserID>
+    export OS_USERNAME=<YourUserName>
+
+    export OS_PASSWORD=<YourPassword>
 
     # OS_AUTH_URL should be your location of Keystone
     # Barbican Client defaults to Keystone V3
-    export OS_AUTH_URL="http://localhost:5000/v3/"
-    export BARBICAN_ENDPOINT="http://localhost:9311"
+    export OS_AUTH_URL="<YourAuthURL>:5000/v3/"
+    export BARBICAN_ENDPOINT="<YourBarbicanEndpoint>:9311"
 
 
 Make any appropriate changes to this file.
