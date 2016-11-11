@@ -14,7 +14,9 @@
 # limitations under the License.
 
 import base64
+import datetime
 import sys
+import time
 
 from barbicanclient import exceptions
 from functionaltests.client import base
@@ -767,3 +769,182 @@ class SecretsTestCase(base.TestCase):
         resp = self.barbicanclient.secrets.get(secret_ref)
         self.assertEqual("ACTIVE", resp.status)
         self.assertEqual(secret_type, resp.secret_type)
+
+    @utils.parameterized_dataset({
+        'query_by_name': {
+            'secret_1_dict': dict(name="name1"),
+            'secret_2_dict': dict(name="name2"),
+            'query_dict': dict(name="name1")
+        },
+        'query_by_algorithm': {
+            'secret_1_dict': dict(algorithm="algorithm1"),
+            'secret_2_dict': dict(algorithm="algorithm2"),
+            'query_dict': dict(algorithm="algorithm1")
+        },
+        'query_by_mode': {
+            'secret_1_dict': dict(mode="mode1"),
+            'secret_2_dict': dict(mode="mode2"),
+            'query_dict': dict(mode="mode1")
+        },
+        'query_by_bit_length': {
+            'secret_1_dict': dict(bit_length=1024),
+            'secret_2_dict': dict(bit_length=2048),
+            'query_dict': dict(bits=1024)
+        },
+        'query_by_secret_type': {
+            'secret_1_dict': dict(secret_type='opaque'),
+            'secret_2_dict': dict(secret_type='symmetric'),
+            'query_dict': dict(secret_type='opaque')
+        },
+    })
+    @testcase.attr('positive')
+    def test_secret_list_with_filter(self, secret_1_dict, secret_2_dict,
+                                     query_dict):
+        secret_1 = self.barbicanclient.secrets.create(**secret_1_dict)
+        secret_1_ref = self.cleanup.add_entity(secret_1)
+        self.assertIsNotNone(secret_1_ref)
+        secret_2 = self.barbicanclient.secrets.create(**secret_2_dict)
+        secret_2_ref = self.cleanup.add_entity(secret_2)
+        self.assertIsNotNone(secret_2_ref)
+
+        secret_list = self.barbicanclient.secrets.list(**query_dict)
+
+        self.assertEqual(1, len(secret_list))
+
+    @utils.parameterized_dataset({
+        'query_by_name': {
+            'secret_1_dict': dict(name="name1"),
+            'secret_2_dict': dict(name="name2"),
+            'sort': 'name'
+        },
+        'query_by_algorithm': {
+            'secret_1_dict': dict(algorithm="algorithm1"),
+            'secret_2_dict': dict(algorithm="algorithm2"),
+            'sort': 'algorithm'
+        },
+        'query_by_mode': {
+            'secret_1_dict': dict(mode="mode1"),
+            'secret_2_dict': dict(mode="mode2"),
+            'sort': 'mode'
+        },
+        'query_by_bit_length': {
+            'secret_1_dict': dict(bit_length=1024),
+            'secret_2_dict': dict(bit_length=2048),
+            'sort': 'bit_length'
+        },
+        'query_by_secret_type': {
+            'secret_1_dict': dict(secret_type='opaque'),
+            'secret_2_dict': dict(secret_type='symmetric'),
+            'sort': 'secret_type'
+        },
+    })
+    @testcase.attr('positive')
+    def test_secret_list_with_sort(self, secret_1_dict, secret_2_dict, sort):
+        secret_1 = self.barbicanclient.secrets.create(**secret_1_dict)
+        secret_1_ref = self.cleanup.add_entity(secret_1)
+        self.assertIsNotNone(secret_1_ref)
+        secret_2 = self.barbicanclient.secrets.create(**secret_2_dict)
+        secret_2_ref = self.cleanup.add_entity(secret_2)
+        self.assertIsNotNone(secret_2_ref)
+
+        query_dict = {'sort': sort + ":asc"}
+        secret_list = self.barbicanclient.secrets.list(**query_dict)
+
+        self.assertEqual(2, len(secret_list))
+        self.assertEqual(secret_1_ref, secret_list[0].secret_ref)
+
+        query_dict = {'sort': sort + ":desc"}
+        secret_list = self.barbicanclient.secrets.list(**query_dict)
+
+        self.assertEqual(2, len(secret_list))
+        self.assertEqual(secret_2_ref, secret_list[0].secret_ref)
+
+    @utils.parameterized_dataset({
+        'created': {
+            'date_type': 'created',
+        },
+        'updated': {
+            'date_type': 'updated',
+        },
+        'expiration': {
+            'date_type': 'expiration',
+        },
+    })
+    @testcase.attr('positive')
+    def test_secret_list_with_date_filter(self, date_type):
+        now = datetime.datetime.utcnow()
+        expiration_1 = (now + datetime.timedelta(days=3)).isoformat()
+        expiration_2 = (now + datetime.timedelta(days=5)).isoformat()
+        secret_1 = self.barbicanclient.secrets.create(expiration=expiration_1)
+        secret_1_ref = self.cleanup.add_entity(secret_1)
+        self.assertIsNotNone(secret_1_ref)
+        payload = "gF6+lLoF3ohA9aPRpt+6bQ=="
+        self.barbicanclient.secrets.update(secret_1_ref, payload)
+
+        time.sleep(1)
+
+        secret_2 = self.barbicanclient.secrets.create(expiration=expiration_2)
+        secret_2_ref = self.cleanup.add_entity(secret_2)
+        self.assertIsNotNone(secret_2_ref)
+
+        time_to_search_1 = getattr(secret_1, date_type).isoformat()
+        time_to_search_2 = getattr(secret_2, date_type).isoformat()
+
+        # Search for secrets with secret 1's time
+        query_dict = {date_type: time_to_search_1}
+        secret_list = self.barbicanclient.secrets.list(**query_dict)
+
+        self.assertEqual(1, len(secret_list))
+        self.assertEqual(secret_1_ref, secret_list[0].secret_ref)
+
+        # Search for secrets with time < secret 2, i.e. secret 1
+        query_dict = {date_type: 'lt:' + time_to_search_2}
+        secret_list = self.barbicanclient.secrets.list(**query_dict)
+
+        self.assertEqual(1, len(secret_list))
+        self.assertEqual(secret_1_ref, secret_list[0].secret_ref)
+
+        # Search for secrets with time < secret 1, i.e. none
+        query_dict = {date_type: 'lt:' + time_to_search_1}
+        secret_list = self.barbicanclient.secrets.list(**query_dict)
+
+        self.assertEqual(0, len(secret_list))
+
+        # Search for secrets with time <= secret 2, i.e. both secrets
+        query_dict = {date_type: 'lte:' + time_to_search_2}
+        secret_list = self.barbicanclient.secrets.list(**query_dict)
+
+        self.assertEqual(2, len(secret_list))
+
+        # Search for secrets with time > secret 1, i.e. secret 2
+        query_dict = {date_type: 'gt:' + time_to_search_1}
+        secret_list = self.barbicanclient.secrets.list(**query_dict)
+
+        self.assertEqual(1, len(secret_list))
+        self.assertEqual(secret_2_ref, secret_list[0].secret_ref)
+
+        # Search for secrets with time > secret 2, i.e. none
+        query_dict = {date_type: 'gt:' + time_to_search_2}
+        secret_list = self.barbicanclient.secrets.list(**query_dict)
+
+        self.assertEqual(0, len(secret_list))
+
+        # Search for secrets with time >= secret 1, i.e. both secrets
+        query_dict = {date_type: 'gte:' + time_to_search_1}
+        secret_list = self.barbicanclient.secrets.list(**query_dict)
+
+        self.assertEqual(2, len(secret_list))
+
+        # Sort secrets by date
+        query_dict = {'sort': date_type + ":asc"}
+        secret_list = self.barbicanclient.secrets.list(**query_dict)
+
+        self.assertEqual(2, len(secret_list))
+        self.assertEqual(secret_1_ref, secret_list[0].secret_ref)
+
+        # Sort secrets by date
+        query_dict = {'sort': date_type + ":desc"}
+        secret_list = self.barbicanclient.secrets.list(**query_dict)
+
+        self.assertEqual(2, len(secret_list))
+        self.assertEqual(secret_2_ref, secret_list[0].secret_ref)
