@@ -61,7 +61,7 @@ class WhenTestingACLManager(ACLTestCase):
         api_resp = self.manager.get(entity_ref=self.secret_ref)
         self.assertEqual(self.secret_acl_ref,
                          self.responses.last_request.url)
-        self.assertEqual(False, api_resp.get('read').project_access)
+        self.assertFalse(api_resp.get('read').project_access)
         self.assertEqual('read', api_resp.get('read').operation_type)
         self.assertEqual(self.secret_acl_ref, api_resp.get('read').acl_ref)
 
@@ -80,7 +80,7 @@ class WhenTestingACLManager(ACLTestCase):
         api_resp = self.manager.get(entity_ref=self.container_ref)
         self.assertEqual(self.container_acl_ref,
                          self.responses.last_request.url)
-        self.assertEqual(False, api_resp.get('read').project_access)
+        self.assertFalse(api_resp.get('read').project_access)
         self.assertEqual('read', api_resp.get('read').operation_type)
         self.assertEqual(self.container_acl_ref, api_resp.get('read').acl_ref)
 
@@ -110,7 +110,7 @@ class WhenTestingACLManager(ACLTestCase):
         read_acl = entity.read
         # entity ref is kept same as provided input.
         self.assertEqual(self.secret_ref + '///', read_acl.entity_ref)
-        self.assertEqual(True, read_acl.project_access)
+        self.assertTrue(read_acl.project_access)
         self.assertEqual(self.users1, read_acl.users)
         self.assertEqual(acls.DEFAULT_OPERATION_TYPE, read_acl.operation_type)
         # acl ref removes extra trailing slashes if there
@@ -130,7 +130,7 @@ class WhenTestingACLManager(ACLTestCase):
         self.assertEqual(self.container_ref + '///', entity.entity_ref)
 
         read_acl = entity.read
-        self.assertEqual(False, read_acl.project_access)
+        self.assertFalse(read_acl.project_access)
         self.assertEqual(self.users2, read_acl.users)
         self.assertEqual(acls.DEFAULT_OPERATION_TYPE, read_acl.operation_type)
         # acl ref removes extra trailing slashes if there

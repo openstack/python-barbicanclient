@@ -117,7 +117,7 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
         api_version = argv.os_identity_api_version
         barbican = Barbican()
         response = barbican.check_auth_arguments(argv, api_version)
-        self.assertEqual(True, response)
+        self.assertTrue(response)
 
     def test_should_fail_check_auth_arguments_v2(self):
         args = ("--os-username bob --os-password jan --os-auth-url boop"
