@@ -342,7 +342,8 @@ class CertificateOrder(Order, CertificateOrderFormatter):
                  sub_status=None, sub_status_message=None, creator_id=None,
                  request_type=None, subject_dn=None,
                  source_container_ref=None, ca_id=None, profile=None,
-                 request_data=None):
+                 request_data=None, requestor_name=None, requestor_email=None,
+                 requestor_phone=None):
         super(CertificateOrder, self).__init__(
             api, self._type, status=status, created=created, updated=updated,
             meta={
@@ -352,8 +353,11 @@ class CertificateOrder(Order, CertificateOrderFormatter):
                 'container_ref': source_container_ref,
                 'ca_id': ca_id,
                 'profile': profile,
-                'request_data': request_data
-            }, order_ref=order_ref, error_status_code=error_status_code,
+                'request_data': request_data,
+                'requestor_name': requestor_name,
+                'requestor_email': requestor_email,
+                'requestor_phone': requestor_phone},
+            order_ref=order_ref, error_status_code=error_status_code,
             error_reason=error_reason)
         self._container_ref = container_ref
 
