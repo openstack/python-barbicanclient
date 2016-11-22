@@ -26,7 +26,7 @@ class ContainerBehaviors(base_behaviors.BaseBehaviors):
         self.container_hrefs_to_delete = []
 
     def delete_container(self, container_href):
-        """ Delete a container
+        """Delete a container
 
         :param container_href the href to the container to delete
         """
@@ -39,7 +39,7 @@ class ContainerBehaviors(base_behaviors.BaseBehaviors):
         self.container_hrefs_to_delete.remove(container_href)
 
     def create_container(self, secret_hrefs=[]):
-        """ Create a container
+        """Create a container
         :param secret_hrefs A list of existing secrets
 
         :return: the href to the newly created container
@@ -58,7 +58,7 @@ class ContainerBehaviors(base_behaviors.BaseBehaviors):
         return container_href
 
     def get_container(self, container_href):
-        """ Get a container
+        """Get a container
 
         :param: the href to a container
         :return dict of container values, or an empty dict if the container
@@ -77,7 +77,7 @@ class ContainerBehaviors(base_behaviors.BaseBehaviors):
         return container_data
 
     def list_containers(self):
-        """ List containers
+        """List containers
 
         :return: a list of containers
         """
@@ -89,6 +89,6 @@ class ContainerBehaviors(base_behaviors.BaseBehaviors):
         return container_list
 
     def delete_all_created_containers(self):
-        """ Delete all containers that we created """
+        """Delete all containers that we created"""
         for href in self.container_hrefs_to_delete:
             self.delete_container(href)

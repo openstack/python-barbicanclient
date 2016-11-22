@@ -28,7 +28,7 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
     def update_secret(self,
                       secret_href,
                       payload):
-        """ Update a secret
+        """Update a secret
 
         :param secret_href the href to the secret to update.
         :param payload the payload to put into the secret.
@@ -42,7 +42,7 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
         stdout, stderr = self.issue_barbican_command(argv)
 
     def delete_secret(self, secret_href):
-        """ Delete a secret
+        """Delete a secret
 
         :param secret_href the href to the secret to delete
         """
@@ -55,7 +55,7 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
         self.secret_hrefs_to_delete.remove(secret_href)
 
     def store_secret(self, payload="Payload for testing", store_argv=[]):
-        """ Store (aka create) a secret
+        """Store (aka create) a secret
 
         The store_argv parameter allows additional command line parameters for
         the store operation to be specified. This can be used to specify -a for
@@ -80,7 +80,7 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
         return secret_href
 
     def get_secret(self, secret_href):
-        """ Get a secret
+        """Get a secret
 
         :param: the href to a secret
         :return dict of secret values, or an empty dict if the secret
@@ -99,7 +99,7 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
         return secret_data
 
     def get_secret_payload(self, secret_href, raw=False):
-        """ Get a secret
+        """Get a secret
 
         :param: the href to a secret
         :param raw if True then add "-f value" to get raw payload (ie not
@@ -127,7 +127,7 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
         return secret
 
     def list_secrets(self):
-        """ List secrets
+        """List secrets
 
         :return: a list of secrets
         """
@@ -140,6 +140,6 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
         return secret_list
 
     def delete_all_created_secrets(self):
-        """ Delete all secrets that we created """
+        """Delete all secrets that we created"""
         for href in self.secret_hrefs_to_delete:
             self.delete_secret(href)

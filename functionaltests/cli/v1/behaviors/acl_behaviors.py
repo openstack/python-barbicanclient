@@ -55,7 +55,7 @@ class ACLBehaviors(base_behaviors.BaseBehaviors):
         return argv
 
     def acl_delete(self, entity_ref):
-        """ Delete a secret or container acl
+        """Delete a secret or container acl
 
         :param entity_ref Reference to secret or container entity
         :return If error returns stderr string otherwise returns None.
@@ -190,7 +190,7 @@ class ACLBehaviors(base_behaviors.BaseBehaviors):
         return acl_list
 
     def delete_all_created_acls(self):
-        """ Delete all ACLs that we created """
+        """Delete all ACLs that we created"""
         entities_to_delete = [entry for entry in self.acl_entity_set]
         for entity_ref in entities_to_delete:
             self.acl_delete(entity_ref)
