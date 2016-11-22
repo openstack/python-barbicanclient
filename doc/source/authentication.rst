@@ -16,7 +16,9 @@ Keystone API Version 3 Authentication
 Authentication using Keystone API Version 3 can be achieved using the
 `keystoneauth1.identity.V3Password` auth plugin.
 
-Example::
+Example:
+
+  .. code-block:: python
 
     from barbicanclient import client
     from keystoneauth1 import identity
@@ -37,7 +39,9 @@ Keystone API Version 2 Authentication
 Authentication using Keystone API Version 2 can be achieved using the
 `keystoneauth1.identity.V2Password` auth plugin.
 
-Example::
+Example:
+
+  .. code-block:: python
 
     from barbicanclient import client
     from keystoneauth1 import identity
@@ -60,7 +64,9 @@ Barbican Service endpoint must be provided, in addition to the Project ID that
 will be used for context (i.e. the project that owns the secrets you'll be
 working with).
 
-Example::
+Example:
+
+  .. code-block:: python
 
     from barbicanclient import client
 
