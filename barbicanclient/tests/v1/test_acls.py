@@ -16,8 +16,8 @@
 from oslo_utils import timeutils
 import requests_mock
 
-from barbicanclient import acls
 from barbicanclient.tests import test_client
+from barbicanclient.v1 import acls
 
 
 class ACLTestCase(test_client.BaseEntityResource):

@@ -16,7 +16,7 @@ Command-line interface sub-commands related to cas.
 from cliff import lister
 from cliff import show
 
-from barbicanclient import cas
+from barbicanclient.v1 import cas
 
 
 class GetCA(show.ShowOne):

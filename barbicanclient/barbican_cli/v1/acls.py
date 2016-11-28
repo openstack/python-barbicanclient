@@ -18,7 +18,7 @@ Command-line interface sub-commands related to ACLs.
 from cliff import command
 from cliff import lister
 
-from barbicanclient import acls
+from barbicanclient.v1 import acls
 
 
 class ArgMixin(object):

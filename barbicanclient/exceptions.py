@@ -22,6 +22,11 @@ class PayloadException(BarbicanException):
     pass
 
 
+class UnsupportedVersion(BarbicanException):
+    """User is trying to use an unsupported version of the API."""
+    pass
+
+
 class HTTPError(Exception):
 
     """Base exception for HTTP errors."""

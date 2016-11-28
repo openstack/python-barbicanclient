@@ -17,11 +17,10 @@ import logging
 
 from oslo_utils.timeutils import parse_isotime
 
-from barbicanclient import acls as acl_manager
 from barbicanclient import base
 from barbicanclient import formatter
-
-from barbicanclient import secrets as secret_manager
+from barbicanclient.v1 import acls as acl_manager
+from barbicanclient.v1 import secrets as secret_manager
 
 
 LOG = logging.getLogger(__name__)

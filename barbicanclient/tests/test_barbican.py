@@ -17,6 +17,7 @@ import six
 from barbicanclient import barbican as barb
 from barbicanclient.barbican import Barbican
 from barbicanclient import client
+from barbicanclient import exceptions
 from barbicanclient.tests import keystone_client_fixtures
 from barbicanclient.tests import test_client
 
@@ -171,13 +172,13 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
         self.assertIsNone(httpclient.service_name)
 
     def test_endpoint_filter_kwargs_set_correctly(self):
-        auth_args = ('--no-auth --endpoint http://barbican_endpoint:9311/v1 '
+        auth_args = ('--no-auth --endpoint http://barbican_endpoint:9311 '
                      '--os-project-id project1')
         endpoint_filter_args = ('--interface private '
                                 '--service-type custom-type '
                                 '--service-name Burrbican '
                                 '--region-name RegionTwo '
-                                '--barbican-api-version v2')
+                                '--barbican-api-version v1')
         args = auth_args + ' ' + endpoint_filter_args
         argv, remainder = self.parser.parse_known_args(args.split())
         barbican_client = self.barbican.create_client(argv)
@@ -187,7 +188,22 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
         self.assertEqual('custom-type', httpclient.service_type)
         self.assertEqual('Burrbican', httpclient.service_name)
         self.assertEqual('RegionTwo', httpclient.region_name)
-        self.assertEqual('v2', httpclient.version)
+        self.assertEqual('v1', httpclient.version)
+
+    def test_should_fail_if_provide_unsupported_api_version(self):
+        auth_args = ('--no-auth --endpoint http://barbican_endpoint:9311/v1 '
+                     '--os-project-id project1')
+        endpoint_filter_args = ('--interface private '
+                                '--service-type custom-type '
+                                '--service-name Burrbican '
+                                '--region-name RegionTwo '
+                                '--barbican-api-version v2')
+        args = auth_args + ' ' + endpoint_filter_args
+        argv, remainder = self.parser.parse_known_args(args.split())
+
+        self.assertRaises(exceptions.UnsupportedVersion,
+                          self.barbican.create_client,
+                          argv)
 
 
 class TestBarbicanWithKeystonePasswordAuth(

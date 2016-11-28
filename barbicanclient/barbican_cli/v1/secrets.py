@@ -17,7 +17,7 @@ from cliff import command
 from cliff import lister
 from cliff import show
 
-from barbicanclient import secrets
+from barbicanclient.v1 import secrets
 
 
 class DeleteSecret(command.Command):

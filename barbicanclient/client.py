@@ -18,19 +18,16 @@ import os
 
 from keystoneauth1 import adapter
 from keystoneauth1 import session as ks_session
+from oslo_utils import importutils
 
-from barbicanclient import acls
-from barbicanclient import cas
-from barbicanclient import containers
 from barbicanclient import exceptions
-from barbicanclient import orders
-from barbicanclient import secrets
 
 
 LOG = logging.getLogger(__name__)
 _DEFAULT_SERVICE_TYPE = 'key-manager'
 _DEFAULT_SERVICE_INTERFACE = 'public'
 _DEFAULT_API_VERSION = 'v1'
+_SUPPORTED_API_VERSION_MAP = {'v1': 'barbicanclient.v1.client.Client'}
 
 
 class _HTTPClient(adapter.Adapter):
@@ -119,11 +116,10 @@ class _HTTPClient(adapter.Adapter):
         return message
 
 
-class Client(object):
+def Client(version=None, session=None, *args, **kwargs):
+        """Barbican client used to interact with barbican service.
 
-    def __init__(self, session=None, *args, **kwargs):
-        """Barbican client object used to interact with barbican service.
-
+        :param version: The API version to use.
         :param session: An instance of keystoneclient.session.Session that
             can be either authenticated, or not authenticated.  When using
             a non-authenticated Session, you must provide some additional
@@ -146,7 +142,7 @@ class Client(object):
             certificate authorities.
             WARNING: This option should be used with caution.
         :param service_type: Used as an endpoint filter when using an
-            authenticated keystone session. Defaults to 'key-management'.
+            authenticated keystone session. Defaults to 'key-manager'.
         :param service_name: Used as an endpoint filter when using an
             authenticated keystone session.
         :param interface: Used as an endpoint filter when using an
@@ -167,14 +163,19 @@ class Client(object):
             if kwargs.get('project_id') is None:
                 raise ValueError('Project ID must be provided when not using '
                                  'auth in the Keystone Session')
+        if not version:
+            version = _DEFAULT_API_VERSION
 
-        httpclient = _HTTPClient(session=session, *args, **kwargs)
-
-        self.secrets = secrets.SecretManager(httpclient)
-        self.orders = orders.OrderManager(httpclient)
-        self.containers = containers.ContainerManager(httpclient)
-        self.cas = cas.CAManager(httpclient)
-        self.acls = acls.ACLManager(httpclient)
+        try:
+            client_path = _SUPPORTED_API_VERSION_MAP[version]
+            client_class = importutils.import_class(client_path)
+            return client_class(session=session, *args, **kwargs)
+        except (KeyError, ValueError):
+            supported_versions = ', '.join(_SUPPORTED_API_VERSION_MAP.keys())
+            msg = ("Invalid client version %(version)s; must be one of: "
+                   "%(versions)s") % {'version': version,
+                                      'versions': supported_versions}
+            raise exceptions.UnsupportedVersion(msg)
 
 
 def env(*vars, **kwargs):

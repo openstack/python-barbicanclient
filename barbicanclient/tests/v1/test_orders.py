@@ -18,8 +18,8 @@ from oslo_utils import timeutils
 import uuid
 
 from barbicanclient import base
-from barbicanclient import orders
 from barbicanclient.tests import test_client
+from barbicanclient.v1 import orders
 
 
 class OrdersTestCase(test_client.BaseEntityResource):
