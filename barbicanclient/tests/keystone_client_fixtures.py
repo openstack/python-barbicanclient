@@ -11,9 +11,9 @@
 # under the License.
 
 import copy
-import uuid
 
 from oslo_serialization import jsonutils
+from oslo_utils import uuidutils
 from requests_mock.contrib import fixture
 import six
 import testtools
@@ -74,19 +74,32 @@ BARBICAN_ENDPOINT = 'http://www.barbican.com/v1'
 def _get_normalized_token_data(**kwargs):
     ref = copy.deepcopy(kwargs)
     # normalized token data
-    ref['user_id'] = ref.get('user_id', uuid.uuid4().hex)
-    ref['username'] = ref.get('username', uuid.uuid4().hex)
-    ref['project_id'] = ref.get('project_id',
-                                ref.get('tenant_id', uuid.uuid4().hex))
-    ref['project_name'] = ref.get('tenant_name',
-                                  ref.get('tenant_name', uuid.uuid4().hex))
-    ref['user_domain_id'] = ref.get('user_domain_id', uuid.uuid4().hex)
-    ref['user_domain_name'] = ref.get('user_domain_name', uuid.uuid4().hex)
-    ref['project_domain_id'] = ref.get('project_domain_id', uuid.uuid4().hex)
-    ref['project_domain_name'] = ref.get('project_domain_name',
-                                         uuid.uuid4().hex)
-    ref['roles'] = ref.get('roles', [{'name': uuid.uuid4().hex,
-                                     'id': uuid.uuid4().hex}])
+    ref['user_id'] = ref.get('user_id',
+                             uuidutils.generate_uuid(dashed=False))
+    ref['username'] = ref.get('username',
+                              uuidutils.generate_uuid(dashed=False))
+    ref['project_id'] = ref.get(
+        'project_id',
+        ref.get('tenant_id', uuidutils.generate_uuid(dashed=False)))
+    ref['project_name'] = ref.get(
+        'tenant_name',
+        ref.get('tenant_name', uuidutils.generate_uuid(dashed=False)))
+    ref['user_domain_id'] = ref.get(
+        'user_domain_id',
+        uuidutils.generate_uuid(dashed=False))
+    ref['user_domain_name'] = ref.get(
+        'user_domain_name',
+        uuidutils.generate_uuid(dashed=False))
+    ref['project_domain_id'] = ref.get(
+        'project_domain_id',
+        uuidutils.generate_uuid(dashed=False))
+    ref['project_domain_name'] = ref.get(
+        'project_domain_name',
+        uuidutils.generate_uuid(dashed=False))
+    ref['roles'] = ref.get(
+        'roles',
+        [{'name': uuidutils.generate_uuid(dashed=False),
+          'id': uuidutils.generate_uuid(dashed=False)}])
     ref['roles_link'] = ref.get('roles_link', [])
     ref['barbican_url'] = ref.get('barbican_url', BARBICAN_ENDPOINT)
 
@@ -97,7 +110,7 @@ def generate_v2_project_scoped_token(**kwargs):
     """Generate a Keystone V2 token based on auth request."""
     ref = _get_normalized_token_data(**kwargs)
 
-    o = {'access': {'token': {'id': uuid.uuid4().hex,
+    o = {'access': {'token': {'id': uuidutils.generate_uuid(dashed=False),
                               'expires': '2099-05-22T00:02:43.941430Z',
                               'issued_at': '2013-05-21T00:02:43.941473Z',
                               'tenant': {'enabled': True,
@@ -106,7 +119,8 @@ def generate_v2_project_scoped_token(**kwargs):
                                          }
                               },
                     'user': {'id': ref.get('user_id'),
-                             'name': uuid.uuid4().hex,
+                             'name':
+                                 uuidutils.generate_uuid(dashed=False),
                              'username': ref.get('username'),
                              'roles': ref.get('roles'),
                              'roles_links': ref.get('roles_links')
@@ -117,7 +131,7 @@ def generate_v2_project_scoped_token(**kwargs):
     o['access']['serviceCatalog'] = [
         {'endpoints': [
             {'publicURL': ref.get('barbican_url'),
-             'id': uuid.uuid4().hex,
+             'id': uuidutils.generate_uuid(dashed=False),
              'region': 'RegionOne'
              }],
          'endpoints_links': [],
@@ -126,7 +140,7 @@ def generate_v2_project_scoped_token(**kwargs):
         {'endpoints': [
             {'publicURL': ref.get('auth_url'),
              'adminURL': ref.get('auth_url'),
-             'id': uuid.uuid4().hex,
+             'id': uuidutils.generate_uuid(dashed=False),
              'region': 'RegionOne'
              }],
          'endpoint_links': [],
@@ -163,32 +177,32 @@ def generate_v3_project_scoped_token(**kwargs):
     o['token']['catalog'] = [
         {'endpoints': [
             {
-                'id': uuid.uuid4().hex,
+                'id': uuidutils.generate_uuid(dashed=False),
                 'interface': 'public',
                 'region': 'RegionTwo',
                 'url': ref.get('barbican_url')
             }],
-         'id': uuid.uuid4().hex,
+         'id': uuidutils.generate_uuid(dashed=False),
          'type': 'keystore'},
         {'endpoints': [
             {
-                'id': uuid.uuid4().hex,
+                'id': uuidutils.generate_uuid(dashed=False),
                 'interface': 'public',
                 'region': 'RegionTwo',
                 'url': ref.get('auth_url')
             },
             {
-                'id': uuid.uuid4().hex,
+                'id': uuidutils.generate_uuid(dashed=False),
                 'interface': 'admin',
                 'region': 'RegionTwo',
                 'url': ref.get('auth_url')
             }],
-         'id': uuid.uuid4().hex,
+         'id': uuidutils.generate_uuid(dashed=False),
          'type': 'identity'}]
 
     # token ID is conveyed via the X-Subject-Token header so we are generating
     # one to stash there
-    token_id = uuid.uuid4().hex
+    token_id = uuidutils.generate_uuid(dashed=False)
 
     return token_id, o
 
@@ -226,7 +240,8 @@ class KeystoneClientFixture(testtools.TestCase):
         return argv
 
     def _delete_secret(self, auth_version):
-        ref = '{0}/secrets/{1}'.format(BARBICAN_ENDPOINT, uuid.uuid4())
+        ref = '{0}/secrets/{1}'.format(BARBICAN_ENDPOINT,
+                                       uuidutils.generate_uuid())
 
         # Mock delete secret
         self.responses.delete(ref, status_code=204)
