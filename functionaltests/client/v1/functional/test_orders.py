@@ -79,6 +79,7 @@ class OrdersTestCase(base.TestCase):
         order_resp = self.barbicanclient.orders.get(order_ref)
         self.assertEqual(order.name, order_resp.name)
 
+    @testcase.skip('Launchpad 1425667')
     @testcase.attr('positive')
     def test_create_order_defaults_payload_content_type_none(self):
         """Covers creating orders with various valid payload content types."""
@@ -87,6 +88,10 @@ class OrdersTestCase(base.TestCase):
 
         order_ref = self.cleanup.add_entity(order)
         self.assertIsNotNone(order_ref)
+
+        order_resp = self.barbicanclient.orders.get(order_ref)
+        self.assertTrue(order_resp.status == "ACTIVE" or
+                        order_resp.status == "PENDING")
 
     @testcase.attr('positive')
     def test_create_order_defaults_check_empty_name(self):
