@@ -17,6 +17,7 @@ import json
 import mock
 from oslo_utils import timeutils
 import testtools
+import uuid
 
 from barbicanclient import orders, base
 from barbicanclient.tests import test_client
@@ -209,6 +210,38 @@ class WhenTestingAsymmetricOrders(OrdersTestCase):
                 )
             except base.ImmutableException:
                 pass
+
+    def test_create_asymmetric_order_w_passphrase(self):
+        data = {'order_ref': self.entity_href}
+        self.responses.post(self.entity_base + '/', json=data)
+
+        passphrase = str(uuid.uuid4())
+        order = orders.AsymmetricOrder(
+            api=self.manager._api,
+            name='name',
+            algorithm='algorithm',
+            payload_content_type='payload_content_type',
+            passphrase=passphrase,
+        )
+        order_href = order.submit()
+        self.assertEqual(self.entity_href, order_href)
+        self.assertEqual(passphrase, order.pass_phrase)
+
+    def test_create_asymmetric_order_w_legacy_pass_phrase_param(self):
+        data = {'order_ref': self.entity_href}
+        self.responses.post(self.entity_base + '/', json=data)
+
+        passphrase = str(uuid.uuid4())
+        order = orders.AsymmetricOrder(
+            api=self.manager._api,
+            name='name',
+            algorithm='algorithm',
+            payload_content_type='payload_content_type',
+            pass_phrase=passphrase,
+        )
+        order_href = order.submit()
+        self.assertEqual(self.entity_href, order_href)
+        self.assertEqual(passphrase, order.pass_phrase)
 
 
 class WhenTestingOrderManager(OrdersTestCase):

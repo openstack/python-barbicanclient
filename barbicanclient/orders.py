@@ -298,7 +298,7 @@ class AsymmetricOrder(Order, AsymmetricOrderFormatter):
     _type = 'asymmetric'
 
     def __init__(self, api, name=None, algorithm=None, bit_length=None,
-                 mode=None, passphrase=None, expiration=None,
+                 mode=None, passphrase=None, pass_phrase=None, expiration=None,
                  payload_content_type=None, status=None, created=None,
                  updated=None, order_ref=None, container_ref=None,
                  error_status_code=None, error_reason=None, sub_status=None,
@@ -315,6 +315,10 @@ class AsymmetricOrder(Order, AsymmetricOrderFormatter):
         self._container_ref = container_ref
         if passphrase:
             self._meta['pass_phrase'] = passphrase
+        elif pass_phrase:
+            # NOTE(jaosorior): Needed for backwards compatibility.
+            # See bug #1635213
+            self._meta['pass_phrase'] = pass_phrase
 
     @property
     def container_ref(self):
