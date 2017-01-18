@@ -33,7 +33,7 @@ class GetCA(show.ShowOne):
 
 
 class ListCA(lister.Lister):
-    """List cas."""
+    """List CAs."""
 
     def get_parser(self, prog_name):
         parser = super(ListCA, self).get_parser(prog_name)

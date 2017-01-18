@@ -176,7 +176,7 @@ usage options
       acl user add             Add ACL users to a secret or container as identified by its href.
       acl user remove          Remove ACL users from a secret or container as identified by its href.
       ca get                   Retrieve a CA by providing its URI.
-      ca list                  List cas.
+      ca list                  List CAs.
       complete                 print bash completion command
       secret container create  Store a container in Barbican.
       secret container delete  Delete a container by providing its href.
