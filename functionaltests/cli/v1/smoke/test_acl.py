@@ -240,5 +240,3 @@ class ACLTestCase(CmdLineTestCase):
         # above secret ACL ref is passed instead of expected secret_ref
         self.assertIn('Secret ACL URI', err)
 
-        err = self.acl_behaviors.acl_delete(entity_ref=None)
-        self.assertIn("Secret or container href", err)
