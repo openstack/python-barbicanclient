@@ -17,7 +17,10 @@
 Cloudkeep's Barbican Client version
 """
 
-import pbr.version
+import barbicanclient
 
-version_info = pbr.version.VersionInfo("python-barbicanclient")
-__version__ = version_info.version_string()
+
+# NOTE(RuiChen): According to PEP 396, barbicanclient.version.__version__
+#                should be deprecated, please use barbicanclient.__version__
+#                instead.
+__version__ = barbicanclient.__version__

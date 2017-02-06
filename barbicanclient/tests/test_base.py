@@ -1,6 +1,8 @@
 import testtools
 
+import barbicanclient
 from barbicanclient import base
+from barbicanclient import version
 
 
 class TestValidateRef(testtools.TestCase):
@@ -22,3 +24,9 @@ class TestValidateRef(testtools.TestCase):
         d3 = base.censored_copy(d1, ['payload'])
         self.assertNotEqual(d1, d3, 'd3 has redacted payload value')
         self.assertNotEqual(d3['payload'], 'my_key', 'no key in payload')
+
+    def test_module_version(self):
+        self.assertTrue(hasattr(barbicanclient, '__version__'))
+        # Test forward compatibility, please remove the case when all reference
+        # switch to barbicanclient.__version__
+        self.assertTrue(hasattr(version, '__version__'))

@@ -32,9 +32,9 @@ from keystoneauth1 import loading
 from keystoneauth1 import session
 import six
 
+import barbicanclient
 from barbicanclient import client
 from barbicanclient._i18n import _LW
-from barbicanclient import version
 
 
 LOG = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ class Barbican(app.App):
 
         super(Barbican, self).__init__(
             description=__doc__.strip(),
-            version=version.__version__,
+            version=barbicanclient.__version__,
             command_manager=commandmanager.CommandManager(
                 'openstack.key_manager.v1'),
             deferred_help=True,
