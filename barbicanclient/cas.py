@@ -47,15 +47,18 @@ class CAFormatter(formatter.EntityFormatter):
                )
 
     def _get_formatted_data(self):
+        created = self.created.isoformat() if self.created else None
+        updated = self.updated.isoformat() if self.updated else None
+        expiration = self.expiration.isoformat() if self.expiration else None
         data = (self.ca_ref,
                 self.name,
                 self.description,
-                self.created,
-                self.updated,
+                created,
+                updated,
                 self.status,
                 self.plugin_name,
                 self.plugin_ca_id,
-                self.expiration
+                expiration
                 )
         return data
 

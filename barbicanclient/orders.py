@@ -48,11 +48,12 @@ class KeyOrderFormatter(formatter.EntityFormatter):
                )
 
     def _get_formatted_data(self):
+        created = self.created.isoformat() if self.created else None
         data = (self.order_ref,
                 "Key",
                 "N/A",
                 self.secret_ref,
-                self.created,
+                created,
                 self.status,
                 self.error_status_code,
                 self.error_reason
@@ -73,11 +74,12 @@ class AsymmetricOrderFormatter(formatter.EntityFormatter):
                )
 
     def _get_formatted_data(self):
+        created = self.created.isoformat() if self.created else None
         data = (self.order_ref,
                 "Asymmetric",
                 self.container_ref,
                 "N/A",
-                self.created,
+                created,
                 self.status,
                 self.error_status_code,
                 self.error_reason
@@ -98,11 +100,12 @@ class CertificateOrderFormatter(formatter.EntityFormatter):
                )
 
     def _get_formatted_data(self):
+        created = self.created.isoformat() if self.created else None
         data = (self.order_ref,
                 "Certificate",
                 self.container_ref,
                 "N/A",
-                self.created,
+                created,
                 self.status,
                 self.error_status_code,
                 self.error_reason

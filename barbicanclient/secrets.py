@@ -61,16 +61,18 @@ class SecretFormatter(formatter.EntityFormatter):
                )
 
     def _get_formatted_data(self):
+        created = self.created.isoformat() if self.created else None
+        expiration = self.expiration.isoformat() if self.expiration else None
         data = (self.secret_ref,
                 self.name,
-                self.created,
+                created,
                 self.status,
                 self.content_types,
                 self.algorithm,
                 self.bit_length,
                 self.secret_type,
                 self.mode,
-                self.expiration,
+                expiration,
                 )
         return data
 

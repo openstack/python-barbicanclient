@@ -131,3 +131,16 @@ class WhenTestingCAs(test_client.BaseEntityResource):
 
         # Verify the correct URL was used to make the GET call
         self.assertEqual(self.entity_href, m.last_request.url)
+
+    def test_get_formatted_data(self):
+        c_entity = cas.CA(api=None,
+                          expiration=self.ca.expiration,
+                          plugin_name=self.ca.plugin_name,
+                          created=self.ca.created)
+
+        data = c_entity._get_formatted_data()
+
+        self.assertEqual(self.ca.plugin_name, data[6])
+        self.assertEqual(timeutils.parse_isotime(
+                         self.ca.expiration).isoformat(),
+                         data[8])
