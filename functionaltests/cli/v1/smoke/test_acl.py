@@ -136,7 +136,6 @@ class ACLTestCase(CmdLineTestCase):
         secret_ref = self.secret_behaviors.store_secret()
         container_ref = self.container_behaviors.create_container(
             secret_hrefs=[secret_ref])
-        secret_ref = self.secret_behaviors.store_secret()
 
         data = self.acl_behaviors.acl_submit(entity_ref=container_ref,
                                              project_access=False,

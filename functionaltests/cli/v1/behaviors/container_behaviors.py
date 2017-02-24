@@ -90,5 +90,8 @@ class ContainerBehaviors(base_behaviors.BaseBehaviors):
 
     def delete_all_created_containers(self):
         """Delete all containers that we created"""
-        for href in self.container_hrefs_to_delete:
+        # Create a copy of the list -- otherwise delete_container will remove
+        # items from the list as we are iterating over it
+        containers_to_delete = list(self.container_hrefs_to_delete)
+        for href in containers_to_delete:
             self.delete_container(href)
