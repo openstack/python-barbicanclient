@@ -488,3 +488,12 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.responses.get(self.entity_base, json={'total': 1})
         total = self.manager.total()
         self.assertEqual(1, total)
+
+    def test_get_formatted_data(self):
+        data = self.secret.get_dict(self.entity_href)
+        m = self.responses.get(self.entity_href, json=data)
+
+        secret = self.manager.get(secret_ref=self.entity_href)
+        f_data = secret._get_formatted_data()
+        self.assertEqual(timeutils.parse_isotime(data['created']).isoformat(),
+                         f_data[2])

@@ -565,3 +565,16 @@ class WhenTestingContainers(test_client.BaseEntityResource):
 
         # Verify the correct URL was used to make the GET call
         self.assertEqual(acl_ref, n.last_request.url)
+
+    def test_get_formatted_data(self):
+        data = self.container.get_dict(self.entity_href)
+        self.responses.get(self.entity_href, json=data)
+
+        container = self.manager.get(container_ref=self.entity_href)
+
+        data = container._get_formatted_data()
+
+        self.assertEqual(self.container.name, data[1])
+        self.assertEqual(timeutils.parse_isotime(
+                         self.container.created).isoformat(),
+                         data[2])

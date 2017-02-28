@@ -363,7 +363,7 @@ class WhenTestingACLEntity(ACLTestCase):
         self.assertEqual(acls.DEFAULT_OPERATION_TYPE, data[0])
         self.assertIsNone(data[1])
         self.assertEqual(self.users2, data[2])
-        self.assertEqual(timeutils.parse_isotime(self.created),
+        self.assertEqual(timeutils.parse_isotime(self.created).isoformat(),
                          data[3])  # created
         self.assertIsNone(data[4])  # updated
         self.assertEqual(self.container_acl_ref, data[5])

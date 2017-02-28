@@ -38,11 +38,13 @@ class ACLFormatter(formatter.EntityFormatter):
                )
 
     def _get_formatted_data(self):
+        created = self.created.isoformat() if self.created else None
+        updated = self.updated.isoformat() if self.updated else None
         data = (self.operation_type,
                 self.project_access,
                 self.users,
-                self.created,
-                self.updated,
+                created,
+                updated,
                 self.acl_ref,
                 )
         return data

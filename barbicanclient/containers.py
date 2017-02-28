@@ -58,9 +58,10 @@ class ContainerFormatter(formatter.EntityFormatter):
             ))
         if self.consumers:
             formatted_consumers = '\n'.join((str(c) for c in self.consumers))
+        created = self.created.isoformat() if self.created else None
         data = (self.container_ref,
                 self.name,
-                self.created,
+                created,
                 self.status,
                 self._type,
                 formatted_secrets,

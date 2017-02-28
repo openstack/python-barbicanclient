@@ -298,6 +298,17 @@ class WhenTestingOrderManager(OrdersTestCase):
         self.responses.get(self.entity_base, json={'total': 1})
         total = self.manager.total()
 
+    def test_get_formatted_data(self):
+        self.responses.get(self.entity_href, text=self.key_order_data)
+
+        order = self.manager.get(order_ref=self.entity_href)
+        data = order._get_formatted_data()
+
+        order_args = self._get_order_args(self.key_order_data)
+        self.assertEqual(timeutils.parse_isotime(
+                         order_args['created']).isoformat(),
+                         data[4])
+
 
 class WhenTestingCertificateOrders(test_client.BaseEntityResource):
     def setUp(self):
@@ -383,3 +394,14 @@ class WhenTestingCertificateOrders(test_client.BaseEntityResource):
         self.assertEqual(3, len(orders_list))
         self.assertIsInstance(orders_list[0], orders.CertificateOrder)
         self.assertEqual(self.entity_href, orders_list[0].order_ref)
+
+    def test_get_formatted_data(self):
+        self.responses.get(self.entity_href, text=self.cert_order_data)
+
+        order = self.manager.get(order_ref=self.entity_href)
+        data = order._get_formatted_data()
+
+        order_args = self._get_order_args(self.cert_order_data)
+        self.assertEqual(timeutils.parse_isotime(
+                         order_args['created']).isoformat(),
+                         data[4])
