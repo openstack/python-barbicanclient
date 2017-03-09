@@ -12,13 +12,12 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import uuid
-
 from testtools import testcase
 
 from functionaltests import utils
 from functionaltests.client import base
 from functionaltests.common import cleanup
+from oslo_utils import uuidutils
 
 from barbicanclient import exceptions
 
@@ -262,7 +261,7 @@ class ACLsTestCase(BaseACLsTestCase):
         This should return a 404.
         """
         base_url = self.barbicanclient.acls._api.endpoint_override
-        new_uuid = str(uuid.uuid4())
+        new_uuid = uuidutils.generate_uuid()
         url = '{0}/containers/{1}'.format(base_url, new_uuid)
 
         e = self.assertRaises(
@@ -280,7 +279,7 @@ class ACLsTestCase(BaseACLsTestCase):
         This should return a 404.
         """
         base_url = self.barbicanclient.acls._api.endpoint_override
-        new_uuid = str(uuid.uuid4())
+        new_uuid = uuidutils.generate_uuid()
         url = '{0}/secrets/{1}'.format(base_url, new_uuid)
 
         acl_data = {'entity_ref': url}
