@@ -66,6 +66,27 @@ class OrdersTestCase(test_client.BaseEntityResource):
             "order_ref": "{1}"
         }}""".format(self.secret_ref, self.entity_href)
 
+        self.container_ref = (
+            self.endpoint + '/containers/a2292306-6da0-4f60-bd8a-84fc8d692716')
+        self.source_container_ref = (
+            self.endpoint + '/containers/c6f20480-c1e5-442b-94a0-cb3b5e0cf179')
+
+        self.cert_order_data = """{{
+            "status": "ACTIVE",
+            "container_ref": "{0}",
+            "updated": "2014-10-21T17:15:50.871596",
+            "meta": {{
+                "name": "secretname",
+                "subject_dn": "cn=server.example.com,o=example.com",
+                "request_type": "stored-key",
+                "container_ref": "{1}"
+            }},
+            "created": "2014-10-21T17:15:50.824202",
+            "type": "certificate",
+            "order_ref": "{2}"
+        }}""".format(self.container_ref, self.source_container_ref,
+                     self.entity_href)
+
         self.manager = self.client.orders
 
     def _get_order_args(self, order_data):
@@ -310,38 +331,7 @@ class WhenTestingOrderManager(OrdersTestCase):
                          data[4])
 
 
-class WhenTestingCertificateOrders(test_client.BaseEntityResource):
-    def setUp(self):
-        self._setUp('orders', entity_id='d0460cc4-2876-4493-b7de-fc5c812883cc')
-
-        self.container_ref = (
-            self.endpoint + '/containers/a2292306-6da0-4f60-bd8a-84fc8d692716')
-        self.source_container_ref = (
-            self.endpoint + '/containers/c6f20480-c1e5-442b-94a0-cb3b5e0cf179')
-
-        self.cert_order_data = """{{
-            "status": "ACTIVE",
-            "container_ref": "{0}",
-            "updated": "2014-10-21T17:15:50.871596",
-            "meta": {{
-                "name": "secretname",
-                "subject_dn": "cn=server.example.com,o=example.com",
-                "request_type": "stored-key",
-                "container_ref": "{1}"
-            }},
-            "created": "2014-10-21T17:15:50.824202",
-            "type": "certificate",
-            "order_ref": "{2}"
-        }}""".format(self.container_ref, self.source_container_ref,
-                     self.entity_href)
-
-        self.manager = self.client.orders
-
-    def _get_order_args(self, order_data):
-        order_args = json.loads(order_data)
-        order_args.update(order_args.pop('meta'))
-        order_args.pop('type')
-        return order_args
+class WhenTestingCertificateOrders(OrdersTestCase):
 
     def test_get(self):
         self.responses.get(self.entity_href, text=self.cert_order_data)
