@@ -42,13 +42,13 @@ class GetSecret(show.ShowOne):
                             help='if specified, retrieve the '
                                  'unencrypted secret data; '
                                  'the data type can be specified with '
-                                 '--payload-content-type.',
+                                 '--payload_content_type.',
                             action='store_true')
         parser.add_argument('--payload', '-p',
                             help='if specified, retrieve the '
                                  'unencrypted secret data; '
                                  'the data type can be specified with '
-                                 '--payload-content-type. If the user'
+                                 '--payload_content_type. If the user'
                                  ' wishes to only retrieve the value of'
                                  ' the payload they must add '
                                  '"-f value" to format returning only'
@@ -57,7 +57,7 @@ class GetSecret(show.ShowOne):
         parser.add_argument('--payload_content_type', '-t',
                             default='text/plain',
                             help='the content type of the decrypted'
-                                 ' secret (default: %(default)s.')
+                                 ' secret (default: %(default)s).')
         return parser
 
     def take_action(self, args):

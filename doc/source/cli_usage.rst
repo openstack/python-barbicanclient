@@ -69,16 +69,17 @@ varies from one to another. The help message for **get** can be seen below.
     optional arguments:
       -h, --help            show this help message and exit
       --decrypt, -d         if specified, retrieve the unencrypted secret data;
-                            the data type can be specified with --payload-content-
-                            type.
+                            the data type can be specified with
+                            --payload_content_type.
       --payload, -p         if specified, retrieve the unencrypted secret data;
-                            the data type can be specified with --payload-content-
-                            type. If the user wishes to only retrieve the value of
-                            the payload they must add "-f value" to format
-                            returning only the value of the payload
+                            the data type can be specified with
+                            --payload_content_type. If the user wishes to only
+                            retrieve the value of the payload they must add
+                            "-f value" to format returning only the value of
+                            the payload
       --payload_content_type PAYLOAD_CONTENT_TYPE, -t PAYLOAD_CONTENT_TYPE
                             the content type of the decrypted secret (default:
-                            text/plain.
+                            text/plain).
 
     output formatters:
       output formatter options
