@@ -28,6 +28,7 @@ class ContainerTestCase(CmdLineTestCase):
 
     def tearDown(self):
         super(ContainerTestCase, self).tearDown()
+        self.secret_behaviors.delete_all_created_secrets()
         self.container_behaviors.delete_all_created_containers()
 
     @testcase.attr('positive')

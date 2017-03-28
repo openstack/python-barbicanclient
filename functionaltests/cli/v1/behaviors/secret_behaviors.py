@@ -141,5 +141,8 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
 
     def delete_all_created_secrets(self):
         """Delete all secrets that we created"""
-        for href in self.secret_hrefs_to_delete:
+        # Create a copy of the list -- otherwise delete_secret will remove
+        # items from the list as we are iterating over it
+        secrets_to_delete = list(self.secret_hrefs_to_delete)
+        for href in secrets_to_delete:
             self.delete_secret(href)
