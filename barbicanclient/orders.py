@@ -115,8 +115,7 @@ class CertificateOrderFormatter(formatter.EntityFormatter):
 
 @six.add_metaclass(abc.ABCMeta)
 class Order(object):
-    """
-    Base order object to hold common functionality
+    """Base order object to hold common functionality
 
     This should be considered an abstract class that should not be
     instantiated directly.
@@ -227,9 +226,10 @@ class Order(object):
 
     @immutable_after_save
     def submit(self):
-        """
-        Submit the Order to Barbican.  New Order objects are not persisted
-        in Barbican until this method is called.
+        """Submit the Order to Barbican.
+
+        New Order objects are not persisted in Barbican until this method
+        is called.
         """
         order_dict = {'type': self._type, 'meta': self._meta}
         LOG.debug("Request body: {0}".format(order_dict))
@@ -239,9 +239,7 @@ class Order(object):
         return self._order_ref
 
     def delete(self):
-        """
-        Deletes the Order from Barbican
-        """
+        """Deletes the Order from Barbican"""
         if self._order_ref:
             self._api.delete(self._order_ref)
             self._order_ref = None
@@ -250,9 +248,7 @@ class Order(object):
 
 
 class KeyOrder(Order, KeyOrderFormatter):
-    """
-    KeyOrders can be used to request random key material from Barbican
-    """
+    """KeyOrders can be used to request random key material from Barbican"""
     _type = 'key'
     _validMeta = (u'name', u'algorithm', u'mode', u'bit_length', u'expiration',
                   u'payload_content_type')
@@ -329,8 +325,7 @@ class AsymmetricOrder(Order, AsymmetricOrderFormatter):
 
     @property
     def pass_phrase(self):
-        """Passphrase to be used for passphrase protected asymmetric keys
-        """
+        """Passphrase to be used for passphrase protected asymmetric keys"""
         return self._meta.get('pass_phrase')
 
     @pass_phrase.setter
@@ -379,9 +374,7 @@ class CertificateOrder(Order, CertificateOrderFormatter):
 
 
 class OrderManager(base.BaseEntityManager):
-    """
-    Entity Manager for Order entitites
-    """
+    """Entity Manager for Order entitites"""
 
     _order_type_to_class_map = {
         'key': KeyOrder,
@@ -393,8 +386,7 @@ class OrderManager(base.BaseEntityManager):
         super(OrderManager, self).__init__(api, 'orders')
 
     def get(self, order_ref):
-        """
-        Retrieve an existing Order from Barbican
+        """Retrieve an existing Order from Barbican
 
         :param order_ref: Full HATEOAS reference to an Order
         :returns: An instance of the appropriate subtype of Order
@@ -449,8 +441,7 @@ class OrderManager(base.BaseEntityManager):
 
     def create_key(self, name=None, algorithm=None, bit_length=None, mode=None,
                    payload_content_type=None, expiration=None):
-        """
-        Factory method for `KeyOrder` objects
+        """Factory method for `KeyOrder` objects
 
         `KeyOrder` objects returned by this method have not yet been submitted
         to the Barbican service.
@@ -475,8 +466,7 @@ class OrderManager(base.BaseEntityManager):
     def create_asymmetric(self, name=None, algorithm=None, bit_length=None,
                           pass_phrase=None, payload_content_type=None,
                           expiration=None):
-        """
-        Factory method for `AsymmetricOrder` objects
+        """Factory method for `AsymmetricOrder` objects
 
         `AsymmetricOrder` objects returned by this method have not yet been
         submitted to the Barbican service.
@@ -501,8 +491,7 @@ class OrderManager(base.BaseEntityManager):
     def create_certificate(self, name=None, request_type=None, subject_dn=None,
                            source_container_ref=None, ca_id=None,
                            profile=None, request_data=None):
-        """
-        Factory method for `CertificateOrder` objects
+        """Factory method for `CertificateOrder` objects
 
         `CertificateOrder` objects returned by this method have not yet been
         submitted to the Barbican service.
@@ -527,8 +516,7 @@ class OrderManager(base.BaseEntityManager):
                                 request_data=request_data)
 
     def delete(self, order_ref):
-        """
-        Delete an Order from Barbican
+        """Delete an Order from Barbican
 
         :param order_ref: The href for the order
         """
@@ -537,8 +525,7 @@ class OrderManager(base.BaseEntityManager):
         self._api.delete(order_ref)
 
     def list(self, limit=10, offset=0):
-        """
-        List Orders for the project
+        """List Orders for the project
 
         This method uses the limit and offset parameters for paging.
 

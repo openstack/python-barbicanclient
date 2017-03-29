@@ -33,8 +33,8 @@ from keystoneauth1 import session
 import six
 
 import barbicanclient
-from barbicanclient import client
 from barbicanclient._i18n import _LW
+from barbicanclient import client
 
 
 LOG = logging.getLogger(__name__)
@@ -223,6 +223,7 @@ class Barbican(app.App):
 
     def build_option_parser(self, description, version, argparse_kwargs=None):
         """Introduces global arguments for the application.
+
         This is inherited from the framework.
         """
         parser = super(Barbican, self).build_option_parser(
@@ -324,6 +325,7 @@ class Barbican(app.App):
 
     def prepare_to_run_command(self, cmd):
         """Prepares to run the command
+
         Checks if the minimal parameters are provided and creates the
         client interface.
         This is inherited from the framework.

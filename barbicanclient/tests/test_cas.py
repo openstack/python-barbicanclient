@@ -14,8 +14,8 @@
 # limitations under the License.
 from oslo_utils import timeutils
 
-from barbicanclient.tests import test_client
 from barbicanclient import cas
+from barbicanclient.tests import test_client
 
 
 class CAData(object):

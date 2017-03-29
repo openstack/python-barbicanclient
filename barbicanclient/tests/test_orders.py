@@ -14,14 +14,12 @@
 # limitations under the License.
 import json
 
-import mock
 from oslo_utils import timeutils
-import testtools
 import uuid
 
-from barbicanclient import orders, base
+from barbicanclient import base
+from barbicanclient import orders
 from barbicanclient.tests import test_client
-from barbicanclient.tests import test_secrets
 
 
 class OrdersTestCase(test_client.BaseEntityResource):
@@ -280,12 +278,10 @@ class WhenTestingOrderManager(OrdersTestCase):
     def test_should_get_invalid_meta(self):
         self.responses.get(self.entity_href, text=self.key_order_invalid_data)
 
-        try:
-            # Verify checking for invalid meta fields.
-            order = self.manager.get(order_ref=self.entity_href)
-            self.fail("Didn't raise an TypeError exception")
-        except TypeError:
-            pass
+        # Verify checking for invalid meta fields.
+        self.assertRaises(TypeError,
+                          self.manager.get,
+                          self.entity_href)
 
     def test_should_get_list(self):
         data = {"orders": [json.loads(self.key_order_data) for _ in range(3)]}
@@ -318,6 +314,7 @@ class WhenTestingOrderManager(OrdersTestCase):
     def test_should_get_total(self):
         self.responses.get(self.entity_base, json={'total': 1})
         total = self.manager.total()
+        self.assertEqual(1, total)
 
     def test_get_formatted_data(self):
         self.responses.get(self.entity_href, text=self.key_order_data)

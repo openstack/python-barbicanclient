@@ -17,9 +17,11 @@ import json
 
 from oslo_utils import timeutils
 
-from barbicanclient.tests import test_client
 from barbicanclient import acls
-from barbicanclient import secrets, base, exceptions
+from barbicanclient import base
+from barbicanclient import exceptions
+from barbicanclient import secrets
+from barbicanclient.tests import test_client
 
 
 class SecretData(object):
@@ -90,8 +92,8 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(self.secret.payload, secret_req['payload'])
 
     def test_should_store_binary_type_as_octet_stream(self):
-        """
-        We use six.binary_type as the canonical binary type.
+        """We use six.binary_type as the canonical binary type.
+
         The client should base64 encode the payload before sending the
         request.
         """
@@ -116,9 +118,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertNotEqual(binary_payload, secret_req['payload'])
 
     def test_should_store_text_type_as_text_plain(self):
-        """
-        We use six.text_type as the canonical text type.
-        """
+        """We use six.text_type as the canonical text type."""
         data = {'secret_ref': self.entity_href}
         self.responses.post(self.entity_base + '/', json=data)
 
@@ -135,8 +135,8 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(u'text/plain', secret_req['payload_content_type'])
 
     def test_should_store_with_deprecated_content_type(self):
-        """
-        DEPRECATION WARNING:
+        """DEPRECATION WARNING
+
         Manually setting the payload_content_type is deprecated and will be
         removed in a future release.
         """
@@ -157,8 +157,8 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
                          secret_req['payload_content_type'])
 
     def test_should_store_with_deprecated_content_encoding(self):
-        """
-        DEPRECATION WARNING:
+        """DEPRECATION WARNING
+
         Manually setting the payload_content_encoding is deprecated and will be
         removed in a future release.
         """
@@ -261,8 +261,8 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(acl_ref, n.last_request.url)
 
     def test_should_get_payload_only_when_content_type_is_set(self):
-        """
-        DEPRECATION WARNING:
+        """DEPRECATION WARNING
+
         Manually setting the payload_content_type is deprecated and will be
         removed in a future release.
         """
@@ -339,8 +339,8 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
                          decryption_response.last_request.url)
 
     def test_should_decrypt_when_content_type_is_set(self):
-        """
-        DEPRECATION WARNING:
+        """DEPRECATION WARNING
+
         Manually setting the payload_content_type is deprecated and will be
         removed in a future release.
         """
@@ -491,9 +491,10 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
     def test_get_formatted_data(self):
         data = self.secret.get_dict(self.entity_href)
-        m = self.responses.get(self.entity_href, json=data)
+        self.responses.get(self.entity_href, json=data)
 
         secret = self.manager.get(secret_ref=self.entity_href)
         f_data = secret._get_formatted_data()
-        self.assertEqual(timeutils.parse_isotime(data['created']).isoformat(),
-                         f_data[2])
+        self.assertEqual(
+            timeutils.parse_isotime(data['created']).isoformat(),
+            f_data[2])

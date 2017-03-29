@@ -20,8 +20,10 @@ from oslo_utils import timeutils
 import six
 
 from barbicanclient import acls
+from barbicanclient import base
+from barbicanclient import containers
+from barbicanclient import secrets
 from barbicanclient.tests import test_client
-from barbicanclient import base, containers, secrets
 
 
 class ContainerData(object):
