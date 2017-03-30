@@ -15,7 +15,6 @@ import copy
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 from requests_mock.contrib import fixture
-import six
 import testtools
 
 import barbicanclient.barbican
@@ -235,7 +234,7 @@ class KeystoneClientFixture(testtools.TestCase):
     def _to_argv(self, argument_dict):
         # Convert to argv to pass into the client
         argv = []
-        for k, v in six.iteritems(argument_dict):
+        for k, v in argument_dict.items():
             argv.extend([k, v])
         return argv
 

@@ -14,7 +14,6 @@
 # limitations under the License.
 import functools
 import logging
-import six
 
 from oslo_utils.timeutils import parse_isotime
 
@@ -54,7 +53,7 @@ class ContainerFormatter(formatter.EntityFormatter):
         if self.secrets:
             formatted_secrets = '\n'.join((
                 '='.join((name, secret_ref)) if name else secret_ref
-                for name, secret_ref in six.iteritems(self.secret_refs)
+                for name, secret_ref in self.secret_refs.items()
             ))
         if self.consumers:
             formatted_consumers = '\n'.join((str(c) for c in self.consumers))
@@ -106,7 +105,7 @@ class Container(ContainerFormatter):
                              "not be retrieved!")
         if secrets:
             try:
-                for name, secret in six.iteritems(secrets):
+                for name, secret in secrets.items():
                     self.add(name, secret)
             except Exception:
                 raise ValueError("One or more of the provided secrets are not "
@@ -117,7 +116,7 @@ class Container(ContainerFormatter):
             self._cached_secrets = dict(
                 (name.lower() if name else "",
                  self._secret_manager.get(secret_ref=secret_ref))
-                for name, secret_ref in six.iteritems(self._secret_refs)
+                for name, secret_ref in self._secret_refs.items()
             )
 
     @property
@@ -156,7 +155,7 @@ class Container(ContainerFormatter):
         if self._cached_secrets:
             self._secret_refs = dict(
                 (name, secret.secret_ref)
-                for name, secret in six.iteritems(self._cached_secrets)
+                for name, secret in self._cached_secrets.items()
             )
 
         return self._secret_refs
@@ -226,7 +225,7 @@ class Container(ContainerFormatter):
         LOG.debug("Storing secrets: {0}".format(base.censored_copy(
                                                 self.secrets, ['payload'])))
         secret_refs = []
-        for name, secret in six.iteritems(self.secrets):
+        for name, secret in self.secrets.items():
             if secret and not secret.secret_ref:
                 secret.store()
             secret_refs.append({'name': name, 'secret_ref': secret.secret_ref})

@@ -22,6 +22,7 @@ import oslotest.base as oslotest
 import six
 import six.moves.urllib.parse as urlparse
 
+
 class BaseTestCase(oslotest.BaseTestCase):
     def setUp(self):
         super(BaseTestCase, self).setUp()
@@ -67,7 +68,7 @@ def process_parameterized_function(name, func_obj, build_data):
     to_remove = []
     to_add = []
 
-    for subtest_name, params in six.iteritems(build_data):
+    for subtest_name, params in build_data.items():
         # Build new test function
         func_name = '{0}_{1}'.format(name, subtest_name)
         new_func = construct_new_test_function(func_obj, func_name, params)
@@ -89,7 +90,7 @@ def parameterized_test_case(cls):
     """
     tests_to_remove = []
     tests_to_add = []
-    for key, val in six.iteritems(vars(cls)):
+    for key, val in vars(cls).items():
         # Only process tests with build data on them
         if key.startswith('test_') and val.__dict__.get('build_data'):
             to_remove, to_add = process_parameterized_function(

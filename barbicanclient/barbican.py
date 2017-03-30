@@ -30,7 +30,6 @@ from keystoneauth1.identity import v2
 from keystoneauth1.identity import v3
 from keystoneauth1 import loading
 from keystoneauth1 import session
-import six
 
 import barbicanclient
 from barbicanclient import client
@@ -122,7 +121,7 @@ class Barbican(app.App):
             }
 
         # Return a dictionary with only the populated (not None) values
-        return dict((k, v) for (k, v) in six.iteritems(kwargs) if v)
+        return dict((k, v) for (k, v) in kwargs.items() if v)
 
     def create_keystone_session(
             self, args, api_version, kwargs_dict, auth_type
