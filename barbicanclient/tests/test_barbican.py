@@ -14,11 +14,11 @@
 # limitations under the License.
 import six
 
-from barbicanclient import client
 from barbicanclient import barbican as barb
+from barbicanclient.barbican import Barbican
+from barbicanclient import client
 from barbicanclient.tests import keystone_client_fixtures
 from barbicanclient.tests import test_client
-from barbicanclient.barbican import Barbican
 
 
 class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
@@ -171,7 +171,6 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
         self.assertIsNone(httpclient.service_name)
 
     def test_endpoint_filter_kwargs_set_correctly(self):
-        from testtools.content import text_content
         auth_args = ('--no-auth --endpoint http://barbican_endpoint:9311/v1 '
                      '--os-project-id project1')
         endpoint_filter_args = ('--interface private '

@@ -19,11 +19,11 @@ import logging
 from oslo_utils.timeutils import parse_isotime
 import six
 
+from barbicanclient._i18n import _LW
 from barbicanclient import acls as acl_manager
 from barbicanclient import base
 from barbicanclient import exceptions
 from barbicanclient import formatter
-from barbicanclient._i18n import _LW
 
 
 LOG = logging.getLogger(__name__)
@@ -78,7 +78,8 @@ class SecretFormatter(formatter.EntityFormatter):
 
 
 class Secret(SecretFormatter):
-    """
+    """Secrets managed by Barbican
+
     Secrets represent keys, credentials, and other sensitive data that is
     stored by the Barbican service.
     """
@@ -90,9 +91,9 @@ class Secret(SecretFormatter):
                  secret_ref=None, created=None, updated=None,
                  content_types=None, status=None, secret_type=None,
                  creator_id=None):
-        """
-        Secret objects should not be instantiated directly.  You should use
-        the `create` or `get` methods of the
+        """Secret objects should not be instantiated directly.
+
+        You should use the `create` or `get` methods of the
         :class:`barbicanclient.secrets.SecretManager` instead.
         """
         self._api = api
@@ -187,9 +188,7 @@ class Secret(SecretFormatter):
 
     @property
     def payload(self):
-        """
-        Lazy-loaded property that holds the unencrypted data
-        """
+        """Lazy-loaded property that holds the unencrypted data"""
         if self._payload is None and self.secret_ref is not None:
             try:
                 self._fetch_payload()
@@ -282,9 +281,10 @@ class Secret(SecretFormatter):
 
     @immutable_after_save
     def store(self):
-        """
-        Stores the Secret in Barbican.  New Secret objects are not persisted
-        in Barbican until this method is called.
+        """Stores the Secret in Barbican.
+
+        New Secret objects are not persisted in Barbican until this method
+        is called.
 
         :raises: PayloadException
         """
@@ -307,31 +307,31 @@ class Secret(SecretFormatter):
             raise exceptions.PayloadException("Invalid Payload Type")
 
         if self.payload_content_type or self.payload_content_encoding:
-            """
+            '''
             Setting the payload_content_type and payload_content_encoding
             manually is deprecated.  This clause of the if statement is here
             for backwards compatibility and should be removed in a future
             release.
-            """
+            '''
             secret_dict['payload'] = self.payload
             secret_dict['payload_content_type'] = self.payload_content_type
             secret_dict['payload_content_encoding'] = (
                 self.payload_content_encoding
             )
         elif type(self.payload) is six.binary_type:
-            """
+            '''
             six.binary_type is stored as application/octet-stream
             and it is base64 encoded for a one-step POST
-            """
+            '''
             secret_dict['payload'] = (
                 base64.b64encode(self.payload)
             ).decode('UTF-8')
             secret_dict['payload_content_type'] = u'application/octet-stream'
             secret_dict['payload_content_encoding'] = u'base64'
         elif type(self.payload) is six.text_type:
-            """
+            '''
             six.text_type is stored as text/plain
-            """
+            '''
             secret_dict['payload'] = self.payload
             secret_dict['payload_content_type'] = u'text/plain'
 
@@ -346,9 +346,7 @@ class Secret(SecretFormatter):
         return self.secret_ref
 
     def update(self):
-        """
-        Updates the secret in Barbican.
-        """
+        """Updates the secret in Barbican."""
 
         if not self.payload:
             raise exceptions.PayloadException("Invalid or Missing Payload")
@@ -367,9 +365,7 @@ class Secret(SecretFormatter):
                       data=self.payload)
 
     def delete(self):
-        """
-        Deletes the Secret from Barbican
-        """
+        """Deletes the Secret from Barbican"""
         if self._secret_ref:
             self._api.delete(self._secret_ref)
             self._secret_ref = None
@@ -449,8 +445,7 @@ class SecretManager(base.BaseEntityManager):
         super(SecretManager, self).__init__(api, 'secrets')
 
     def get(self, secret_ref, payload_content_type=None):
-        """
-        Retrieve an existing Secret from Barbican
+        """Retrieve an existing Secret from Barbican
 
         :param str secret_ref: Full HATEOAS reference to a Secret
         :param str payload_content_type: DEPRECATED: Content type to use for
@@ -471,8 +466,7 @@ class SecretManager(base.BaseEntityManager):
         )
 
     def update(self, secret_ref, payload=None):
-        """
-        Update an existing Secret from Barbican
+        """Update an existing Secret from Barbican
 
         :param str secret_ref: Full HATEOAS reference to a Secret
         :param str payload: New payload to add to secret
@@ -500,8 +494,7 @@ class SecretManager(base.BaseEntityManager):
                payload_content_type=None, payload_content_encoding=None,
                algorithm=None, bit_length=None, secret_type=None,
                mode=None, expiration=None):
-        """
-        Factory method for creating new `Secret` objects
+        """Factory method for creating new `Secret` objects
 
         Secrets returned by this method have not yet been stored in the
         Barbican service.
@@ -532,8 +525,7 @@ class SecretManager(base.BaseEntityManager):
                       secret_type=secret_type, expiration=expiration)
 
     def delete(self, secret_ref):
-        """
-        Delete a Secret from Barbican
+        """Delete a Secret from Barbican
 
         :param secret_ref: The href for the secret to be deleted
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
@@ -547,8 +539,7 @@ class SecretManager(base.BaseEntityManager):
 
     def list(self, limit=10, offset=0, name=None, algorithm=None,
              mode=None, bits=0):
-        """
-        List Secrets for the project
+        """List Secrets for the project
 
         This method uses the limit and offset parameters for paging,
         and also supports filtering.

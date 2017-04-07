@@ -12,7 +12,7 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
+
 import logging
 import os
 
@@ -23,7 +23,6 @@ from barbicanclient import acls
 from barbicanclient import cas
 from barbicanclient import containers
 from barbicanclient import exceptions
-from barbicanclient._i18n import _
 from barbicanclient import orders
 from barbicanclient import secrets
 
@@ -123,8 +122,7 @@ class _HTTPClient(adapter.Adapter):
 class Client(object):
 
     def __init__(self, session=None, *args, **kwargs):
-        """
-        Barbican client object used to interact with barbican service.
+        """Barbican client object used to interact with barbican service.
 
         :param session: An instance of keystoneclient.session.Session that
             can be either authenticated, or not authenticated.  When using

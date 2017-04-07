@@ -513,8 +513,7 @@ class CertificateContainer(CertificateContainerFormatter, Container):
 
 
 class ContainerManager(base.BaseEntityManager):
-    """
-    EntityManager for Container entities
+    """EntityManager for Container entities
 
     You should use the ContainerManager exposed by the Client and should not
     need to instantiate your own.
@@ -530,8 +529,7 @@ class ContainerManager(base.BaseEntityManager):
         super(ContainerManager, self).__init__(api, 'containers')
 
     def get(self, container_ref):
-        """
-        Retrieve an existing Container from Barbican
+        """Retrieve an existing Container from Barbican
 
         :param str container_ref: Full HATEOAS reference to a Container
         :returns: Container object or a subclass of the appropriate type
@@ -616,8 +614,7 @@ class ContainerManager(base.BaseEntityManager):
         )
 
     def create(self, name=None, secrets=None):
-        """
-        Factory method for `Container` objects
+        """Factory method for `Container` objects
 
         `Container` objects returned by this method have not yet been
         stored in Barbican.
@@ -638,8 +635,7 @@ class ContainerManager(base.BaseEntityManager):
 
     def create_rsa(self, name=None, public_key=None, private_key=None,
                    private_key_passphrase=None):
-        """
-        Factory method for `RSAContainer` objects
+        """Factory method for `RSAContainer` objects
 
         `RSAContainer` objects returned by this method have not yet been
         stored in Barbican.
@@ -665,8 +661,7 @@ class ContainerManager(base.BaseEntityManager):
     def create_certificate(self, name=None, certificate=None,
                            intermediates=None, private_key=None,
                            private_key_passphrase=None):
-        """
-        Factory method for `CertificateContainer` objects
+        """Factory method for `CertificateContainer` objects
 
         `CertificateContainer` objects returned by this method have not yet
         been stored in Barbican.
@@ -692,8 +687,7 @@ class ContainerManager(base.BaseEntityManager):
         )
 
     def delete(self, container_ref):
-        """
-        Delete a Container from Barbican
+        """Delete a Container from Barbican
 
         :param container_ref: Full HATEOAS reference to a Container
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
@@ -705,8 +699,9 @@ class ContainerManager(base.BaseEntityManager):
         self._api.delete(container_ref)
 
     def list(self, limit=10, offset=0, name=None, type=None):
-        """
-        List containers for the project.  This method uses the limit and offset
+        """List containers for the project.
+
+        This method uses the limit and offset
         parameters for paging.
 
         :param limit: Max number of containers returned
@@ -732,8 +727,7 @@ class ContainerManager(base.BaseEntityManager):
                 for container in response.get('containers', [])]
 
     def register_consumer(self, container_ref, name, url):
-        """
-        Add a consumer to the container
+        """Add a consumer to the container
 
         :param container_ref: Full HATEOAS reference to a Container
         :param name: Name of the consuming service
@@ -755,8 +749,7 @@ class ContainerManager(base.BaseEntityManager):
         return self._generate_typed_container(response)
 
     def remove_consumer(self, container_ref, name, url):
-        """
-        Remove a consumer from the container
+        """Remove a consumer from the container
 
         :param container_ref: Full HATEOAS reference to a Container
         :param name: Name of the previously consuming service

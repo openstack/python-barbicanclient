@@ -125,8 +125,7 @@ class _PerOperationACL(ACLFormatter):
         self._users = value
 
     def remove(self):
-        """
-        Remove operation specific setting defined for a secret or container
+        """Remove operation specific setting defined for a secret or container
 
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
@@ -307,8 +306,7 @@ class ACL(object):
         return response.json().get('acl_ref')
 
     def remove(self):
-        """
-        Remove Barbican ACLs setting defined for a secret or container
+        """Remove Barbican ACLs setting defined for a secret or container
 
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
@@ -418,8 +416,7 @@ class ACLManager(base.BaseEntityManager):
 
     def create(self, entity_ref=None, users=None, project_access=None,
                operation_type=DEFAULT_OPERATION_TYPE):
-        """
-        Factory method for creating `ACL` entity.
+        """Factory method for creating `ACL` entity.
 
         `ACL` object returned by this method have not yet been
         stored in Barbican.
@@ -447,8 +444,7 @@ class ACLManager(base.BaseEntityManager):
                             operation_type=operation_type)
 
     def get(self, entity_ref):
-        """
-        Retrieve existing ACLs for a secret or container defined in Barbican
+        """Retrieve existing ACLs for a secret or container found in Barbican
 
         :param str entity_ref: Full HATEOAS reference to a secret or container.
         :returns: ACL entity object instance

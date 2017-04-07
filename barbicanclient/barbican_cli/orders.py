@@ -17,8 +17,6 @@ from cliff import command
 from cliff import lister
 from cliff import show
 
-from barbicanclient import orders
-
 
 class CreateOrder(show.ShowOne):
     """Create a new order."""

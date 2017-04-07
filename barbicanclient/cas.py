@@ -14,7 +14,6 @@
 # limitations under the License.
 import functools
 import logging
-import traceback
 
 from oslo_utils.timeutils import parse_isotime
 
@@ -64,7 +63,8 @@ class CAFormatter(formatter.EntityFormatter):
 
 
 class CA(CAFormatter):
-    """
+    """Certificate authority
+
     CAs represent certificate authorities or subCAs with which the Barbican
     service is configured to interact.
     """
@@ -74,7 +74,8 @@ class CA(CAFormatter):
                  plugin_name=None, plugin_ca_id=None,
                  ca_ref=None, created=None, updated=None,
                  status=None, creator_id=None):
-        """
+        """Certificate authority
+
         CA objects should not be instantiated directly.  You should use
         the `create` or `get` methods of the
         :class:`barbicanclient.cas.CAManager` instead.
@@ -194,8 +195,7 @@ class CAManager(base.BaseEntityManager):
         super(CAManager, self).__init__(api, 'cas')
 
     def get(self, ca_ref):
-        """
-        Retrieve an existing CA from Barbican
+        """Retrieve an existing CA from Barbican
 
         :param str ca_ref: Full HATEOAS reference to a CA
         :returns: CA object retrieved from Barbican
@@ -212,8 +212,7 @@ class CAManager(base.BaseEntityManager):
         )
 
     def list(self, limit=10, offset=0, name=None):
-        """
-        List CAs for the project
+        """List CAs for the project
 
         This method uses the limit and offset parameters for paging,
         and also supports filtering.
