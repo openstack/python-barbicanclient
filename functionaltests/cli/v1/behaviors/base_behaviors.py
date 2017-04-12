@@ -125,7 +125,7 @@ class BaseBehaviors(object):
         """
         retval = []
         if str is not None and len(str) > 0:
-            rows = re.findall('\|(.*)?\n', str)
+            rows = re.findall('\|(.*?)\n', str)
             # Remove header
             header_row = rows.pop(0)
             key_names = re.findall('\s*(.*?)\s*\|', header_row)
