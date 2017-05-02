@@ -12,13 +12,12 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import base64
 
-from testtools import testcase
 from functionaltests.client import base
 from functionaltests.common import cleanup
 from functionaltests.common import keys
 from functionaltests import utils
+from testtools import testcase
 
 secret_create_defaults_data = {
     "name": "AES key",

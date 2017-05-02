@@ -49,7 +49,8 @@ class BaseBehaviors(object):
 
         if 'v3' in CONF.identity.auth_version.lower():
             arg_list.extend(['--os-auth-url', CONF.identity.uri_v3])
-            arg_list.extend(['--os-project-name', CONF.keymanager.project_name])
+            arg_list.extend(['--os-project-name',
+                             CONF.keymanager.project_name])
             # NOTE(jaosorior): Should we add the user_domain_name to the
             #                  config?
             arg_list.extend(

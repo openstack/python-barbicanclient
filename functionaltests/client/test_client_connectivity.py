@@ -12,15 +12,14 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 
-from functionaltests.base import BaseTestCase
-from functionaltests.common import config
 from barbicanclient import client
 from barbicanclient import exceptions
+from functionaltests.base import BaseTestCase
+from functionaltests.common import config
+from keystoneauth1 import exceptions as ks_exceptions
 from keystoneauth1 import identity
 from keystoneauth1 import session
-from keystoneauth1 import exceptions as ks_exceptions
 
 CONF = config.get_config()
 
@@ -108,8 +107,7 @@ class WhenTestingClientConnectivity(BaseTestCase):
             auth=self.auth,
             interface=client._DEFAULT_SERVICE_INTERFACE,
             service_type=client._DEFAULT_SERVICE_TYPE,
-            version=client._DEFAULT_API_VERSION,
-            )
+            version=client._DEFAULT_API_VERSION)
 
         self.assert_client_can_contact_barbican(barbicanclient)
 
@@ -119,8 +117,7 @@ class WhenTestingClientConnectivity(BaseTestCase):
             auth=self.auth,
             interface=client._DEFAULT_SERVICE_INTERFACE,
             service_type='wrong-service-type',
-            version=client._DEFAULT_API_VERSION,
-            )
+            version=client._DEFAULT_API_VERSION)
 
         self.assert_client_cannot_get_endpoint(barbicanclient)
 
@@ -129,8 +126,7 @@ class WhenTestingClientConnectivity(BaseTestCase):
             auth=self.auth,
             interface='wrong-interface',
             service_type=client._DEFAULT_SERVICE_TYPE,
-            version=client._DEFAULT_API_VERSION,
-            )
+            version=client._DEFAULT_API_VERSION)
 
         self.assert_client_cannot_get_endpoint(barbicanclient)
 
@@ -140,8 +136,7 @@ class WhenTestingClientConnectivity(BaseTestCase):
             interface=client._DEFAULT_SERVICE_INTERFACE,
             service_type=client._DEFAULT_SERVICE_TYPE,
             service_name='wrong-service-name',
-            version=client._DEFAULT_API_VERSION,
-            )
+            version=client._DEFAULT_API_VERSION)
 
         self.assert_client_cannot_get_endpoint(barbicanclient)
 
@@ -151,27 +146,24 @@ class WhenTestingClientConnectivity(BaseTestCase):
             interface=client._DEFAULT_SERVICE_INTERFACE,
             service_type=client._DEFAULT_SERVICE_TYPE,
             region_name='wrong-region-name',
-            version=client._DEFAULT_API_VERSION,
-            )
+            version=client._DEFAULT_API_VERSION)
 
         self.assert_client_cannot_get_endpoint(barbicanclient)
 
-    def test_client_cannot_access_server_if_nonexistent_version_specified(self):
-        barbicanclient = client.Client(
+    def test_client_cannot_access_server_if_nonexistent_version_specified(self):  # noqa
+        barbicanclient_1 = client.Client(
             project_id=CONF.keymanager.project_id,
             auth=self.auth,
             interface=client._DEFAULT_SERVICE_INTERFACE,
             service_type=client._DEFAULT_SERVICE_TYPE,
-            version='wrong-version',
-            )
+            version='wrong-version')
 
-        self.assertRaises(TypeError, barbicanclient.containers.list)
+        self.assertRaises(TypeError, barbicanclient_1.containers.list)
 
-    def test_client_cannot_access_server_if_nonexistent_version_specified(self):
-        barbicanclient = client.Client(
+        barbicanclient_2 = client.Client(
             endpoint=CONF.keymanager.url,
             project_id=CONF.keymanager.project_id,
             auth=self.auth,
             version='nonexistent_version')
 
-        self.assert_client_cannot_contact_barbican(barbicanclient)
+        self.assert_client_cannot_contact_barbican(barbicanclient_2)

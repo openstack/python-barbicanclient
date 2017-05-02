@@ -28,17 +28,19 @@ class CleanUp(object):
         self.barbicanclient = barbicanclient
 
     def delete_all_entities(self):
-        """Helper method to delete all containers and secrets used for
-        testing"""
+        """Helper method to delete all entities used for testing"""
         self._delete_all_acls()
         self._delete_all_containers()
         self._delete_all_orders()
         self._delete_all_secrets()
 
     def add_entity(self, entity):
-        """Stores an entity in Barbican to be used for testing
-        and keeps track of entity for removal after tests are
-        run"""
+        """Stores an entity in Barbican
+
+        used for testing and keeps track of entity for removal after
+        tests are running
+
+        """
         entity_type = str(type(entity)).lower()
         if 'acl' in entity_type:
             entity_ref = entity.submit()
@@ -57,8 +59,7 @@ class CleanUp(object):
         return entity_ref
 
     def _delete_all_containers(self):
-        """Helper method to delete all containers used for
-        testing"""
+        """Helper method to delete all containers used for testing"""
         for container_ref in self.created_entities['container']:
             self.barbicanclient.containers.delete(container_ref)
 

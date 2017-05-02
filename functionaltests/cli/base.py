@@ -16,6 +16,7 @@ limitations under the License.
 
 from functionaltests.base import BaseTestCase
 
+
 class CmdLineTestCase(BaseTestCase):
 
     def setUp(self):

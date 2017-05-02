@@ -15,11 +15,11 @@
 import pytz
 import sys
 
-from testtools import testcase
-from functionaltests import utils
 from functionaltests.client import base
 from functionaltests.common import cleanup
+from functionaltests import utils
 from oslo_utils import timeutils
+from testtools import testcase
 
 from barbicanclient import exceptions
 

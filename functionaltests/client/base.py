@@ -13,11 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import logging
 
+from barbicanclient import client
 from functionaltests.base import BaseTestCase
 from functionaltests.common import config
-from barbicanclient import client
 from keystoneauth1 import identity
 from keystoneauth1 import session
 

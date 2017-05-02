@@ -14,9 +14,9 @@
 # limitations under the License.
 from testtools import testcase
 
-from functionaltests import utils
 from functionaltests.client import base
 from functionaltests.common import cleanup
+from functionaltests import utils
 from oslo_utils import uuidutils
 
 from barbicanclient import exceptions
@@ -332,10 +332,7 @@ class ACLsTestCase(BaseACLsTestCase):
     def test_acl_incorrect_submit(self, users, project_access,
                                   entity_ref_method, acl_type, expect_users,
                                   expect_project_access, **kwargs):
-        """Incorrect Submit operation on ACL entity which stores ACL setting in
-        Barbican.
-
-        """
+        """Check incorrect submit operation failure on ACL entity."""
         entity_ref, _ = getattr(self, entity_ref_method)()
 
         acl_data = {'entity_ref': entity_ref, 'users': users,
