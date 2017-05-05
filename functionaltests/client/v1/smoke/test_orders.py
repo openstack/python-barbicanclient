@@ -14,9 +14,9 @@
 # limitations under the License.
 from testtools import testcase
 
-from functionaltests import utils
 from functionaltests.client import base
 from functionaltests.common import cleanup
+from functionaltests import utils
 
 
 order_create_key_data = {

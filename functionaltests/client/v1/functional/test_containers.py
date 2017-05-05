@@ -12,10 +12,10 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from testtools import testcase
-from functionaltests import utils
 from functionaltests.client import base
 from functionaltests.common import cleanup
+from functionaltests import utils
+from testtools import testcase
 
 from barbicanclient import exceptions
 

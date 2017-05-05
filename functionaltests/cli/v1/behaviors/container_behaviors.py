@@ -40,6 +40,7 @@ class ContainerBehaviors(base_behaviors.BaseBehaviors):
 
     def create_container(self, secret_hrefs=[]):
         """Create a container
+
         :param secret_hrefs A list of existing secrets
 
         :return: the href to the newly created container

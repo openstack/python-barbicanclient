@@ -604,7 +604,8 @@ class SecretsTestCase(base.TestCase):
         """Covers creating secrets with various invalid payloads.
 
         These requests will fail with a value error before the request to the
-        server is made"""
+        server is made
+        """
         secret = self.barbicanclient.secrets.create(
             **secret_create_defaults_data)
         secret.payload = payload

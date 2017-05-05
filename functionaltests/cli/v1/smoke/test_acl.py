@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from functionaltests import utils
 from functionaltests.cli.base import CmdLineTestCase
 from functionaltests.cli.v1.behaviors import acl_behaviors
 from functionaltests.cli.v1.behaviors import container_behaviors
 from functionaltests.cli.v1.behaviors import secret_behaviors
+from functionaltests import utils
 from testtools import testcase
 
 ARGS_TYPE = {'short_arg_false': [False],
@@ -238,4 +238,3 @@ class ACLTestCase(CmdLineTestCase):
         err = self.acl_behaviors.acl_delete(entity_ref=secret_ref + '/acl')
         # above secret ACL ref is passed instead of expected secret_ref
         self.assertIn('Secret ACL URI', err)
-
