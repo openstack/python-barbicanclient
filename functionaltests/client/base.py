@@ -30,14 +30,14 @@ class TestCase(BaseTestCase):
         super(TestCase, self).setUp()
 
         if 'v2' in CONF.identity.auth_version:
-            self.auth = identity.v2.Password(
+            self.auth = identity.Password(
                 auth_url=CONF.identity.uri,
                 username=CONF.keymanager.username,
                 password=CONF.keymanager.password,
                 tenant_name=CONF.keymanager.project_name)
         else:
-            self.auth = identity.v3.Password(
-                auth_url=CONF.identity.uri_v3,
+            self.auth = identity.Password(
+                auth_url=CONF.identity.uri,
                 username=CONF.keymanager.username,
                 user_domain_name=CONF.identity.domain_name,
                 password=CONF.keymanager.password,

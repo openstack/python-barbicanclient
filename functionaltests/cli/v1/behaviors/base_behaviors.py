@@ -48,7 +48,6 @@ class BaseBehaviors(object):
         """
 
         if 'v3' in CONF.identity.auth_version.lower():
-            arg_list.extend(['--os-auth-url', CONF.identity.uri_v3])
             arg_list.extend(['--os-project-name',
                              CONF.keymanager.project_name])
             # NOTE(jaosorior): Should we add the user_domain_name to the
@@ -60,10 +59,10 @@ class BaseBehaviors(object):
                  CONF.keymanager.project_domain_name])
             arg_list.extend(['--os-identity-api-version', '3'])
         else:
-            arg_list.extend(['--os-auth-url', CONF.identity.uri])
             arg_list.extend(['--os-tenant-name', CONF.keymanager.project_name])
             arg_list.extend(['--os-identity-api-version', '2.0'])
 
+        arg_list.extend(['--os-auth-url', CONF.identity.uri])
         arg_list.extend(['--os-username', CONF.keymanager.username,
                          '--os-password', CONF.keymanager.password])
 

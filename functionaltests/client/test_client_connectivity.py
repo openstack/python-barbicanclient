@@ -30,14 +30,14 @@ class WhenTestingClientConnectivity(BaseTestCase):
     def setUpClass(cls):
         super(WhenTestingClientConnectivity, cls).setUpClass()
         if 'v2' in CONF.identity.auth_version:
-            cls.auth = identity.v2.Password(
+            cls.auth = identity.Password(
                 auth_url=CONF.identity.uri,
                 username=CONF.keymanager.username,
                 password=CONF.keymanager.password,
                 tenant_name=CONF.keymanager.project_name)
         else:
-            cls.auth = identity.v3.Password(
-                auth_url=CONF.identity.uri_v3,
+            cls.auth = identity.Password(
+                auth_url=CONF.identity.uri,
                 username=CONF.keymanager.username,
                 user_domain_name=CONF.identity.domain_name,
                 password=CONF.keymanager.password,

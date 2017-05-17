@@ -26,8 +26,7 @@ from cliff import command
 from cliff import commandmanager
 from cliff import complete
 from cliff import help
-from keystoneauth1.identity import v2
-from keystoneauth1.identity import v3
+from keystoneauth1 import identity
 from keystoneauth1 import loading
 from keystoneauth1 import session
 
@@ -132,19 +131,17 @@ class Barbican(app.App):
         kwargs = self.build_kwargs_based_on_version(args, api_version)
         kwargs.update(kwargs_dict)
 
-        if api_version in _IDENTITY_API_VERSION_2:
-            method = v2.Token if auth_type == 'token' else v2.Password
-        else:
-            if not api_version or api_version not in _IDENTITY_API_VERSION_3:
-                self.stderr.write(
-                    "WARNING: The identity version <{0}> is not in supported "
-                    "versions <{1}>, falling back to <{2}>.".format(
-                        api_version,
-                        _IDENTITY_API_VERSION_2 + _IDENTITY_API_VERSION_3,
-                        _DEFAULT_IDENTITY_API_VERSION
-                    )
+        _supported_version = _IDENTITY_API_VERSION_2 + _IDENTITY_API_VERSION_3
+        if not api_version or api_version not in _supported_version:
+            self.stderr.write(
+                "WARNING: The identity version <{0}> is not in supported "
+                "versions <{1}>, falling back to <{2}>.".format(
+                    api_version,
+                    _IDENTITY_API_VERSION_2 + _IDENTITY_API_VERSION_3,
+                    _DEFAULT_IDENTITY_API_VERSION
                 )
-            method = v3.Token if auth_type == 'token' else v3.Password
+            )
+        method = identity.Token if auth_type == 'token' else identity.Password
 
         auth = method(**kwargs)
 
