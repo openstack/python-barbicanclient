@@ -537,12 +537,18 @@ class SecretManager(base.BaseEntityManager):
             raise ValueError('secret_ref is required.')
         self._api.delete(secret_ref)
 
-    def list(self, limit=10, offset=0, name=None, algorithm=None,
-             mode=None, bits=0):
+    def list(self, limit=10, offset=0, name=None, algorithm=None, mode=None,
+             bits=0, secret_type=None, created=None, updated=None,
+             expiration=None, sort=None):
         """List Secrets for the project
 
         This method uses the limit and offset parameters for paging,
         and also supports filtering.
+
+        The time filters (created, updated, and expiration) are expected to
+        be an ISO 8601 formatted string, which can be prefixed with comparison
+        operators: 'gt:' (greater-than), 'gte:' (greater-than-or-equal), 'lt:'
+        (less-than), or 'lte': (less-than-or-equal).
 
         :param limit: Max number of secrets returned
         :param offset: Offset secrets to begin list
@@ -550,6 +556,18 @@ class SecretManager(base.BaseEntityManager):
         :param algorithm: Algorithm filter for the list
         :param mode: Mode filter for the list
         :param bits: Bits filter for the list
+        :param secret_type: Secret type filter for the list
+        :param created: Created time filter for the list, an ISO 8601 format
+            string, optionally prefixed with 'gt:', 'gte:', 'lt:', or 'lte:'
+        :param updated: Updated time filter for the list, an ISO 8601 format
+            string, optionally prefixed with 'gt:', 'gte:', 'lt:', or 'lte:'
+        :param expiration: Expiration time filter for the list, an ISO 8601
+            format string, optionally prefixed with 'gt:', 'gte:', 'lt:',
+            or 'lte:'
+        :param sort: Determines the sorted order of the returned list, a
+            string of comma-separated sort keys ('created', 'expiration',
+            'mode', 'name', 'secret_type', 'status', or 'updated') with a
+            direction appended (':asc' or ':desc') to each key
         :returns: list of Secret objects that satisfy the provided filter
             criteria.
         :rtype: list
@@ -568,6 +586,16 @@ class SecretManager(base.BaseEntityManager):
             params['mode'] = mode
         if bits > 0:
             params['bits'] = bits
+        if secret_type:
+            params['secret_type'] = secret_type
+        if created:
+            params['created'] = created
+        if updated:
+            params['updated'] = updated
+        if expiration:
+            params['expiration'] = expiration
+        if sort:
+            params['sort'] = sort
 
         response = self._api.get(self._entity, params=params)
 
