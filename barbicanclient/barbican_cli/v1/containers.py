@@ -17,9 +17,9 @@ from cliff import command
 from cliff import lister
 from cliff import show
 
-from barbicanclient.containers import CertificateContainer
-from barbicanclient.containers import Container
-from barbicanclient.containers import RSAContainer
+from barbicanclient.v1.containers import CertificateContainer
+from barbicanclient.v1.containers import Container
+from barbicanclient.v1.containers import RSAContainer
 
 
 class DeleteContainer(command.Command):

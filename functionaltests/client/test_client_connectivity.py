@@ -150,20 +150,27 @@ class WhenTestingClientConnectivity(BaseTestCase):
 
         self.assert_client_cannot_get_endpoint(barbicanclient)
 
-    def test_client_cannot_access_server_if_nonexistent_version_specified(self):  # noqa
-        barbicanclient_1 = client.Client(
+    def test_cannot_create_client_if_nonexistent_version_specified(self):
+        self.assertRaises(exceptions.UnsupportedVersion,
+                          client.Client,
+                          **{"project_id": CONF.keymanager.project_id,
+                             "auth": self.auth,
+                             "interface": client._DEFAULT_SERVICE_INTERFACE,
+                             "service_type": client._DEFAULT_SERVICE_TYPE,
+                             "version": 'wrong-version'})
+
+        self.assertRaises(exceptions.UnsupportedVersion,
+                          client.Client,
+                          **{"endpoint": CONF.keymanager.url,
+                             "project_id": CONF.keymanager.project_id,
+                             "auth": self.auth,
+                             "version": 'nonexistent_version'})
+
+    def test_client_can_access_server_if_no_version_is_specified(self):
+        barbicanclient = client.Client(
             project_id=CONF.keymanager.project_id,
             auth=self.auth,
             interface=client._DEFAULT_SERVICE_INTERFACE,
-            service_type=client._DEFAULT_SERVICE_TYPE,
-            version='wrong-version')
+            service_type=client._DEFAULT_SERVICE_TYPE)
 
-        self.assertRaises(TypeError, barbicanclient_1.containers.list)
-
-        barbicanclient_2 = client.Client(
-            endpoint=CONF.keymanager.url,
-            project_id=CONF.keymanager.project_id,
-            auth=self.auth,
-            version='nonexistent_version')
-
-        self.assert_client_cannot_contact_barbican(barbicanclient_2)
+        self.assert_client_can_contact_barbican(barbicanclient)

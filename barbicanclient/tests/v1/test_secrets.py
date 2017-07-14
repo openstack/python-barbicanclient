@@ -17,11 +17,11 @@ import json
 
 from oslo_utils import timeutils
 
-from barbicanclient import acls
 from barbicanclient import base
 from barbicanclient import exceptions
-from barbicanclient import secrets
 from barbicanclient.tests import test_client
+from barbicanclient.v1 import acls
+from barbicanclient.v1 import secrets
 
 
 class SecretData(object):

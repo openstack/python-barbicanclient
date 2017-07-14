@@ -19,11 +19,10 @@ import logging
 from oslo_utils.timeutils import parse_isotime
 import six
 
-from barbicanclient._i18n import _LW
-from barbicanclient import acls as acl_manager
 from barbicanclient import base
 from barbicanclient import exceptions
 from barbicanclient import formatter
+from barbicanclient.v1 import acls as acl_manager
 
 
 LOG = logging.getLogger(__name__)
@@ -193,7 +192,7 @@ class Secret(SecretFormatter):
             try:
                 self._fetch_payload()
             except ValueError:
-                LOG.warning(_LW("Secret does not contain a payload"))
+                LOG.warning("Secret does not contain a payload")
                 return None
         return self._payload
 
@@ -242,22 +241,20 @@ class Secret(SecretFormatter):
     @immutable_after_save
     def payload_content_type(self, value):
         LOG.warning(
-            _LW('DEPRECATION WARNING: Manually setting the '
-                'payload_content_type can lead to unexpected '
-                'results.  It will be removed in a future release. '
-                'See Launchpad Bug #1419166.')
-        )
+            'DEPRECATION WARNING: Manually setting the '
+            'payload_content_type can lead to unexpected '
+            'results.  It will be removed in a future release. '
+            'See Launchpad Bug #1419166.')
         self._payload_content_type = value
 
     @payload_content_encoding.setter
     @immutable_after_save
     def payload_content_encoding(self, value):
         LOG.warning(
-            _LW('DEPRECATION WARNING: Manually setting the '
-                'payload_content_encoding can lead to unexpected '
-                'results.  It will be removed in a future release. '
-                'See Launchpad Bug #1419166.')
-        )
+            'DEPRECATION WARNING: Manually setting the '
+            'payload_content_encoding can lead to unexpected '
+            'results.  It will be removed in a future release. '
+            'See Launchpad Bug #1419166.')
         self._payload_content_encoding = value
 
     def _fetch_payload(self):
