@@ -30,7 +30,7 @@ with the following command:
 
     If you do not have the appropriate Python versions available, consider
     setting up PyEnv to install multiple versions of Python. See the
-    documentation regarding :doc:`/setup/dev` for more information.
+    documentation `setting up a Barbican development environment <https://github.com/openstack/barbican/blob/master/doc/source/contributor/dev.rst>`_.
 
 .. note::
 
@@ -72,8 +72,8 @@ Functional Tests
 
 Unlike running unit tests, the functional tests require Barbican and
 Keystone services to be running in order to execute. For more
-information on :doc:`setting up a Barbican development environment
-</setup/dev>` and using :doc:`Keystone with Barbican </setup/keystone>`,
+information on `setting up a Barbican development environment <https://github.com/openstack/barbican/blob/master/doc/source/contributor/dev.rst>`_
+and using `Keystone with Barbican <https://github.com/openstack/barbican/blob/master/doc/source/configuration/keystone.rst>`_,
 see our accompanying project documentation.
 
 A configuration file for functional tests must be edited before the tests
