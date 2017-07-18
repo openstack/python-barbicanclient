@@ -25,8 +25,7 @@ API_VERSIONS = {
 
 def make_client(instance):
     """Returns a Barbican service client."""
-    return client.Client(version=DEFAULT_API_VERSION,
-                         session=instance.session,
+    return client.Client(session=instance.session,
                          region_name=instance._region_name)
 
 
