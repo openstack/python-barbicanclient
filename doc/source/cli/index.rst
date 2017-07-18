@@ -8,3 +8,4 @@ User Documentation
    cli_usage
    authentication
    usage
+   details
