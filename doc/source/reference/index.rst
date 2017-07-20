@@ -11,62 +11,62 @@ Client
 Secrets
 =======
 
-.. autoclass:: barbicanclient.secrets.SecretManager
+.. autoclass:: barbicanclient.v1.secrets.SecretManager
    :members:
 
-.. autoclass:: barbicanclient.secrets.Secret
+.. autoclass:: barbicanclient.v1.secrets.Secret
    :members:
 
 Orders
 ======
 
-.. autoclass:: barbicanclient.orders.OrderManager
+.. autoclass:: barbicanclient.v1.orders.OrderManager
    :members:
 
-.. autoclass:: barbicanclient.orders.Order
+.. autoclass:: barbicanclient.v1.orders.Order
    :members:
 
-.. autoclass:: barbicanclient.orders.KeyOrder
+.. autoclass:: barbicanclient.v1.orders.KeyOrder
    :members:
 
-.. autoclass:: barbicanclient.orders.AsymmetricOrder
+.. autoclass:: barbicanclient.v1.orders.AsymmetricOrder
    :members:
 
 Containers
 ==========
 
-.. autoclass:: barbicanclient.containers.ContainerManager
+.. autoclass:: barbicanclient.v1.containers.ContainerManager
    :members:
 
-.. autoclass:: barbicanclient.containers.Container
+.. autoclass:: barbicanclient.v1.containers.Container
    :members:
 
-.. autoclass:: barbicanclient.containers.RSAContainer
+.. autoclass:: barbicanclient.v1.containers.RSAContainer
    :members:
 
-.. autoclass:: barbicanclient.containers.CertificateContainer
+.. autoclass:: barbicanclient.v1.containers.CertificateContainer
    :members:
 
 Certificate Authorities
 =======================
 
-.. autoclass:: barbicanclient.cas.CAManager
+.. autoclass:: barbicanclient.v1.cas.CAManager
    :members:
 
-.. autoclass:: barbicanclient.cas.CA
+.. autoclass:: barbicanclient.v1.cas.CA
    :members:
 
 ACLs
 ====
 
-.. autoclass:: barbicanclient.acls.ACLManager
+.. autoclass:: barbicanclient.v1.acls.ACLManager
    :members:
 
-.. autoclass:: barbicanclient.acls.SecretACL
+.. autoclass:: barbicanclient.v1.acls.SecretACL
    :members:
    :inherited-members:
 
-.. autoclass:: barbicanclient.acls.ContainerACL
+.. autoclass:: barbicanclient.v1.acls.ContainerACL
    :members:
    :inherited-members:
 
