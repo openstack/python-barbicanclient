@@ -8,7 +8,7 @@ The client defers authentication to `Keystone Sessions`_, which provide several
 authentication plugins in the `keystoneauth1.identity` namespace.  Below we give
 examples of the most commonly used auth plugins.
 
-.. _`Keystone Sessions`: http://docs.openstack.org/developer/keystoneauth/using-sessions.html
+.. _`Keystone Sessions`: https://docs.openstack.org/keystoneauth/latest/using-sessions.html
 
 Keystone API Version 3 Authentication
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
