@@ -29,7 +29,7 @@ barbicanclient - Python Library
 -------------------------------
 
 The full api is
-`documented in the official OpenStack documentation site <http://docs.openstack.org/developer/python-barbicanclient>`__.
+`documented in the official OpenStack documentation site <https://docs.openstack.org/python-barbicanclient/latest/>`__.
 
 
 Here's an example of storing a secret in barbican using the python library
@@ -82,7 +82,7 @@ with keystone authentication:
     In order for the example above to work Barbican must be running and
     configured to use the Keystone Middleware. For more information on
     setting this up please visit:
-    http://docs.openstack.org/developer/barbican/setup/keystone.html [1]_
+    https://docs.openstack.org/barbican/latest/configuration/keystone.html [1]_
 
 barbican - Command Line Client
 ------------------------------
@@ -204,13 +204,13 @@ usage options
 * `Getting involved`_
 
 .. _PyPi: https://pypi.python.org/pypi/python-barbicanclient/
-.. _Online Documentation: http://docs.openstack.org/developer/python-barbicanclient/
+.. _Online Documentation: https://docs.openstack.org/python-barbicanclient/latest/
 .. _Launchpad project: https://launchpad.net/python-barbicanclient/
 .. _Blueprints: https://blueprints.launchpad.net/python-barbicanclient/
 .. _Bugs: https://bugs.launchpad.net/python-barbicanclient/
 .. _Source: https://git.openstack.org/cgit/openstack/python-barbicanclient/
-.. _Getting involved: http://docs.openstack.org/developer/barbican/contribute/getting_involved.html
+.. _Getting involved: https://docs.openstack.org/barbican/latest/contributor/getting_involved.html
 .. _Specs: http://specs.openstack.org/openstack/barbican-specs/
 
 
-.. [1] Documentation in this link is currently incomplete. Please use the `devstack setup <http://docs.openstack.org/developer/barbican/setup/devstack.html>`__.
+.. [1] Documentation in this link is currently incomplete. Please use the `devstack setup <https://docs.openstack.org/barbican/latest/contributor/devstack.html>`__.
