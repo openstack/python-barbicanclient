@@ -449,7 +449,7 @@ class SecretManager(base.BaseEntityManager):
             payload decryption. Setting this can lead to unexpected results.
             See Launchpad Bug #1419166.
         :returns: Secret object retrieved from Barbican
-        :rtype: :class:`barbicanclient.secrets.Secret`
+        :rtype: :class:`barbicanclient.v1.secrets.Secret`
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
@@ -510,7 +510,7 @@ class SecretManager(base.BaseEntityManager):
         :param secret_type: The secret type for this secret key
         :param expiration: The expiration time of the secret in ISO 8601 format
         :returns: A new Secret object
-        :rtype: :class:`barbicanclient.secrets.Secret`
+        :rtype: :class:`barbicanclient.v1.secrets.Secret`
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses

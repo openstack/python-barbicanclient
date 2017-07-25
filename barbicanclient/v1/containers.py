@@ -621,7 +621,7 @@ class ContainerManager(base.BaseEntityManager):
         :param name: A friendly name for the Container
         :param secrets: Secrets to populate when creating a Container
         :returns: Container
-        :rtype: :class:`barbicanclient.containers.Container`
+        :rtype: :class:`barbicanclient.v1.containers.Container`
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
@@ -644,7 +644,7 @@ class ContainerManager(base.BaseEntityManager):
         :param private_key: Secret object containing a Private Key
         :param private_key_passphrase: Secret object containing a passphrase
         :returns: RSAContainer
-        :rtype: :class:`barbicanclient.containers.RSAContainer`
+        :rtype: :class:`barbicanclient.v1.containers.RSAContainer`
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
@@ -671,7 +671,7 @@ class ContainerManager(base.BaseEntityManager):
         :param private_key: Secret object containing a Private Key
         :param private_key_passphrase: Secret object containing a passphrase
         :returns: CertificateContainer
-        :rtype: :class:`barbicanclient.containers.CertificateContainer`
+        :rtype: :class:`barbicanclient.v1.containers.CertificateContainer`
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses

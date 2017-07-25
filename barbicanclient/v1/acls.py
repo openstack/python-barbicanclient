@@ -432,8 +432,8 @@ class ACLManager(base.BaseEntityManager):
         :param str operation_type: Type indicating which class of Barbican
             operations this ACL is defined for e.g. 'read' operations
         :returns: ACL object instance
-        :rtype: :class:`barbicanclient.acls.SecretACL` or
-            :class:`barbicanclient.acls.ContainerACL`
+        :rtype: :class:`barbicanclient.v1.acls.SecretACL` or
+            :class:`barbicanclient.v1.acls.ContainerACL`
         """
         entity_type = ACL.identify_ref_type(entity_ref)
 
@@ -448,8 +448,8 @@ class ACLManager(base.BaseEntityManager):
 
         :param str entity_ref: Full HATEOAS reference to a secret or container.
         :returns: ACL entity object instance
-        :rtype: :class:`barbicanclient.acls.SecretACL` or
-            :class:`barbicanclient.acls.ContainerACL`
+        :rtype: :class:`barbicanclient.v1.acls.SecretACL` or
+            :class:`barbicanclient.v1.acls.ContainerACL`
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         """

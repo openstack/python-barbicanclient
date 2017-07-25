@@ -199,7 +199,7 @@ class CAManager(base.BaseEntityManager):
 
         :param str ca_ref: Full HATEOAS reference to a CA
         :returns: CA object retrieved from Barbican
-        :rtype: :class:`barbicanclient.cas.CA`
+        :rtype: :class:`barbicanclient.v1.cas.CA`
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
