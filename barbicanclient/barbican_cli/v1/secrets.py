@@ -114,12 +114,16 @@ class ListSecret(lister.Lister):
         parser.add_argument('--mode', '-m', default=None,
                             help='the algorithm mode filter for the'
                                  ' list (default: %(default)s).')
+        parser.add_argument('--secret-type', '-s', default=None,
+                            help='specify the secret type '
+                                 '(default: %(default)s).')
         return parser
 
     def take_action(self, args):
         obj_list = self.app.client_manager.key_manager.secrets.list(
             limit=args.limit, offset=args.offset, name=args.name,
-            algorithm=args.algorithm, mode=args.mode, bits=args.bit_length)
+            algorithm=args.algorithm, mode=args.mode, bits=args.bit_length,
+            secret_type=args.secret_type)
         return secrets.Secret._list_objects(obj_list)
 
 
