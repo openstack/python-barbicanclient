@@ -453,7 +453,7 @@ class OrderManager(base.BaseEntityManager):
         :param payload_content_type: The format/type of the secret data
         :param expiration: The expiration time of the secret in ISO 8601 format
         :returns: KeyOrder
-        :rtype: :class:`barbicanclient.orders.KeyOrder`
+        :rtype: :class:`barbicanclient.v1.orders.KeyOrder`
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
@@ -478,7 +478,7 @@ class OrderManager(base.BaseEntityManager):
         :param payload_content_type: The format/type of the secret data
         :param expiration: The expiration time of the secret in ISO 8601 format
         :returns: AsymmetricOrder
-        :rtype: :class:`barbicanclient.orders.AsymmetricOrder`
+        :rtype: :class:`barbicanclient.v1.orders.AsymmetricOrder`
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
@@ -505,7 +505,7 @@ class OrderManager(base.BaseEntityManager):
         :param profile: The profile of certificate to use
         :param request_data: The CSR content
         :returns: CertificateOrder
-        :rtype: :class:`barbicanclient.orders.CertificateOrder`
+        :rtype: :class:`barbicanclient.v1.orders.CertificateOrder`
         """
         return CertificateOrder(api=self._api, name=name,
                                 request_type=request_type,
