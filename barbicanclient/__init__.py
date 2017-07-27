@@ -15,8 +15,54 @@
 
 """Barbican Client Library Binding"""
 
+import importlib
+import sys
+import warnings
+
 import pbr.version
+
+from barbicanclient.v1 import acls
+from barbicanclient.v1 import cas
+from barbicanclient.v1 import containers
+from barbicanclient.v1 import orders
+from barbicanclient.v1 import secrets
 
 
 version_info = pbr.version.VersionInfo("python-barbicanclient")
 __version__ = version_info.version_string()
+
+__all__ = (
+    'acls',
+    'cas',
+    'containers',
+    'orders',
+    'secrets',
+)
+
+
+class _LazyImporter(object):
+    def __init__(self, module):
+        self._module = module
+
+    def __getattr__(self, name):
+        # This is only called until the import has been done.
+        lazy_submodules = [
+            'acls',
+            'cas',
+            'containers',
+            'orders',
+            'secrets',
+        ]
+        if name in lazy_submodules:
+            warnings.warn("The %s module is moved to barbicanclient/v1 "
+                          "directory, direct import of barbicanclient.%s "
+                          "will be deprecated. Please import "
+                          "barbicanclient.v1.%s instead."
+                          % (name, name, name))
+            return importlib.import_module('barbicanclient.v1.%s' % name)
+
+        # Return module attributes like __all__ etc.
+        return getattr(self._module, name)
+
+
+sys.modules[__name__] = _LazyImporter(sys.modules[__name__])
