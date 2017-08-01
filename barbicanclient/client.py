@@ -13,8 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib
 import logging
 import os
+import sys
+import warnings
 
 from keystoneauth1 import adapter
 from keystoneauth1 import session as ks_session
@@ -191,3 +194,32 @@ def env(*vars, **kwargs):
         if value:
             return value
     return kwargs.get('default', '')
+
+
+class _LazyImporter(object):
+    def __init__(self, module):
+        self._module = module
+
+    def __getattr__(self, name):
+        # This is only called until the import has been done.
+        lazy_submodules = [
+            'acls',
+            'cas',
+            'containers',
+            'orders',
+            'secrets',
+        ]
+        if name in lazy_submodules:
+            warnings.warn("The %s module is moved to barbicanclient/v1 "
+                          "directory, direct import of "
+                          "barbicanclient.client.%s "
+                          "will be deprecated. Please import "
+                          "barbicanclient.v1.%s instead."
+                          % (name, name, name))
+            return importlib.import_module('barbicanclient.v1.%s' % name)
+
+        # Return module attributes like __all__ etc.
+        return getattr(self._module, name)
+
+
+sys.modules[__name__] = _LazyImporter(sys.modules[__name__])
