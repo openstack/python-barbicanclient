@@ -83,7 +83,7 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
         """Get a secret
 
         :param: the href to a secret
-        :return dict of secret values, or an empty dict if the secret
+        :return: dict of secret values, or an empty dict if the secret
         is not found.
         """
         argv = ['secret', 'get']
@@ -104,7 +104,7 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
         :param: the href to a secret
         :param raw if True then add "-f value" to get raw payload (ie not
         within a PrettyTable).  If False then omit -f.
-        :return string representing the secret payload.
+        :return: string representing the secret payload.
         """
         argv = ['secret', 'get']
         self.add_auth_and_endpoint(argv)

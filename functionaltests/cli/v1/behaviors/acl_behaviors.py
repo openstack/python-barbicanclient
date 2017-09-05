@@ -57,8 +57,8 @@ class ACLBehaviors(base_behaviors.BaseBehaviors):
     def acl_delete(self, entity_ref):
         """Delete a secret or container acl
 
-        :param entity_ref Reference to secret or container entity
-        :return If error returns stderr string otherwise returns None.
+        :param entity_ref: Reference to secret or container entity
+        :return: If error returns stderr string otherwise returns None.
         """
         argv = ['acl', 'delete']
         self.add_auth_and_endpoint(argv)
@@ -74,8 +74,8 @@ class ACLBehaviors(base_behaviors.BaseBehaviors):
     def acl_get(self, entity_ref):
         """Get a 'read' ACL setting for a secret or a container.
 
-        :param entity_ref Reference to secret or container entity
-        :return dict of 'read' operation ACL settings if found otherwise empty
+        :param entity_ref: Reference to secret or container entity
+        :return: dict of 'read' operation ACL settings if found otherwise empty
             dict in case of error.
         """
         argv = ['acl', 'get']
@@ -95,14 +95,14 @@ class ACLBehaviors(base_behaviors.BaseBehaviors):
                    operation_type='read'):
         """Submits a secret or container ACL
 
-        :param entity_ref Reference to secret or container entity
-        :param users List of users for ACL
+        :param entity_ref: Reference to secret or container entity
+        :param users: List of users for ACL
         :param project_access: Flag to pass for project access behavior
         :param use_short_arg: Flag to indicate if use short arguments in cli.
             Default is False
         :param operation_type: ACL operation type. Default is 'read' as
             Barbican currently supports only that type of operation.
-        :return dict of 'read' operation ACL settings if found otherwise empty
+        :return: dict of 'read' operation ACL settings if found otherwise empty
             dict in case of error.
         """
         argv = ['acl', 'submit']
@@ -128,14 +128,14 @@ class ACLBehaviors(base_behaviors.BaseBehaviors):
                 operation_type='read'):
         """Add to a secret or container ACL
 
-        :param entity_ref Reference to secret or container entity
-        :param users List of users to be added in ACL
+        :param entity_ref: Reference to secret or container entity
+        :param users: List of users to be added in ACL
         :param project_access: Flag to pass for project access behavior
         :param use_short_arg: Flag to indicate if use short arguments in cli.
             Default is False
         :param operation_type: ACL operation type. Default is 'read' as
             Barbican currently supports only that type of operation.
-        :return dict of 'read' operation ACL settings if found otherwise empty
+        :return: dict of 'read' operation ACL settings if found otherwise empty
             dict in case of error.
         """
         argv = ['acl', 'user', 'add']
@@ -162,14 +162,14 @@ class ACLBehaviors(base_behaviors.BaseBehaviors):
                    operation_type='read'):
         """Remove users from a secret or container ACL
 
-        :param entity_ref Reference to secret or container entity
-        :param users List of users to be removed from ACL
+        :param entity_ref: Reference to secret or container entity
+        :param users: List of users to be removed from ACL
         :param project_access: Flag to pass for project access behavior
         :param use_short_arg: Flag to indicate if use short arguments in cli.
             Default is False
         :param operation_type: ACL operation type. Default is 'read' as
             Barbican currently supports only that type of operation.
-        :return dict of 'read' operation ACL settings if found otherwise empty
+        :return: dict of 'read' operation ACL settings if found otherwise empty
             dict in case of error.
         """
         argv = ['acl', 'user', 'remove']
