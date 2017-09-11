@@ -10,8 +10,8 @@ testrepository>=0.0.18 # Apache-2.0/BSD
 testtools>=1.4.0 # MIT
 oslotest>=1.10.0 # Apache-2.0
 nose # LGPL
-oslo.config!=4.3.0,!=4.4.0,>=4.0.0 # Apache-2.0
-python-openstackclient!=3.10.0,>=3.3.0 # Apache-2.0
+oslo.config>=4.6.0 # Apache-2.0
+python-openstackclient>=3.12.0 # Apache-2.0
 
 # Documentation build requirements
 sphinx>=1.6.2 # BSD
