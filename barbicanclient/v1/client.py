@@ -30,7 +30,7 @@ class Client(object):
     def __init__(self, session=None, *args, **kwargs):
         """Barbican client object used to interact with barbican service.
 
-        :param session: An instance of keystoneclient.session.Session that
+        :param session: An instance of keystoneauth1.session.Session that
             can be either authenticated, or not authenticated.  When using
             a non-authenticated Session, you must provide some additional
             parameters.  When no session is provided it will default to a

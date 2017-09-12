@@ -38,7 +38,7 @@ with keystone authentication:
 .. code:: python
 
     >>> from keystoneclient.auth import identity
-    >>> from keystoneclient import session
+    >>> from keystoneauth1 import session
     >>> from barbicanclient import client
 
     >>> # We'll use Keystone API v3 for authentication

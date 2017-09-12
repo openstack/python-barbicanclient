@@ -123,7 +123,7 @@ def Client(version=None, session=None, *args, **kwargs):
         """Barbican client used to interact with barbican service.
 
         :param version: The API version to use.
-        :param session: An instance of keystoneclient.session.Session that
+        :param session: An instance of keystoneauth1.session.Session that
             can be either authenticated, or not authenticated.  When using
             a non-authenticated Session, you must provide some additional
             parameters.  When no session is provided it will default to a
