@@ -42,7 +42,7 @@ def setup_config(config_file=''):
 
     keymanager_group = cfg.OptGroup(name='keymanager')
     keymanager_options = [
-        cfg.StrOpt('url', default='http://localhost:9311'),
+        cfg.StrOpt('url', default='http://localhost/key-manager'),
         cfg.StrOpt('username', default='admin'),
         cfg.StrOpt('password', default='secretadmin'),
         cfg.StrOpt('project_name', default='admin'),
