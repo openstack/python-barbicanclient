@@ -7,10 +7,10 @@ fixtures>=3.0.0 # Apache-2.0/BSD
 requests-mock>=1.1.0 # Apache-2.0
 mock>=2.0.0 # BSD
 testrepository>=0.0.18 # Apache-2.0/BSD
-testtools>=1.4.0 # MIT
+testtools>=2.2.0 # MIT
 oslotest>=1.10.0 # Apache-2.0
 nose>=1.3.7 # LGPL
-oslo.config>=4.6.0 # Apache-2.0
+oslo.config>=5.1.0 # Apache-2.0
 python-openstackclient>=3.12.0 # Apache-2.0
 
 # Documentation build requirements
