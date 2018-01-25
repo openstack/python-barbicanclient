@@ -62,7 +62,7 @@ class ContainerBehaviors(base_behaviors.BaseBehaviors):
         """Get a container
 
         :param: the href to a container
-        :return dict of container values, or an empty dict if the container
+        :return: dict of container values, or an empty dict if the container
         is not found.
         """
         argv = ['secret', 'container', 'get']
