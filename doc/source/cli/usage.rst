@@ -115,7 +115,7 @@ Example:
 
     barbican = client.Client(...)
 
-    my_order = barbican.orders.key_order()
+    my_order = barbican.orders.create_key()
     my_order.algorithm = 'AES'
     my_order.mode = 'CBC'
     my_order.bit_length = 256
