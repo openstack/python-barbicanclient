@@ -28,7 +28,7 @@ from testtools import testcase
 
 secret_create_defaults_data = {
     "name": "AES key",
-    "expiration": "2018-02-28T19:14:44.180394",
+    "expiration": "2020-02-28T19:14:44.180394",
     "algorithm": "aes",
     "bit_length": 256,
     "mode": "cbc",
