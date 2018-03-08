@@ -210,7 +210,7 @@ usage options
 .. _Bugs: https://bugs.launchpad.net/python-barbicanclient/
 .. _Source: https://git.openstack.org/cgit/openstack/python-barbicanclient/
 .. _Getting involved: https://docs.openstack.org/barbican/latest/contributor/getting_involved.html
-.. _Specs: http://specs.openstack.org/openstack/barbican-specs/
+.. _Specs: https://specs.openstack.org/openstack/barbican-specs/
 
 
 .. [1] Documentation in this link is currently incomplete. Please use the `devstack setup <https://docs.openstack.org/barbican/latest/contributor/devstack.html>`__.
