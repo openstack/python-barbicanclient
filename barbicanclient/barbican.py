@@ -46,6 +46,13 @@ _IDENTITY_API_VERSION_3 = ['3']
 class Barbican(app.App):
     """Barbican command line interface."""
 
+    # verbose logging levels
+    WARNING_LEVEL = 0
+    INFO_LEVEL = 1
+    DEBUG_LEVEL = 2
+    CONSOLE_MESSAGE_FORMAT = '%(message)s'
+    DEBUG_MESSAGE_FORMAT = '%(levelname)s: %(name)s %(message)s'
+
     def __init__(self, **kwargs):
         self.client = None
 
@@ -328,6 +335,9 @@ class Barbican(app.App):
         """
         self.client_manager = namedtuple('ClientManager', 'key_manager')
         if cmd.auth_required:
+            # NOTE(liujiong): cliff sets log level to DEBUG in run function,
+            # need to overwrite this configuration to depress DEBUG messages.
+            self.configure_logging()
             self.client_manager.key_manager = self.create_client(self.options)
 
     def run(self, argv):
@@ -336,6 +346,26 @@ class Barbican(app.App):
             self.stderr.write(self.parser.format_usage())
             return 1
         return super(Barbican, self).run(argv)
+
+    def configure_logging(self):
+        """Create logging handlers for any log output."""
+        root_logger = logging.getLogger('')
+        # Set log level to INFO
+        root_logger.setLevel(logging.INFO)
+
+        # Send higher-level messages to the console via stderr
+        console = logging.StreamHandler(self.stderr)
+        console_level = {self.WARNING_LEVEL: logging.WARNING,
+                         self.INFO_LEVEL: logging.INFO,
+                         self.DEBUG_LEVEL: logging.DEBUG,
+                         }.get(self.options.verbose_level, logging.INFO)
+        if logging.DEBUG == console_level:
+            formatter = logging.Formatter(self.DEBUG_MESSAGE_FORMAT)
+        else:
+            formatter = logging.Formatter(self.CONSOLE_MESSAGE_FORMAT)
+        console.setFormatter(formatter)
+        root_logger.addHandler(console)
+        return
 
 
 def main(argv=sys.argv[1:]):
