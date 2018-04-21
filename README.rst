@@ -2,11 +2,11 @@ python-barbicanclient
 =====================
 
 .. image:: https://img.shields.io/pypi/v/python-barbicanclient.svg
-    :target: https://pypi.python.org/pypi/python-barbicanclient/
+    :target: https://pypi.org/project/python-barbicanclient/
     :alt: Latest Version
 
 .. image:: https://img.shields.io/pypi/dm/python-barbicanclient.svg
-    :target: https://pypi.python.org/pypi/python-barbicanclient/
+    :target: https://pypi.org/project/python-barbicanclient/
     :alt: Downloads
 
 This is a client for the `Barbican <https://github.com/openstack/barbican>`__
@@ -17,7 +17,7 @@ Installation
 ------------
 
 The client is
-`pip installable <https://pypi.python.org/pypi/python-barbicanclient>`__ as
+`pip installable <https://pypi.org/project/python-barbicanclient>`__ as
 follows:
 
 .. code:: console
@@ -203,7 +203,7 @@ usage options
 * `Specs`_
 * `Getting involved`_
 
-.. _PyPi: https://pypi.python.org/pypi/python-barbicanclient/
+.. _PyPi: https://pypi.org/project/python-barbicanclient/
 .. _Online Documentation: https://docs.openstack.org/python-barbicanclient/latest/
 .. _Launchpad project: https://launchpad.net/python-barbicanclient/
 .. _Blueprints: https://blueprints.launchpad.net/python-barbicanclient/
