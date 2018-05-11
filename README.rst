@@ -207,7 +207,7 @@ usage options
 .. _Online Documentation: https://docs.openstack.org/python-barbicanclient/latest/
 .. _Launchpad project: https://launchpad.net/python-barbicanclient/
 .. _Blueprints: https://blueprints.launchpad.net/python-barbicanclient/
-.. _Bugs: https://bugs.launchpad.net/python-barbicanclient/
+.. _Bugs: https://storyboard.openstack.org/#!/project/984
 .. _Source: https://git.openstack.org/cgit/openstack/python-barbicanclient/
 .. _Getting involved: https://docs.openstack.org/barbican/latest/contributor/getting_involved.html
 .. _Specs: https://specs.openstack.org/openstack/barbican-specs/
