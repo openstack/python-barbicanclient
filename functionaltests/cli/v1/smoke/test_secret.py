@@ -132,3 +132,19 @@ class SecretTestCase(CmdLineTestCase):
         payload = self.secret_behaviors.get_secret_payload(secret_href,
                                                            raw=True)
         self.assertEqual(payload, self.expected_payload)
+
+    @testcase.attr('positive')
+    def test_secret_file_parameter_read(self):
+        secret_href = self.secret_behaviors.store_secret(
+            payload=self.expected_payload)
+        self.secret_behaviors.get_secret_file(secret_href=secret_href)
+        payload = self.secret_behaviors.read_secret_test_file()
+        self.assertEqual(payload, self.expected_payload)
+
+    @testcase.attr('positive')
+    def test_secret_file_parameter_write(self):
+        self.secret_behaviors.write_secret_test_file(
+            payload=self.expected_payload)
+        secret_href = self.secret_behaviors.store_secret_file()
+        payload = self.secret_behaviors.get_secret_payload(secret_href)
+        self.assertEqual(payload, self.expected_payload)

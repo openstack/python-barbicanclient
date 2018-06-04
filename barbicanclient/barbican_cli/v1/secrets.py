@@ -13,11 +13,13 @@
 """
 Command-line interface sub-commands related to secrets.
 """
+import os
+
 from cliff import command
 from cliff import lister
 from cliff import show
 
-from barbicanclient.v1 import secrets
+from barbicanclient import secrets
 
 
 class DeleteSecret(command.Command):
@@ -38,22 +40,18 @@ class GetSecret(show.ShowOne):
     def get_parser(self, prog_name):
         parser = super(GetSecret, self).get_parser(prog_name)
         parser.add_argument('URI', help='The URI reference for the secret.')
-        parser.add_argument('--decrypt', '-d',
-                            help='if specified, retrieve the '
-                                 'unencrypted secret data; '
-                                 'the data type can be specified with '
-                                 '--payload_content_type.',
-                            action='store_true')
-        parser.add_argument('--payload', '-p',
-                            help='if specified, retrieve the '
-                                 'unencrypted secret data; '
-                                 'the data type can be specified with '
-                                 '--payload_content_type. If the user'
-                                 ' wishes to only retrieve the value of'
-                                 ' the payload they must add '
-                                 '"-f value" to format returning only'
-                                 ' the value of the payload',
-                            action='store_true')
+        payload_params = parser.add_mutually_exclusive_group(required=False)
+        payload_params.add_argument('--decrypt', '-d',
+                                    help='if specified, retrieve the '
+                                    'unencrypted secret data.',
+                                    action='store_true')
+        payload_params.add_argument('--payload', '-p',
+                                    help='if specified, retrieve the '
+                                    'unencrypted secret data.',
+                                    action='store_true')
+        payload_params.add_argument('--file', '-F', metavar='<filename>',
+                                    help='if specified, save the payload to a '
+                                         'new file with the given filename.')
         parser.add_argument('--payload_content_type', '-t',
                             default='text/plain',
                             help='the content type of the decrypted'
@@ -61,7 +59,7 @@ class GetSecret(show.ShowOne):
         return parser
 
     def take_action(self, args):
-        if args.decrypt or args.payload:
+        if args.decrypt or args.payload or args.file:
             entity = self.app.client_manager.key_manager.secrets.get(
                 args.URI, args.payload_content_type)
             return (('Payload',),
@@ -70,6 +68,18 @@ class GetSecret(show.ShowOne):
             entity = self.app.client_manager.key_manager.secrets.get(
                 secret_ref=args.URI)
             return entity._get_formatted_entity()
+
+    def produce_output(self, parsed_args, column_names, data):
+        if parsed_args.file:
+            if os.path.exists(parsed_args.file):
+                raise ValueError("ERROR: file already exists.")
+            with open(parsed_args.file, 'wb') as f:
+                f.write(data[0])
+
+        else:
+            super(GetSecret, self).produce_output(
+                parsed_args, column_names, data
+            )
 
 
 class UpdateSecret(command.Command):
@@ -134,10 +144,6 @@ class StoreSecret(show.ShowOne):
         parser = super(StoreSecret, self).get_parser(prog_name)
         parser.add_argument('--name', '-n',
                             help='a human-friendly name.')
-        parser.add_argument('--payload', '-p',
-                            help='the unencrypted secret; if provided, '
-                                 'you must also provide a '
-                                 'payload_content_type')
         parser.add_argument('--secret-type', '-s', default='opaque',
                             help='the secret type; must be one of symmetric, '
                                  'public, private, certificate, passphrase, '
@@ -163,11 +169,21 @@ class StoreSecret(show.ShowOne):
         parser.add_argument('--expiration', '-x',
                             help='the expiration time for the secret in '
                                  'ISO 8601 format.')
+        payload_params = parser.add_mutually_exclusive_group(required=False)
+        payload_params.add_argument('--payload', '-p',
+                                    help='the unencrypted secret data.')
+        payload_params.add_argument('--file', '-F', metavar='<filename>',
+                                    help='file containing the secret payload')
         return parser
 
     def take_action(self, args):
+        data = None
+        if args.file:
+            with open(args.file, 'rb') as f:
+                data = f.read()
+
         entity = self.app.client_manager.key_manager.secrets.create(
-            name=args.name, payload=args.payload,
+            name=args.name, payload=args.payload or data,
             payload_content_type=args.payload_content_type,
             payload_content_encoding=args.payload_content_encoding,
             algorithm=args.algorithm, bit_length=args.bit_length,

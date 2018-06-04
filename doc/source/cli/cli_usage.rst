@@ -55,9 +55,10 @@ varies from one to another. The help message for **get** can be seen below.
 .. code-block:: bash
 
     $  barbican help secret get
-    usage: barbican secret get [-h] [-f {shell,table,value}] [-c COLUMN]
-                               [--max-width <integer>] [--prefix PREFIX]
-                               [--decrypt] [--payload]
+    usage: barbican secret get [-h] [-f {json,shell,table,value,yaml}] [-c COLUMN]
+                               [--max-width <integer>] [--fit-width]
+                               [--print-empty] [--noindent] [--prefix PREFIX]
+                               [--decrypt | --payload | --file <filename>]
                                [--payload_content_type PAYLOAD_CONTENT_TYPE]
                                URI
 
@@ -68,15 +69,11 @@ varies from one to another. The help message for **get** can be seen below.
 
     optional arguments:
       -h, --help            show this help message and exit
-      --decrypt, -d         if specified, retrieve the unencrypted secret data;
-                            the data type can be specified with
-                            --payload_content_type.
-      --payload, -p         if specified, retrieve the unencrypted secret data;
-                            the data type can be specified with
-                            --payload_content_type. If the user wishes to only
-                            retrieve the value of the payload they must add
-                            "-f value" to format returning only the value of
-                            the payload
+      --decrypt, -d         if specified, retrieve the unencrypted secret data.
+      --payload, -p         if specified, retrieve the unencrypted secret data.
+      --file <filename>, -F <filename>
+                            if specified, save the payload to a new file with the
+                            given filename.
       --payload_content_type PAYLOAD_CONTENT_TYPE, -t PAYLOAD_CONTENT_TYPE
                             the content type of the decrypted secret (default:
                             text/plain).
@@ -120,6 +117,11 @@ Secret Create
     | Expiration    | None                                                                  |
     +---------------+-----------------------------------------------------------------------+
 
+Instead of using the :code:`-p` or :code:`--payload` option with the
+value of the secret in the command line, the value of
+the secret may be stored in a file.  For this method the
+:code:`-F <filename>` or :code:`--file <filename>` option can be used.
+
 Secret Get
 ~~~~~~~~~~
 
@@ -150,6 +152,11 @@ it will be deprecated)
 
     $ barbican secret get http://localhost:9311/v1/secrets/a70a45d8-4076-42a2-b111-8893d3b92a3e --payload -f value
     my secret value
+
+Instead of using the :code:`-p` or :code:`--payload` option with the
+value of the secret returned to stdout, the value of
+the secret may be written to a file.  For this method the
+:code:`-F <filename>` or :code:`--file <filename>` option can be used.
 
 Secret Delete
 ~~~~~~~~~~~~~

@@ -205,6 +205,20 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
                           self.barbican.create_client,
                           argv)
 
+    def test_should_prevent_mutual_exclusive_file_opt(self):
+        args = (
+            '--no-auth --endpoint {0} --os-tenant-id {1}'
+            '--file foo --payload'
+            'secret get'.format(self.endpoint, self.project_id)
+        )
+        list_secrets_url = '{0}/v1/secrets'.format(self.endpoint)
+        self.responses.get(list_secrets_url, json={"secrets": [], "total": 0})
+        client = self.create_and_assert_client(args)
+        secret_list = client.secrets.list()
+        self.assertTrue(self.responses._adapter.called)
+        self.assertEqual(1, self.responses._adapter.call_count)
+        self.assertEqual([], secret_list)
+
 
 class TestBarbicanWithKeystonePasswordAuth(
         keystone_client_fixtures.KeystoneClientFixture):
