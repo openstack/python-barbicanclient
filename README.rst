@@ -5,10 +5,6 @@ python-barbicanclient
     :target: https://pypi.org/project/python-barbicanclient/
     :alt: Latest Version
 
-.. image:: https://img.shields.io/pypi/dm/python-barbicanclient.svg
-    :target: https://pypi.org/project/python-barbicanclient/
-    :alt: Downloads
-
 This is a client for the `Barbican <https://github.com/openstack/barbican>`__
 Key Management API.  There is a Python library for accessing the API
 (`barbicanclient` module), and a command-line script (`barbican`).
