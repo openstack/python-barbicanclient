@@ -67,7 +67,7 @@ class CreateOrder(show.ShowOne):
             request_data = None
             if args.request_file:
                 try:
-                    request_data = file(args.request_file).read()
+                    request_data = open(args.request_file, 'r').read()
                 except IOError:
                     raise ValueError(
                         'Couldn\'t read request file %s.' % args.request_file)
