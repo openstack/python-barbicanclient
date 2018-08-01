@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import testtools
+import uuid
 
 import barbicanclient
 from barbicanclient import base
@@ -23,12 +24,21 @@ from barbicanclient import version
 class TestValidateRef(testtools.TestCase):
 
     def test_valid_ref(self):
-        ref = 'http://localhost/ff2ca003-5ebb-4b61-8a17-3f9c54ef6356'
-        self.assertTrue(base.validate_ref(ref, 'Thing'))
+        secret_uuid = uuid.uuid4()
+        ref = 'http://localhost/' + str(secret_uuid)
+        self.assertEqual(secret_uuid,
+                         base.validate_ref_and_return_uuid(ref, 'Thing'))
+
+    def test_valid_uuid(self):
+        secret_uuid = uuid.uuid4()
+        self.assertEqual(secret_uuid,
+                         base.validate_ref_and_return_uuid(str(secret_uuid),
+                                                           'Thing'))
 
     def test_invalid_uuid(self):
         ref = 'http://localhost/not_a_uuid'
-        self.assertRaises(ValueError, base.validate_ref, ref, 'Thing')
+        self.assertRaises(ValueError, base.validate_ref_and_return_uuid, ref,
+                          'Thing')
 
     def test_censored_copy(self):
         d1 = {'a': '1', 'password': 'my_password', 'payload': 'my_key',

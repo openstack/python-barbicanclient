@@ -25,12 +25,13 @@ class ACLTestCase(test_client.BaseEntityResource):
     def setUp(self):
         self._setUp('acl', entity_id='d9f95d61-8863-49d3-a045-5c2cb77130b5')
 
-        self.secret_ref = (self.endpoint +
-                           '/secrets/8a3108ec-88fc-4f5c-86eb-f37b8ae8358e')
-
+        self.secret_uuid = '8a3108ec-88fc-4f5c-86eb-f37b8ae8358e'
+        self.secret_ref = (self.endpoint + '/v1/secrets/' + self.secret_uuid)
         self.secret_acl_ref = '{0}/acl'.format(self.secret_ref)
-        self.container_ref = (self.endpoint + '/containers/'
-                              '83c302c7-86fe-4f07-a277-c4962f121f19')
+
+        self.container_uuid = '83c302c7-86fe-4f07-a277-c4962f121f19'
+        self.container_ref = (self.endpoint + '/v1/containers/' +
+                              self.container_uuid)
         self.container_acl_ref = '{0}/acl'.format(self.container_ref)
 
         self.manager = self.client.acls
@@ -54,16 +55,22 @@ class ACLTestCase(test_client.BaseEntityResource):
 
 class WhenTestingACLManager(ACLTestCase):
 
-    def test_should_get_secret_acl(self):
+    def test_should_get_secret_acl(self, entity_ref=None):
+        entity_ref = entity_ref or self.secret_ref
         self.responses.get(self.secret_acl_ref,
                            json=self.get_acl_response_data())
 
-        api_resp = self.manager.get(entity_ref=self.secret_ref)
+        api_resp = self.manager.get(entity_ref=entity_ref)
         self.assertEqual(self.secret_acl_ref,
                          self.responses.last_request.url)
         self.assertFalse(api_resp.get('read').project_access)
         self.assertEqual('read', api_resp.get('read').operation_type)
-        self.assertEqual(self.secret_acl_ref, api_resp.get('read').acl_ref)
+        self.assertIn(api_resp.get('read').acl_ref_relative,
+                      self.secret_acl_ref)
+
+    def test_should_get_secret_acl_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/secrets/" + self.secret_uuid
+        self.test_should_get_secret_acl(bad_href)
 
     def test_should_get_secret_acl_with_extra_trailing_slashes(self):
         self.responses.get(requests_mock.ANY,
@@ -73,16 +80,22 @@ class WhenTestingACLManager(ACLTestCase):
         self.assertEqual(self.secret_acl_ref,
                          self.responses.last_request.url)
 
-    def test_should_get_container_acl(self):
+    def test_should_get_container_acl(self, entity_ref=None):
+        entity_ref = entity_ref or self.container_ref
         self.responses.get(self.container_acl_ref,
                            json=self.get_acl_response_data())
 
-        api_resp = self.manager.get(entity_ref=self.container_ref)
+        api_resp = self.manager.get(entity_ref=entity_ref)
         self.assertEqual(self.container_acl_ref,
                          self.responses.last_request.url)
         self.assertFalse(api_resp.get('read').project_access)
         self.assertEqual('read', api_resp.get('read').operation_type)
-        self.assertEqual(self.container_acl_ref, api_resp.get('read').acl_ref)
+        self.assertIn(api_resp.get('read').acl_ref_relative,
+                      self.container_acl_ref)
+
+    def test_should_get_container_acl_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/containers/" + self.container_uuid
+        self.test_should_get_container_acl(bad_href)
 
     def test_should_get_container_acl_with_trailing_slashes(self):
         self.responses.get(requests_mock.ANY,
@@ -122,20 +135,26 @@ class WhenTestingACLManager(ACLTestCase):
         read_acl_via_get = entity.get('read')
         self.assertEqual(read_acl, read_acl_via_get)
 
-    def test_should_create_acl_with_users(self):
-        entity = self.manager.create(entity_ref=self.container_ref + '///',
+    def test_should_create_acl_with_users(self, entity_ref=None):
+        entity_ref = entity_ref or self.container_ref
+        entity = self.manager.create(entity_ref=entity_ref + '///',
                                      users=self.users2, project_access=False)
         self.assertIsInstance(entity, acls.ContainerACL)
         # entity ref is kept same as provided input.
-        self.assertEqual(self.container_ref + '///', entity.entity_ref)
+        self.assertEqual(entity_ref + '///', entity.entity_ref)
 
         read_acl = entity.read
         self.assertFalse(read_acl.project_access)
         self.assertEqual(self.users2, read_acl.users)
         self.assertEqual(acls.DEFAULT_OPERATION_TYPE, read_acl.operation_type)
         # acl ref removes extra trailing slashes if there
-        self.assertIn(self.container_ref, read_acl.acl_ref,
+        self.assertIn(entity_ref, read_acl.acl_ref,
                       'ACL ref has additional /acl')
+        self.assertIn(read_acl.acl_ref_relative, self.container_acl_ref)
+
+    def test_should_create_acl_with_users_stripped_uuid(self):
+        bad_href = "http://badsite.com/containers/" + self.container_uuid
+        self.test_should_create_acl_with_users(bad_href)
 
     def test_should_create_acl_with_no_users(self):
         entity = self.manager.create(entity_ref=self.container_ref, users=[])
@@ -163,17 +182,22 @@ class WhenTestingACLManager(ACLTestCase):
 
 class WhenTestingACLEntity(ACLTestCase):
 
-    def test_should_submit_acl_with_users_project_access_set(self):
+    def test_should_submit_acl_with_users_project_access_set(self, href=None):
+        href = href or self.secret_ref
         data = {'acl_ref': self.secret_acl_ref}
         # register put acl URI with expected acl ref in response
         self.responses.put(self.secret_acl_ref, json=data)
 
-        entity = self.manager.create(entity_ref=self.secret_ref + '///',
+        entity = self.manager.create(entity_ref=href + '///',
                                      users=self.users1, project_access=True)
         api_resp = entity.submit()
         self.assertEqual(self.secret_acl_ref, api_resp)
         self.assertEqual(self.secret_acl_ref,
                          self.responses.last_request.url)
+
+    def test_should_submit_acl_with_users_project_access_stripped_uuid(self):
+        bad_href = "http://badsite.com/secrets/" + self.secret_uuid
+        self.test_should_submit_acl_with_users_project_access_set(bad_href)
 
     def test_should_submit_acl_with_project_access_set_but_no_users(self):
         data = {'acl_ref': self.secret_acl_ref}
@@ -368,10 +392,11 @@ class WhenTestingACLEntity(ACLTestCase):
         self.assertIsNone(data[4])  # updated
         self.assertEqual(self.container_acl_ref, data[5])
 
-    def test_should_secret_acl_remove(self):
+    def test_should_secret_acl_remove(self, entity_ref=None):
+        entity_ref = entity_ref or self.secret_ref
         self.responses.delete(self.secret_acl_ref)
 
-        entity = self.manager.create(entity_ref=self.secret_ref,
+        entity = self.manager.create(entity_ref=entity_ref,
                                      users=self.users2)
 
         api_resp = entity.remove()
@@ -391,13 +416,22 @@ class WhenTestingACLEntity(ACLTestCase):
 
         self.responses.delete(self.container_acl_ref)
 
-    def test_should_container_acl_remove(self):
+    def test_should_secret_acl_remove_stripped_uuid(self):
+        bad_href = "http://badsite.com/secrets/" + self.secret_uuid
+        self.test_should_secret_acl_remove(bad_href)
+
+    def test_should_container_acl_remove(self, entity_ref=None):
+        entity_ref = entity_ref or self.container_ref
         self.responses.delete(self.container_acl_ref)
 
-        entity = self.manager.create(entity_ref=self.container_ref)
+        entity = self.manager.create(entity_ref=entity_ref)
         entity.remove()
         self.assertEqual(self.container_acl_ref,
                          self.responses.last_request.url)
+
+    def test_should_container_acl_remove_stripped_uuid(self):
+        bad_href = "http://badsite.com/containers/" + self.container_uuid
+        self.test_should_container_acl_remove(bad_href)
 
     def test_should_fail_acl_remove_invalid_uri(self):
         # secret_acl URI expected and not secret acl URI
