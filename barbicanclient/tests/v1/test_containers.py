@@ -367,13 +367,15 @@ class WhenTestingContainers(test_client.BaseEntityResource):
             except AttributeError:
                 pass
 
-    def test_should_get_generic_container(self):
-        data = self.container.get_dict(self.entity_href)
+    def test_should_get_generic_container(self, container_ref=None):
+        container_ref = container_ref or self.entity_href
+
+        data = self.container.get_dict(container_ref)
         self.responses.get(self.entity_href, json=data)
 
-        container = self.manager.get(container_ref=self.entity_href)
+        container = self.manager.get(container_ref=container_ref)
         self.assertIsInstance(container, containers.Container)
-        self.assertEqual(self.entity_href, container.container_ref)
+        self.assertEqual(container_ref, container.container_ref)
 
         # Verify the correct URL was used to make the call.
         self.assertEqual(self.entity_href, self.responses.last_request.url)
@@ -414,21 +416,39 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.assertIsNotNone(container.public_key)
         self.assertIsNotNone(container.private_key_passphrase)
 
-    def test_should_delete_from_manager(self):
+    def test_should_get_generic_container_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_should_get_generic_container(bad_href)
+
+    def test_should_get_generic_container_using_only_uuid(self):
+        self.test_should_get_generic_container(self.entity_id)
+
+    def test_should_delete_from_manager(self, container_ref=None):
+        container_ref = container_ref or self.entity_href
+
         self.responses.delete(self.entity_href, status_code=204)
 
-        self.manager.delete(container_ref=self.entity_href)
+        self.manager.delete(container_ref=container_ref)
 
         # Verify the correct URL was used to make the call.
         self.assertEqual(self.entity_href, self.responses.last_request.url)
 
-    def test_should_delete_from_object(self):
-        data = self.container.get_dict(self.entity_href)
+    def test_should_delete_from_manager_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_should_delete_from_manager(bad_href)
+
+    def test_should_delete_from_manager_using_only_uuid(self):
+        self.test_should_delete_from_manager(self.entity_id)
+
+    def test_should_delete_from_object(self, container_ref=None):
+        container_ref = container_ref or self.entity_href
+
+        data = self.container.get_dict(container_ref)
         m = self.responses.get(self.entity_href, json=data)
         n = self.responses.delete(self.entity_href, status_code=204)
 
-        container = self.manager.get(container_ref=self.entity_href)
-        self.assertIsNotNone(container.container_ref)
+        container = self.manager.get(container_ref=container_ref)
+        self.assertEqual(container_ref, container.container_ref)
 
         container.delete()
 
@@ -438,6 +458,13 @@ class WhenTestingContainers(test_client.BaseEntityResource):
 
         # Verify that the Container no longer has a container_ref
         self.assertIsNone(container.container_ref)
+
+    def test_should_delete_from_object_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_should_delete_from_object(bad_href)
+
+    def test_should_delete_from_object_using_only_uuid(self):
+        self.test_should_delete_from_object(self.entity_id)
 
     def test_should_store_after_delete_from_object(self):
         data = self.container.get_dict(self.entity_href)

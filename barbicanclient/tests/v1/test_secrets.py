@@ -219,13 +219,15 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
             except AttributeError:
                 pass
 
-    def test_should_get_lazy(self):
-        data = self.secret.get_dict(self.entity_href)
+    def test_should_get_lazy(self, secret_ref=None):
+        secret_ref = secret_ref or self.entity_href
+
+        data = self.secret.get_dict(secret_ref)
         m = self.responses.get(self.entity_href, json=data)
 
-        secret = self.manager.get(secret_ref=self.entity_href)
+        secret = self.manager.get(secret_ref=secret_ref)
         self.assertIsInstance(secret, secrets.Secret)
-        self.assertEqual(self.entity_href, secret.secret_ref)
+        self.assertEqual(secret_ref, secret.secret_ref)
 
         # Verify GET wasn't called yet
         self.assertFalse(m.called)
@@ -235,6 +237,13 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
         # Verify the correct URL was used to make the GET call
         self.assertEqual(self.entity_href, m.last_request.url)
+
+    def test_should_get_lazy_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_should_get_lazy(bad_href)
+
+    def test_should_get_lazy_using_only_uuid(self):
+        self.test_should_get_lazy(self.entity_id)
 
     def test_should_get_acls_lazy(self):
         data = self.secret.get_dict(self.entity_href)
@@ -388,21 +397,80 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(self.entity_payload_href,
                          decryption_response.last_request.url)
 
-    def test_should_delete(self):
+    def test_should_delete_from_manager(self, secret_ref=None):
+        secret_ref = secret_ref or self.entity_href
+
         self.responses.delete(self.entity_href, status_code=204)
 
-        self.manager.delete(secret_ref=self.entity_href)
+        self.manager.delete(secret_ref=secret_ref)
 
         # Verify the correct URL was used to make the call.
         self.assertEqual(self.entity_href, self.responses.last_request.url)
 
-    def test_should_update(self):
-        data = {'secret_ref': self.entity_href}
+    def test_should_delete_from_manager_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_should_delete_from_manager(bad_href)
+
+    def test_should_delete_from_manager_using_only_uuid(self):
+        self.test_should_delete_from_manager(self.entity_id)
+
+    def test_should_delete_from_object(self, secref_ref=None):
+        secref_ref = secref_ref or self.entity_href
+        data = {'secret_ref': secref_ref}
         self.responses.post(self.entity_base + '/', json=data)
 
         secret = self.manager.create()
         secret.payload = None
         secret.store()
+
+        # Verify the secret has the correct ref for testing deletes
+        self.assertEqual(secref_ref, secret.secret_ref)
+
+        self.responses.delete(self.entity_href, status_code=204)
+
+        secret.delete()
+
+        # Verify the correct URL was used to make the call.
+        self.assertEqual(self.entity_href, self.responses.last_request.url)
+
+    def test_should_delete_from_object_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_should_delete_from_object(bad_href)
+
+    def test_should_delete_from_object_using_only_uuid(self):
+        self.test_should_delete_from_object(self.entity_id)
+
+    def test_should_update_from_manager(self, secret_ref=None):
+        # This literal will have type(unicode) in Python 2, but will have
+        # type(str) in Python 3.  It is six.text_type in both cases.
+        text_payload = u'time for an ice cold \U0001f37a'
+        secret_ref = secret_ref or self.entity_href
+
+        self.responses.put(self.entity_href, status_code=204)
+
+        self.manager.update(secret_ref=secret_ref, payload=text_payload)
+
+        # Verify the correct URL was used to make the call.
+        self.assertEqual(self.entity_href, self.responses.last_request.url)
+
+    def test_should_update_from_manager_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_should_update_from_manager(bad_href)
+
+    def test_should_update_from_manager_using_only_uuid(self):
+        self.test_should_update_from_manager(self.entity_id)
+
+    def test_should_update_from_object(self, secref_ref=None):
+        secref_ref = secref_ref or self.entity_href
+        data = {'secret_ref': secref_ref}
+        self.responses.post(self.entity_base + '/', json=data)
+
+        secret = self.manager.create()
+        secret.payload = None
+        secret.store()
+
+        # Verify the secret has the correct ref for testing updates
+        self.assertEqual(secref_ref, secret.secret_ref)
 
         # This literal will have type(unicode) in Python 2, but will have
         # type(str) in Python 3.  It is six.text_type in both cases.
@@ -418,6 +486,13 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
         # Verify that the data has been updated
         self.assertEqual(text_payload, secret.payload)
+
+    def test_should_update_from_object_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_should_update_from_object(bad_href)
+
+    def test_should_update_from_object_using_only_uuid(self):
+        self.test_should_update_from_object(self.entity_id)
 
     def test_should_get_list(self):
         secret_resp = self.secret.get_dict(self.entity_href)
