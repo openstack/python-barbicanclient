@@ -357,14 +357,16 @@ class Secret(SecretFormatter):
         else:
             raise exceptions.PayloadException("Invalid Payload Type")
 
-        self._api.put(self._secret_ref,
+        uuid_ref = base.calculate_uuid_ref(self._secret_ref, self._entity)
+        self._api.put(uuid_ref,
                       headers=headers,
                       data=self.payload)
 
     def delete(self):
         """Deletes the Secret from Barbican"""
         if self._secret_ref:
-            self._api.delete(self._secret_ref)
+            uuid_ref = base.calculate_uuid_ref(self._secret_ref, self._entity)
+            self._api.delete(uuid_ref)
             self._secret_ref = None
         else:
             raise LookupError("Secret is not yet stored.")
@@ -411,7 +413,8 @@ class Secret(SecretFormatter):
 
     def _fill_lazy_properties(self):
         if self._secret_ref and not self._name:
-            result = self._api.get(self._secret_ref)
+            uuid_ref = base.calculate_uuid_ref(self._secret_ref, self._entity)
+            result = self._api.get(uuid_ref)
             self._fill_from_data(
                 name=result.get('name'),
                 expiration=result.get('expiration'),
@@ -444,7 +447,7 @@ class SecretManager(base.BaseEntityManager):
     def get(self, secret_ref, payload_content_type=None):
         """Retrieve an existing Secret from Barbican
 
-        :param str secret_ref: Full HATEOAS reference to a Secret
+        :param str secret_ref: Full HATEOAS reference to a Secret, or a UUID
         :param str payload_content_type: DEPRECATED: Content type to use for
             payload decryption. Setting this can lead to unexpected results.
             See Launchpad Bug #1419166.
@@ -455,7 +458,7 @@ class SecretManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         LOG.debug("Getting secret - Secret href: {0}".format(secret_ref))
-        base.validate_ref(secret_ref, 'Secret')
+        base.validate_ref_and_return_uuid(secret_ref, 'Secret')
         return Secret(
             api=self._api,
             payload_content_type=payload_content_type,
@@ -463,16 +466,16 @@ class SecretManager(base.BaseEntityManager):
         )
 
     def update(self, secret_ref, payload=None):
-        """Update an existing Secret from Barbican
+        """Update an existing Secret in Barbican
 
-        :param str secret_ref: Full HATEOAS reference to a Secret
+        :param str secret_ref: Full HATEOAS reference to a Secret, or a UUID
         :param str payload: New payload to add to secret
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
 
-        base.validate_ref(secret_ref, 'Secret')
+        base.validate_ref_and_return_uuid(secret_ref, 'Secret')
         if not secret_ref:
             raise ValueError('secret_ref is required.')
 
@@ -483,7 +486,8 @@ class SecretManager(base.BaseEntityManager):
         else:
             raise exceptions.PayloadException("Invalid Payload Type")
 
-        self._api.put(secret_ref,
+        uuid_ref = base.calculate_uuid_ref(secret_ref, self._entity)
+        self._api.put(uuid_ref,
                       headers=headers,
                       data=payload)
 
@@ -524,15 +528,16 @@ class SecretManager(base.BaseEntityManager):
     def delete(self, secret_ref):
         """Delete a Secret from Barbican
 
-        :param secret_ref: The href for the secret to be deleted
+        :param secret_ref: Full HATEOAS reference to a Secret, or a UUID
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        base.validate_ref(secret_ref, 'Secret')
+        base.validate_ref_and_return_uuid(secret_ref, 'Secret')
         if not secret_ref:
             raise ValueError('secret_ref is required.')
-        self._api.delete(secret_ref)
+        uuid_ref = base.calculate_uuid_ref(secret_ref, self._entity)
+        self._api.delete(uuid_ref)
 
     def list(self, limit=10, offset=0, name=None, algorithm=None, mode=None,
              bits=0, secret_type=None, created=None, updated=None,

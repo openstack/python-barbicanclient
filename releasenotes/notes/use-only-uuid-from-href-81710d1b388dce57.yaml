@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Lookups (for all Read/Update/Delete actions) are now performed using only
+    the UUID of the entity. For backward compatability, full HATEOS refs may
+    be used, but everything before the UUID will be stripped and the service
+    catalog entry for Barbican will be substituted. This should have no impact
+    on accessing existing secrets with any version of Barbican.
