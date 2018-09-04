@@ -1,0 +1,13 @@
+- project:
+    templates:
+      - openstack-python-jobs
+      - openstack-python35-jobs
+      - publish-openstack-sphinx-docs
+      - check-requirements
+      - openstackclient-plugin-jobs
+    check:
+      jobs:
+        - legacy-python-barbicanclient-dsvm
+    gate:
+      jobs:
+        - legacy-python-barbicanclient-dsvm
