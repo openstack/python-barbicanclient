@@ -55,13 +55,15 @@ class WhenTestingCAs(test_client.BaseEntityResource):
         self.ca = CAData()
         self.manager = self.client.cas
 
-    def test_should_get_lazy(self):
-        data = self.ca.get_dict(self.entity_href)
+    def test_should_get_lazy(self, ca_ref=None):
+        ca_ref = ca_ref or self.entity_href
+
+        data = self.ca.get_dict(ca_ref)
         m = self.responses.get(self.entity_href, json=data)
 
-        ca = self.manager.get(ca_ref=self.entity_href)
+        ca = self.manager.get(ca_ref=ca_ref)
         self.assertIsInstance(ca, cas.CA)
-        self.assertEqual(self.entity_href, ca._ca_ref)
+        self.assertEqual(ca_ref, ca._ca_ref)
 
         # Verify GET wasn't called yet
         self.assertFalse(m.called)
@@ -71,6 +73,13 @@ class WhenTestingCAs(test_client.BaseEntityResource):
 
         # Verify the correct URL was used to make the GET call
         self.assertEqual(self.entity_href, m.last_request.url)
+
+    def test_should_get_lazy_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_should_get_lazy(bad_href)
+
+    def test_should_get_lazy_using_only_uuid(self):
+        self.test_should_get_lazy(self.entity_id)
 
     def test_should_get_lazy_in_meta(self):
         data = self.ca.get_dict(self.entity_href)

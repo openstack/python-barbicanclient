@@ -171,7 +171,8 @@ class CA(CAFormatter):
 
     def _fill_lazy_properties(self):
         if self._ca_ref and not self._plugin_name:
-            result = self._api.get(self._ca_ref)
+            uuid_ref = base.calculate_uuid_ref(self._ca_ref, self._entity)
+            result = self._api.get(uuid_ref)
             self._fill_from_data(
                 meta=result.get('meta'),
                 expiration=result.get('expiration'),
@@ -205,7 +206,7 @@ class CAManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         LOG.debug("Getting ca - CA href: {0}".format(ca_ref))
-        base.validate_ref(ca_ref, 'CA')
+        base.validate_ref_and_return_uuid(ca_ref, 'CA')
         return CA(
             api=self._api,
             ca_ref=ca_ref

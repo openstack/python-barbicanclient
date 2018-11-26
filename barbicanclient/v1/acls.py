@@ -86,8 +86,16 @@ class _PerOperationACL(ACLFormatter):
         return ACL.get_acl_ref_from_entity_ref(self.entity_ref)
 
     @property
+    def acl_ref_relative(self):
+        return self._parent_acl.acl_ref_relative
+
+    @property
     def entity_ref(self):
         return self._entity_ref
+
+    @property
+    def entity_uuid(self):
+        return self._parent_acl.entity_uuid
 
     @property
     def project_access(self):
@@ -204,6 +212,12 @@ class ACL(object):
         return self._entity_ref
 
     @property
+    def entity_uuid(self):
+        """Entity UUID"""
+        return str(base.validate_ref_and_return_uuid(
+            self._entity_ref, self._acl_type))
+
+    @property
     def operation_acls(self):
         """List of operation specific ACL settings."""
         return self._operation_acls
@@ -211,6 +225,11 @@ class ACL(object):
     @property
     def acl_ref(self):
         return ACL.get_acl_ref_from_entity_ref(self.entity_ref)
+
+    @property
+    def acl_ref_relative(self):
+        return ACL.get_acl_ref_from_entity_ref_relative(
+            self.entity_uuid, self._parent_entity_path)
 
     def add_operation_acl(self, users=None, project_access=None,
                           operation_type=None, created=None,
@@ -301,7 +320,7 @@ class ACL(object):
                 acl_data['users'] = per_op_acl.users
             acl_dict[op_type] = acl_data
 
-        response = self._api.put(self.acl_ref, json=acl_dict)
+        response = self._api.put(self.acl_ref_relative, json=acl_dict)
 
         return response.json().get('acl_ref')
 
@@ -314,7 +333,7 @@ class ACL(object):
         self.validate_input_ref()
         LOG.debug('Removing ACL for {0} for href: {1}'
                   .format(self.acl_type, self.entity_ref))
-        self._api.delete(self.acl_ref)
+        self._api.delete(self.acl_ref_relative)
 
     def load_acls_data(self):
         """Loads ACL entity from Barbican server using its acl_ref
@@ -328,7 +347,7 @@ class ACL(object):
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
 
-        response = self._api.get(self.acl_ref)
+        response = self._api.get(self.acl_ref_relative)
 
         del self.operation_acls[:]  # clearing list for all of its references
         for op_type in response:
@@ -354,7 +373,7 @@ class ACL(object):
         else:
             raise ValueError('{0} URI is not specified.'.format(res_title))
 
-        base.validate_ref(self.entity_ref, ref_type)
+        base.validate_ref_and_return_uuid(self.entity_ref, ref_type)
         return ref_type
 
     @staticmethod
@@ -363,6 +382,14 @@ class ACL(object):
         if entity_ref:
             entity_ref = entity_ref.rstrip('/')
             return '{0}/{1}'.format(entity_ref, ACL._resource_name)
+
+    @staticmethod
+    def get_acl_ref_from_entity_ref_relative(entity_ref, entity_type):
+        # Utility for converting entity ref to acl ref
+        if entity_ref:
+            entity_ref = entity_ref.rstrip('/')
+            return '{0}/{1}/{2}'.format(entity_type, entity_ref,
+                                        ACL._resource_name)
 
     @staticmethod
     def identify_ref_type(entity_ref):

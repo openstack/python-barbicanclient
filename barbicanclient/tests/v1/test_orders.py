@@ -198,6 +198,34 @@ class WhenTestingKeyOrders(OrdersTestCase):
             except AttributeError:
                 pass
 
+    def test_should_delete_from_object(self, order_ref=None):
+        order_ref = order_ref or self.entity_href
+
+        data = {'order_ref': order_ref}
+        self.responses.post(self.entity_base + '/', json=data)
+        self.responses.delete(self.entity_href, status_code=204)
+
+        order = self.manager.create_key(
+            name='name',
+            algorithm='algorithm',
+            payload_content_type='payload_content_type'
+        )
+        order_href = order.submit()
+
+        self.assertEqual(order_ref, order_href)
+
+        order.delete()
+
+        # Verify the correct URL was used to make the call.
+        self.assertEqual(self.entity_href, self.responses.last_request.url)
+
+    def test_should_delete_from_object_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_should_delete_from_object(bad_href)
+
+    def test_should_delete_from_object_using_only_uuid(self):
+        self.test_should_delete_from_object(self.entity_id)
+
 
 class WhenTestingAsymmetricOrders(OrdersTestCase):
 
@@ -265,15 +293,24 @@ class WhenTestingAsymmetricOrders(OrdersTestCase):
 
 class WhenTestingOrderManager(OrdersTestCase):
 
-    def test_should_get(self):
+    def test_should_get(self, order_ref=None):
+        order_ref = order_ref or self.entity_href
+
         self.responses.get(self.entity_href, text=self.key_order_data)
 
-        order = self.manager.get(order_ref=self.entity_href)
+        order = self.manager.get(order_ref=order_ref)
         self.assertIsInstance(order, orders.KeyOrder)
         self.assertEqual(self.entity_href, order.order_ref)
 
         # Verify the correct URL was used to make the call.
         self.assertEqual(self.entity_href, self.responses.last_request.url)
+
+    def test_should_get_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_should_get(bad_href)
+
+    def test_should_get_using_only_uuid(self):
+        self.test_should_get(self.entity_id)
 
     def test_should_get_invalid_meta(self):
         self.responses.get(self.entity_href, text=self.key_order_invalid_data)
@@ -300,13 +337,21 @@ class WhenTestingOrderManager(OrdersTestCase):
         self.assertEqual(['10'], self.responses.last_request.qs['limit'])
         self.assertEqual(['5'], self.responses.last_request.qs['offset'])
 
-    def test_should_delete(self):
+    def test_should_delete(self, order_ref=None):
+        order_ref = order_ref or self.entity_href
         self.responses.delete(self.entity_href, status_code=204)
 
-        self.manager.delete(order_ref=self.entity_href)
+        self.manager.delete(order_ref=order_ref)
 
         # Verify the correct URL was used to make the call.
         self.assertEqual(self.entity_href, self.responses.last_request.url)
+
+    def test_should_delete_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_should_delete(bad_href)
+
+    def test_should_delete_using_only_uuid(self):
+        self.test_should_delete(self.entity_id)
 
     def test_should_fail_delete_no_href(self):
         self.assertRaises(ValueError, self.manager.delete, None)
@@ -330,15 +375,24 @@ class WhenTestingOrderManager(OrdersTestCase):
 
 class WhenTestingCertificateOrders(OrdersTestCase):
 
-    def test_get(self):
+    def test_get(self, order_ref=None):
+        order_ref = order_ref or self.entity_href
+
         self.responses.get(self.entity_href, text=self.cert_order_data)
 
-        order = self.manager.get(order_ref=self.entity_href)
+        order = self.manager.get(order_ref=order_ref)
         self.assertIsInstance(order, orders.CertificateOrder)
         self.assertEqual(self.entity_href, order.order_ref)
 
         # Verify the correct URL was used to make the call.
         self.assertEqual(self.entity_href, self.responses.last_request.url)
+
+    def test_get_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_get(bad_href)
+
+    def test_get_using_only_uuid(self):
+        self.test_get(self.entity_id)
 
     def test_repr(self):
         order_args = self._get_order_args(self.cert_order_data)

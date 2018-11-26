@@ -241,7 +241,8 @@ class Order(object):
     def delete(self):
         """Deletes the Order from Barbican"""
         if self._order_ref:
-            self._api.delete(self._order_ref)
+            uuid_ref = base.calculate_uuid_ref(self._order_ref, self._entity)
+            self._api.delete(uuid_ref)
             self._order_ref = None
         else:
             raise LookupError("Order is not yet stored.")
@@ -388,16 +389,16 @@ class OrderManager(base.BaseEntityManager):
     def get(self, order_ref):
         """Retrieve an existing Order from Barbican
 
-        :param order_ref: Full HATEOAS reference to an Order
+        :param order_ref: Full HATEOAS reference to an Order, or a UUID
         :returns: An instance of the appropriate subtype of Order
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         LOG.debug("Getting order - Order href: {0}".format(order_ref))
-        base.validate_ref(order_ref, 'Order')
+        uuid_ref = base.calculate_uuid_ref(order_ref, self._entity)
         try:
-            response = self._api.get(order_ref)
+            response = self._api.get(uuid_ref)
         except AttributeError:
             raise LookupError(
                 'Order {0} could not be found.'.format(order_ref)
@@ -518,11 +519,12 @@ class OrderManager(base.BaseEntityManager):
     def delete(self, order_ref):
         """Delete an Order from Barbican
 
-        :param order_ref: The href for the order
+        :param order_ref: Full HATEOAS reference to an Order, or a UUID
         """
         if not order_ref:
             raise ValueError('order_ref is required.')
-        self._api.delete(order_ref)
+        uuid_ref = base.calculate_uuid_ref(order_ref, self._entity)
+        self._api.delete(uuid_ref)
 
     def list(self, limit=10, offset=0):
         """List Orders for the project

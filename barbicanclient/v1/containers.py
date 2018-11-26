@@ -211,7 +211,9 @@ class Container(ContainerFormatter):
     def delete(self):
         """Delete container from Barbican"""
         if self._container_ref:
-            self._api.delete(self._container_ref)
+            uuid_ref = base.calculate_uuid_ref(self._container_ref,
+                                               self._entity)
+            self._api.delete(uuid_ref)
             self._container_ref = None
             self._status = None
             self._created = None
@@ -235,9 +237,10 @@ class Container(ContainerFormatter):
             raise AttributeError("container_ref not set, cannot reload data.")
         LOG.debug('Getting container - Container href: {0}'
                   .format(self._container_ref))
-        base.validate_ref(self._container_ref, 'Container')
+        uuid_ref = base.calculate_uuid_ref(self._container_ref,
+                                           self._entity)
         try:
-            response = self._api.get(self._container_ref)
+            response = self._api.get(uuid_ref)
         except AttributeError:
             raise LookupError('Container {0} could not be found.'
                               .format(self._container_ref))
@@ -530,14 +533,14 @@ class ContainerManager(base.BaseEntityManager):
     def get(self, container_ref):
         """Retrieve an existing Container from Barbican
 
-        :param str container_ref: Full HATEOAS reference to a Container
+        :param container_ref: Full HATEOAS reference to a Container, or a UUID
         :returns: Container object or a subclass of the appropriate type
         """
         LOG.debug('Getting container - Container href: {0}'
                   .format(container_ref))
-        base.validate_ref(container_ref, 'Container')
+        uuid_ref = base.calculate_uuid_ref(container_ref, self._entity)
         try:
-            response = self._api.get(container_ref)
+            response = self._api.get(uuid_ref)
         except AttributeError:
             raise LookupError('Container {0} could not be found.'
                               .format(container_ref))
@@ -688,14 +691,15 @@ class ContainerManager(base.BaseEntityManager):
     def delete(self, container_ref):
         """Delete a Container from Barbican
 
-        :param container_ref: Full HATEOAS reference to a Container
+        :param container_ref: Full HATEOAS reference to a Container, or a UUID
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         if not container_ref:
             raise ValueError('container_ref is required.')
-        self._api.delete(container_ref)
+        uuid_ref = base.calculate_uuid_ref(container_ref, self._entity)
+        self._api.delete(uuid_ref)
 
     def list(self, limit=10, offset=0, name=None, type=None):
         """List containers for the project.
@@ -728,7 +732,7 @@ class ContainerManager(base.BaseEntityManager):
     def register_consumer(self, container_ref, name, url):
         """Add a consumer to the container
 
-        :param container_ref: Full HATEOAS reference to a Container
+        :param container_ref: Full HATEOAS reference to a Container, or a UUID
         :param name: Name of the consuming service
         :param url: URL of the consuming resource
         :returns: A container object per the get() method
@@ -738,8 +742,9 @@ class ContainerManager(base.BaseEntityManager):
         """
         LOG.debug('Creating consumer registration for container '
                   '{0} as {1}: {2}'.format(container_ref, name, url))
-        href = '{0}/{1}/consumers'.format(self._entity,
-                                          container_ref.split('/')[-1])
+        container_uuid = base.validate_ref_and_return_uuid(
+            container_ref, 'Container')
+        href = '{0}/{1}/consumers'.format(self._entity, container_uuid)
         consumer_dict = dict()
         consumer_dict['name'] = name
         consumer_dict['URL'] = url
@@ -750,7 +755,7 @@ class ContainerManager(base.BaseEntityManager):
     def remove_consumer(self, container_ref, name, url):
         """Remove a consumer from the container
 
-        :param container_ref: Full HATEOAS reference to a Container
+        :param container_ref: Full HATEOAS reference to a Container, or a UUID
         :param name: Name of the previously consuming service
         :param url: URL of the previously consuming resource
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
@@ -759,8 +764,9 @@ class ContainerManager(base.BaseEntityManager):
         """
         LOG.debug('Deleting consumer registration for container '
                   '{0} as {1}: {2}'.format(container_ref, name, url))
-        href = '{0}/{1}/consumers'.format(self._entity,
-                                          container_ref.split('/')[-1])
+        container_uuid = base.validate_ref_and_return_uuid(
+            container_ref, 'Container')
+        href = '{0}/{1}/consumers'.format(self._entity, container_uuid)
         consumer_dict = {
             'name': name,
             'URL': url

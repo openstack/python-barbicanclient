@@ -15,7 +15,11 @@
 """
 Base utilities to build API operation managers.
 """
+import logging
 import uuid
+
+
+LOG = logging.getLogger(__name__)
 
 
 def filter_null_keys(dictionary):
@@ -30,19 +34,26 @@ def censored_copy(data_dict, censor_keys):
             data_dict.items()}
 
 
-def validate_ref(ref, entity):
-    """Verifies that there is a real uuid at the end of the uri
+def validate_ref_and_return_uuid(ref, entity):
+    """Verifies that there is a real uuid (possibly at the end of a uri)
 
-    :return: Returns True for easier testing
+    :return: The uuid.UUID object
     :raises ValueError: If it cannot correctly parse the uuid in the ref.
     """
     try:
-        _, entity_uuid = ref.rstrip('/').rsplit('/', 1)
-        uuid.UUID(entity_uuid)
+        # This works for a ref *or* a UUID, since we just pick the last piece
+        ref_pieces = ref.rstrip('/').rsplit('/', 1)
+        return uuid.UUID(ref_pieces[-1])
     except Exception:
         raise ValueError('{0} incorrectly specified.'.format(entity))
 
-    return True
+
+def calculate_uuid_ref(ref, entity):
+    entity_uuid = validate_ref_and_return_uuid(
+        ref, entity.capitalize().rstrip('s'))
+    entity_ref = "{entity}/{uuid}".format(entity=entity, uuid=entity_uuid)
+    LOG.info("Calculated %s uuid ref: %s", entity.capitalize(), entity_ref)
+    return entity_ref
 
 
 class ImmutableException(Exception):
