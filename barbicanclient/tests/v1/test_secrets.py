@@ -371,9 +371,11 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         # Verify the correct URL was used to make the call.
         self.assertEqual(self.entity_payload_href, m.last_request.url)
 
-    def test_should_decrypt(self):
+    def test_should_decrypt(self, secret_ref=None):
+        secret_ref = secret_ref or self.entity_href
+
         content_types_dict = {'default': 'application/octet-stream'}
-        json = self.secret.get_dict(self.entity_href, content_types_dict)
+        json = self.secret.get_dict(secret_ref, content_types_dict)
         metadata_response = self.responses.get(
             self.entity_href,
             request_headers={'Accept': 'application/json'},
@@ -386,7 +388,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
             request_headers=request_headers,
             content=decrypted)
 
-        secret = self.manager.get(secret_ref=self.entity_href)
+        secret = self.manager.get(secret_ref=secret_ref)
         secret_payload = secret.payload
         self.assertEqual(decrypted, secret_payload)
 
@@ -396,6 +398,10 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         # Verify the correct URL was used to make the call.
         self.assertEqual(self.entity_payload_href,
                          decryption_response.last_request.url)
+
+    def test_should_decrypt_using_stripped_uuid(self):
+        bad_href = "http://badsite.com/" + self.entity_id
+        self.test_should_decrypt(bad_href)
 
     def test_should_delete_from_manager(self, secret_ref=None):
         secret_ref = secret_ref or self.entity_href

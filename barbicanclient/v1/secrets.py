@@ -266,10 +266,8 @@ class Secret(SecretFormatter):
                              "content-type.")
         headers = {'Accept': self.payload_content_type}
 
-        if self._secret_ref[-1] != "/":
-            payload_url = self._secret_ref + '/payload'
-        else:
-            payload_url = self._secret_ref + 'payload'
+        uuid_ref = base.calculate_uuid_ref(self._secret_ref, self._entity)
+        payload_url = uuid_ref + '/payload'
         payload = self._api._get_raw(payload_url, headers=headers)
         if self.payload_content_type == u'text/plain':
             self._payload = payload.decode('UTF-8')
