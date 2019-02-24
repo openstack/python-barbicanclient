@@ -12,8 +12,8 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
 
+from oslo_serialization import jsonutils
 from oslo_utils import timeutils
 import uuid
 
@@ -88,7 +88,7 @@ class OrdersTestCase(test_client.BaseEntityResource):
         self.manager = self.client.orders
 
     def _get_order_args(self, order_data):
-        order_args = json.loads(order_data)
+        order_args = jsonutils.loads(order_data)
         order_args.update(order_args.pop('meta'))
         order_args.pop('type')
         return order_args
@@ -152,7 +152,7 @@ class WhenTestingKeyOrders(OrdersTestCase):
                          self.responses.last_request.url)
 
         # Verify that correct information was sent in the call.
-        order_req = json.loads(self.responses.last_request.text)
+        order_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual('name', order_req['meta']['name'])
         self.assertEqual('algorithm',
                          order_req['meta']['algorithm'])
@@ -176,7 +176,7 @@ class WhenTestingKeyOrders(OrdersTestCase):
                          self.responses.last_request.url)
 
         # Verify that correct information was sent in the call.
-        order_req = json.loads(self.responses.last_request.text)
+        order_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual('name', order_req['meta']['name'])
         self.assertEqual('algorithm',
                          order_req['meta']['algorithm'])
@@ -321,7 +321,8 @@ class WhenTestingOrderManager(OrdersTestCase):
                           self.entity_href)
 
     def test_should_get_list(self):
-        data = {"orders": [json.loads(self.key_order_data) for _ in range(3)]}
+        data = {"orders": [jsonutils.loads(self.key_order_data)
+                           for _ in range(3)]}
         self.responses.get(self.entity_base, json=data)
 
         orders_list = self.manager.list(limit=10, offset=5)
@@ -418,7 +419,7 @@ class WhenTestingCertificateOrders(OrdersTestCase):
                          self.responses.last_request.url)
 
         # Verify that correct information was sent in the call.
-        order_req = json.loads(self.responses.last_request.text)
+        order_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual('name', order_req['meta']['name'])
         self.assertEqual('cn=server.example.com,o=example.com',
                          order_req['meta']['subject_dn'])
@@ -428,7 +429,8 @@ class WhenTestingCertificateOrders(OrdersTestCase):
                          order_req['meta']['container_ref'])
 
     def test_list(self):
-        data = {"orders": [json.loads(self.cert_order_data) for _ in range(3)]}
+        data = {"orders": [jsonutils.loads(self.cert_order_data)
+                           for _ in range(3)]}
         self.responses.get(self.entity_base, json=data)
 
         orders_list = self.manager.list(limit=10, offset=5)

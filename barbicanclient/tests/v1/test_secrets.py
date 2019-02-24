@@ -12,9 +12,10 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import base64
-import json
 
+import base64
+
+from oslo_serialization import jsonutils
 from oslo_utils import timeutils
 
 from barbicanclient import base
@@ -72,7 +73,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, secret_href)
 
         # Verify that correct information was sent in the call.
-        secret_req = json.loads(self.responses.last_request.text)
+        secret_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.secret.name, secret_req['name'])
         self.assertEqual(self.secret.payload, secret_req['payload'])
 
@@ -87,7 +88,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(self.entity_href, secret_href)
 
         # Verify that correct information was sent in the call.
-        secret_req = json.loads(self.responses.last_request.text)
+        secret_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.secret.name, secret_req['name'])
         self.assertEqual(self.secret.payload, secret_req['payload'])
 
@@ -109,7 +110,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         secret.payload = binary_payload
         secret.store()
 
-        secret_req = json.loads(self.responses.last_request.text)
+        secret_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.secret.name, secret_req['name'])
         self.assertEqual(u'application/octet-stream',
                          secret_req['payload_content_type'])
@@ -130,7 +131,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         secret.payload = text_payload
         secret.store()
 
-        secret_req = json.loads(self.responses.last_request.text)
+        secret_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(text_payload, secret_req['payload'])
         self.assertEqual(u'text/plain', secret_req['payload_content_type'])
 
@@ -151,7 +152,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         secret.payload_content_type = payload_content_type
         secret.store()
 
-        secret_req = json.loads(self.responses.last_request.text)
+        secret_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(payload, secret_req['payload'])
         self.assertEqual(payload_content_type,
                          secret_req['payload_content_type'])
@@ -177,7 +178,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         secret.payload_content_encoding = payload_content_encoding
         secret.store()
 
-        secret_req = json.loads(self.responses.last_request.text)
+        secret_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(encoded_payload, secret_req['payload'])
         self.assertEqual(payload_content_type,
                          secret_req['payload_content_type'])

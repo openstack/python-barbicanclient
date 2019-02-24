@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
 import mock
+from oslo_serialization import jsonutils
 from oslo_utils import timeutils
 import six
 
@@ -150,7 +149,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                          self.responses.last_request.url)
 
         # Verify that correct information was sent in the call.
-        container_req = json.loads(self.responses.last_request.text)
+        container_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.container.name, container_req['name'])
         self.assertEqual(self.container.type, container_req['type'])
         self.assertEqual(self.container.generic_secret_refs_json,
@@ -172,7 +171,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                          self.responses.last_request.url)
 
         # Verify that correct information was sent in the call.
-        container_req = json.loads(self.responses.last_request.text)
+        container_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.container.name, container_req['name'])
         self.assertEqual(self.container.type, container_req['type'])
         self.assertEqual(self.container.generic_secret_refs_json,
@@ -197,7 +196,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                          self.responses.last_request.url)
 
         # Verify that correct information was sent in the call.
-        container_req = json.loads(self.responses.last_request.text)
+        container_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.container.name, container_req['name'])
         self.assertEqual('certificate', container_req['type'])
         self.assertItemsEqual(self.container.certificate_secret_refs_json,
@@ -222,7 +221,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                          self.responses.last_request.url)
 
         # Verify that correct information was sent in the call.
-        container_req = json.loads(self.responses.last_request.text)
+        container_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.container.name, container_req['name'])
         self.assertEqual('certificate', container_req['type'])
         self.assertItemsEqual(self.container.certificate_secret_refs_json,
@@ -246,7 +245,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                          self.responses.last_request.url)
 
         # Verify that correct information was sent in the call.
-        container_req = json.loads(self.responses.last_request.text)
+        container_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.container.name, container_req['name'])
         self.assertEqual('rsa', container_req['type'])
         self.assertItemsEqual(self.container.rsa_secret_refs_json,
@@ -271,7 +270,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
                          self.responses.last_request.url)
 
         # Verify that correct information was sent in the call.
-        container_req = json.loads(self.responses.last_request.text)
+        container_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.container.name, container_req['name'])
         self.assertEqual('rsa', container_req['type'])
         self.assertItemsEqual(self.container.rsa_secret_refs_json,
@@ -546,7 +545,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         self.assertIsInstance(container, containers.Container)
         self.assertEqual(self.entity_href, container.container_ref)
 
-        body = json.loads(self.responses.last_request.text)
+        body = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.consumers_post_resource,
                          self.responses.last_request.url)
         self.assertEqual(self.container.consumer, body)
@@ -560,7 +559,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
             self.container.consumer.get('URL')
         )
 
-        body = json.loads(self.responses.last_request.text)
+        body = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.consumers_delete_resource,
                          self.responses.last_request.url)
         self.assertEqual(self.container.consumer, body)
