@@ -151,8 +151,17 @@ class Barbican(app.App):
         method = identity.Token if auth_type == 'token' else identity.Password
 
         auth = method(**kwargs)
-
-        return session.Session(auth=auth, verify=not args.insecure)
+        cacert = args.os_cacert
+        cert = args.os_cert
+        key = args.os_key
+        insecure = args.insecure
+        if insecure:
+            verify = False
+        else:
+            verify = cacert or True
+        if cert and key:
+            cert = (cert, key)
+        return session.Session(auth=auth, verify=verify, cert=cert)
 
     def create_client(self, args):
         created_client = None

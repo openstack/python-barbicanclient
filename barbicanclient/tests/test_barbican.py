@@ -219,6 +219,46 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
         self.assertEqual(1, self.responses._adapter.call_count)
         self.assertEqual([], secret_list)
 
+    def test_insecure_true_kwargs_set_correctly(self):
+        auth_args = ('--no-auth --endpoint https://barbican_endpoint:9311/v1 '
+                     '--os-project-id project1')
+        endpoint_filter_args = ('--interface public '
+                                '--service-type custom-type '
+                                '--service-name Burrbican '
+                                '--region-name RegionTwo '
+                                '--barbican-api-version v1')
+        args = auth_args + ' ' + endpoint_filter_args
+        argv, remainder = self.parser.parse_known_args(args.split())
+        argv.insecure = True
+        argv.os_identity_api_version = '2.0'
+        argv.os_tenant_name = 'my_tenant_name'
+        barbican_client = self.barbican.create_client(argv)
+        httpclient = barbican_client.secrets._api
+        self.assertFalse(httpclient.session.verify)
+
+    def test_cafile_certfile_keyfile_kwargs_set_correctly(self):
+        auth_args = ('no_auth '
+                     '--os-auth-url https://keystone_endpoint:5000/v2 '
+                     '--os-auth-token f554ccb5-e157-4824-b67b-d139c87bc555 '
+                     '--os-project-id project1')
+        endpoint_filter_args = ('--interface public '
+                                '--service-type custom-type '
+                                '--service-name Burrbican '
+                                '--region-name RegionTwo '
+                                '--barbican-api-version v1')
+        args = auth_args + ' ' + endpoint_filter_args
+        argv, remainder = self.parser.parse_known_args(args.split())
+        argv.os_cacert = 'ca.pem'
+        argv.os_cert = 'cert.pem'
+        argv.os_key = 'key.pem'
+        argv.os_identity_api_version = '2.0'
+        argv.os_tenant_name = 'my_tenant_name'
+        barbican_client = self.barbican.create_client(argv)
+        httpclient = barbican_client.secrets._api
+        self.assertEqual('ca.pem', httpclient.session.verify)
+        self.assertEqual('cert.pem', httpclient.session.cert[0])
+        self.assertEqual('key.pem', httpclient.session.cert[1])
+
 
 class TestBarbicanWithKeystonePasswordAuth(
         keystone_client_fixtures.KeystoneClientFixture):
