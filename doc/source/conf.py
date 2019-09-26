@@ -23,6 +23,7 @@ extensions = [
     'sphinx.ext.autodoc',
     #'sphinx.ext.intersphinx',
     'openstackdocstheme',
+    'sphinxcontrib.rsvgconverter',
 ]
 
 # autodoc generation is a bit aggressive and a nuisance when doing heavy
@@ -67,10 +68,12 @@ htmlhelp_basename = 'python-barbicanclientdoc'
 # [howto/manual]).
 latex_documents = [
     ('index',
-     'python-barbicanclient.tex',
+     'doc-python-barbicanclient.tex',
      u'python-barbicanclient Documentation',
      u'OpenStack Foundation', 'manual'),
 ]
+
+latex_use_xindy = False
 
 # Example configuration for intersphinx: refer to the Python standard library.
 #intersphinx_mapping = {'http://docs.python.org/': None}
