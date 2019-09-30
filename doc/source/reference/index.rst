@@ -5,8 +5,7 @@ Reference
 Client
 ======
 
-.. autoclass:: barbicanclient.client.Client
-   :members:
+.. autofunction:: barbicanclient.client.Client
 
 Secrets
 =======
