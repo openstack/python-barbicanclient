@@ -269,14 +269,14 @@ class ACL(object):
             self._operation_acls.append(new_acl)
 
     def _get_operation_acl(self, operation_type):
-            return next((acl for acl in self._operation_acls
-                        if acl.operation_type == operation_type), None)
+        return next((acl for acl in self._operation_acls
+                     if acl.operation_type == operation_type), None)
 
     def get(self, operation_type):
         """Get operation specific ACL instance.
 
         :param str operation_type: Type indicating which operation's ACL
-        setting is needed.
+            setting is needed.
         """
         return self._get_operation_acl(operation_type)
 
