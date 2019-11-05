@@ -64,6 +64,7 @@ requestsexceptions==1.2.0
 rfc3986==0.3.1
 simplejson==3.5.1
 six==1.10.0
+sphinxcontrib-svg2pdfconverter==0.1.0
 stevedore==1.20.0
 stestr==2.0.0
 testtools==2.2.0
