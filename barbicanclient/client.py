@@ -120,65 +120,65 @@ class _HTTPClient(adapter.Adapter):
 
 
 def Client(version=None, session=None, *args, **kwargs):
-        """Barbican client used to interact with barbican service.
+    """Barbican client used to interact with barbican service.
 
-        :param version: The API version to use.
-        :param session: An instance of keystoneauth1.session.Session that
-            can be either authenticated, or not authenticated.  When using
-            a non-authenticated Session, you must provide some additional
-            parameters.  When no session is provided it will default to a
-            non-authenticated Session.
-        :param endpoint: Barbican endpoint url. Required when a session is not
-            given, or when using a non-authenticated session.
-            When using an authenticated session, the client will attempt
-            to get an endpoint from the session.
-        :param project_id: The project ID used for context in Barbican.
-            Required when a session is not given, or when using a
-            non-authenticated session.
-            When using an authenticated session, the project ID will be
-            provided by the authentication mechanism.
-        :param verify: When a session is not given, the client will create
-            a non-authenticated session.  This parameter is passed to the
-            session that is created.  If set to False, it allows
-            barbicanclient to perform "insecure" TLS (https) requests.
-            The server's certificate will not be verified against any
-            certificate authorities.
-            WARNING: This option should be used with caution.
-        :param service_type: Used as an endpoint filter when using an
-            authenticated keystone session. Defaults to 'key-manager'.
-        :param service_name: Used as an endpoint filter when using an
-            authenticated keystone session.
-        :param interface: Used as an endpoint filter when using an
-            authenticated keystone session. Defaults to 'public'.
-        :param region_name: Used as an endpoint filter when using an
-            authenticated keystone session.
-        """
-        LOG.debug("Creating Client object")
+    :param version: The API version to use.
+    :param session: An instance of keystoneauth1.session.Session that
+        can be either authenticated, or not authenticated.  When using
+        a non-authenticated Session, you must provide some additional
+        parameters.  When no session is provided it will default to a
+        non-authenticated Session.
+    :param endpoint: Barbican endpoint url. Required when a session is not
+        given, or when using a non-authenticated session.
+        When using an authenticated session, the client will attempt
+        to get an endpoint from the session.
+    :param project_id: The project ID used for context in Barbican.
+        Required when a session is not given, or when using a
+        non-authenticated session.
+        When using an authenticated session, the project ID will be
+        provided by the authentication mechanism.
+    :param verify: When a session is not given, the client will create
+        a non-authenticated session.  This parameter is passed to the
+        session that is created.  If set to False, it allows
+        barbicanclient to perform "insecure" TLS (https) requests.
+        The server's certificate will not be verified against any
+        certificate authorities.
+        WARNING: This option should be used with caution.
+    :param service_type: Used as an endpoint filter when using an
+        authenticated keystone session. Defaults to 'key-manager'.
+    :param service_name: Used as an endpoint filter when using an
+        authenticated keystone session.
+    :param interface: Used as an endpoint filter when using an
+        authenticated keystone session. Defaults to 'public'.
+    :param region_name: Used as an endpoint filter when using an
+        authenticated keystone session.
+    """
+    LOG.debug("Creating Client object")
 
-        if not session:
-            session = ks_session.Session(verify=kwargs.pop('verify', True))
+    if not session:
+        session = ks_session.Session(verify=kwargs.pop('verify', True))
 
-        if session.auth is None and kwargs.get('auth') is None:
-            if not kwargs.get('endpoint'):
-                raise ValueError('Barbican endpoint url must be provided when '
-                                 'not using auth in the Keystone Session.')
+    if session.auth is None and kwargs.get('auth') is None:
+        if not kwargs.get('endpoint'):
+            raise ValueError('Barbican endpoint url must be provided when '
+                             'not using auth in the Keystone Session.')
 
-            if kwargs.get('project_id') is None:
-                raise ValueError('Project ID must be provided when not using '
-                                 'auth in the Keystone Session')
-        if not version:
-            version = _DEFAULT_API_VERSION
+        if kwargs.get('project_id') is None:
+            raise ValueError('Project ID must be provided when not using '
+                             'auth in the Keystone Session')
+    if not version:
+        version = _DEFAULT_API_VERSION
 
-        try:
-            client_path = _SUPPORTED_API_VERSION_MAP[version]
-            client_class = importutils.import_class(client_path)
-            return client_class(session=session, *args, **kwargs)
-        except (KeyError, ValueError):
-            supported_versions = ', '.join(_SUPPORTED_API_VERSION_MAP.keys())
-            msg = ("Invalid client version %(version)s; must be one of: "
-                   "%(versions)s") % {'version': version,
-                                      'versions': supported_versions}
-            raise exceptions.UnsupportedVersion(msg)
+    try:
+        client_path = _SUPPORTED_API_VERSION_MAP[version]
+        client_class = importutils.import_class(client_path)
+        return client_class(session=session, *args, **kwargs)
+    except (KeyError, ValueError):
+        supported_versions = ', '.join(_SUPPORTED_API_VERSION_MAP.keys())
+        msg = ("Invalid client version %(version)s; must be one of: "
+               "%(versions)s") % {'version': version,
+                                  'versions': supported_versions}
+        raise exceptions.UnsupportedVersion(msg)
 
 
 def env(*vars, **kwargs):

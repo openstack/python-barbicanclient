@@ -48,7 +48,7 @@ class ACLBehaviors(base_behaviors.BaseBehaviors):
                 argv.extend(['--project-access'])
             else:
                 argv.extend(['--no-project-access'])
-        if operation_type and operation_type is not 'read':
+        if operation_type and operation_type != 'read':
             argv.extend([self._args_map_list['operation_type'][index],
                          operation_type])
 

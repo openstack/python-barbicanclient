@@ -385,5 +385,6 @@ def main(argv=sys.argv[1:]):
     barbican_app = Barbican()
     return barbican_app.run(argv)
 
+
 if __name__ == '__main__':   # pragma: no cover
     sys.exit(main(sys.argv[1:]))

@@ -104,7 +104,7 @@ class BaseBehaviors(object):
         """
         retval = {}
         if str is not None and len(str) > 0:
-            table_body = re.split('\+-*\+-*\+\n', str)[2:-1]
+            table_body = re.split(r'\+-*\+-*\+\n', str)[2:-1]
             lines = table_body[0].split('\n')
             for line in lines:
                 if len(line) > 0:
@@ -124,12 +124,12 @@ class BaseBehaviors(object):
         """
         retval = []
         if str is not None and len(str) > 0:
-            rows = re.findall('\|(.*?)\n', str)
+            rows = re.findall(r'\|(.*?)\n', str)
             # Remove header
             header_row = rows.pop(0)
-            key_names = re.findall('\s*(.*?)\s*\|', header_row)
+            key_names = re.findall(r'\s*(.*?)\s*\|', header_row)
             for row in rows:
-                values = re.findall('\s*(.*?)\s*\|', row)
+                values = re.findall(r'\s*(.*?)\s*\|', row)
                 entry_dict = dict(zip(key_names, values))
                 retval.append(entry_dict)
         return retval
