@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from unittest import mock
+
 from keystoneauth1 import session
-import mock
 from requests_mock.contrib import fixture
 import testtools
 
