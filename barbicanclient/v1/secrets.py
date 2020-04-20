@@ -292,14 +292,13 @@ class Secret(SecretFormatter):
             'expiration': self.expiration
         }
 
-        if self.payload == '':
-            raise exceptions.PayloadException("Invalid Payload: "
-                                              "Cannot Be Empty String")
+        if self.payload is not None:
+            if not isinstance(self.payload, (six.text_type, six.binary_type)):
+                raise exceptions.PayloadException("Invalid Payload Type")
 
-        if self.payload is not None and not isinstance(self.payload,
-                                                       (six.text_type,
-                                                        six.binary_type)):
-            raise exceptions.PayloadException("Invalid Payload Type")
+            if not len(self.payload):
+                raise exceptions.PayloadException("Invalid Payload: "
+                                                  "Cannot Be Empty String")
 
         if self.payload_content_type or self.payload_content_encoding:
             '''
@@ -308,7 +307,10 @@ class Secret(SecretFormatter):
             for backwards compatibility and should be removed in a future
             release.
             '''
-            secret_dict['payload'] = self.payload
+            if type(self.payload) is six.binary_type:
+                secret_dict['payload'] = self.payload.decode('utf-8')
+            else:
+                secret_dict['payload'] = self.payload
             secret_dict['payload_content_type'] = self.payload_content_type
             secret_dict['payload_content_encoding'] = (
                 self.payload_content_encoding

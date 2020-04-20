@@ -28,11 +28,11 @@ from testtools import testcase
 
 secret_create_defaults_data = {
     "name": "AES key",
-    "expiration": "2020-02-28T19:14:44.180394",
+    "expiration": "2030-02-28T19:14:44.180394",
     "algorithm": "aes",
     "bit_length": 256,
     "mode": "cbc",
-    "payload": "gF6+lLoF3ohA9aPRpt+6bQ=="
+    "payload": b"gF6+lLoF3ohA9aPRpt+6bQ=="
 }
 
 secret_create_nones_data = {
@@ -41,7 +41,7 @@ secret_create_nones_data = {
     "algorithm": None,
     "bit_length": None,
     "mode": None,
-    "payload": "gF6+lLoF3ohA9aPRpt+6bQ==",
+    "payload": b"gF6+lLoF3ohA9aPRpt+6bQ==",
     "payload_content_type": "application/octet-stream",
     "payload_content_encoding": "base64",
 }
@@ -52,7 +52,7 @@ secret_create_emptystrings_data = {
     "algorithm": '',
     "bit_length": '',
     "mode": '',
-    "payload": '',
+    "payload": b'',
     "payload_content_type": '',
     "payload_content_encoding": '',
 }
@@ -145,7 +145,7 @@ class SecretsTestCase(base.TestCase):
         e = self.assertRaises(ValueError, self.barbicanclient.secrets.delete,
                               url)
 
-        self.assertEqual('Secret incorrectly specified.', e.message)
+        self.assertEqual('Secret incorrectly specified.', str(e))
 
     @testcase.attr('negative')
     def test_secret_delete_doesnt_exist_valid_uuid_format(self):
@@ -179,7 +179,7 @@ class SecretsTestCase(base.TestCase):
         e = self.assertRaises(ValueError, self.barbicanclient.secrets.get,
                               url, 'text/plain')
 
-        self.assertIn("Secret incorrectly specified", e.message)
+        self.assertIn("Secret incorrectly specified", str(e))
 
     @testcase.attr('negative')
     def test_secret_create_defaults_expiration_passed(self):
@@ -309,8 +309,8 @@ class SecretsTestCase(base.TestCase):
         'symmetric': ['symmetric',
                       'aes',
                       128,
-                      ('\x00\x01\x02\x03\x04\x05\x06\x07'
-                       '\x00\x01\x02\x03\x04\x05\x06\x07')],
+                      (b'\x00\x01\x02\x03\x04\x05\x06\x07'
+                       b'\x00\x01\x02\x03\x04\x05\x06\x07')],
         'private': ['private',
                     'rsa',
                     2048,
@@ -390,7 +390,7 @@ class SecretsTestCase(base.TestCase):
         'str_type': ['not-an-int'],
         'empty': [''],
         'blank': [' '],
-        'negative_maxint': [-sys.maxint],
+        'negative_maxsize': [-sys.maxsize],
         'negative_one': [-1],
         'zero': [0]
     })
@@ -481,7 +481,7 @@ class SecretsTestCase(base.TestCase):
                 resp.payload
             )
         else:
-            self.assertEqual(secret.payload, str(resp.payload))
+            self.assertEqual(secret.payload, resp.payload.encode('utf-8'))
 
     @utils.parameterized_dataset({
         'large_string_content_type_and_encoding': {
@@ -703,7 +703,7 @@ class SecretsTestCase(base.TestCase):
         'alphanumeric': ['1f34ds'],
         'punctuation': ['~!@#$%^&*()_+`-={}[]|:;<>,.?'],
         'uuid': ['54262d9d-4bc7-4821-8df0-dc2ca8e112bb'],
-        'len_255': [str(bytearray().zfill(255))],
+        'len_255': ['a' * 255],
         'empty': [''],
         'null': [None]
     })

@@ -22,11 +22,11 @@ from barbicanclient import exceptions
 
 create_secret_defaults_data = {
     "name": "AES key",
-    "expiration": "2020-02-28T19:14:44.180394",
+    "expiration": "2030-02-28T19:14:44.180394",
     "algorithm": "aes",
     "bit_length": 256,
     "mode": "cbc",
-    "payload": "gF6+lLoF3ohA9aPRpt+6bQ==",
+    "payload": b"gF6+lLoF3ohA9aPRpt+6bQ==",
     "payload_content_type": "application/octet-stream",
     "payload_content_encoding": "base64",
 }
@@ -48,7 +48,7 @@ create_container_empty_data = {
 accepted_str_values = {
     'alphanumeric': ['a2j3j6ll9'],
     'punctuation': ['~!@#$%^&*()_+`-={}[]|:;<>,.?'],
-    'len_255': [str(bytearray().zfill(255))],
+    'len_255': ['a' * 255],
     'uuid': ['54262d9d-4bc7-4821-8df0-dc2ca8e112bb'],
     'empty': ['']
 }
@@ -139,7 +139,7 @@ class GenericContainersTestCase(BaseContainersTestCase):
         e = self.assertRaises(ValueError, self.barbicanclient.containers.get,
                               url)
 
-        self.assertEqual('Container incorrectly specified.', e.message)
+        self.assertEqual('Container incorrectly specified.', str(e))
 
     @testcase.attr('negative')
     def test_get_non_existent_container_valid_uuid(self):
@@ -171,7 +171,7 @@ class GenericContainersTestCase(BaseContainersTestCase):
         e = self.assertRaises(ValueError, self.barbicanclient.containers.get,
                               url)
 
-        self.assertEqual('Container incorrectly specified.', e.message)
+        self.assertEqual('Container incorrectly specified.', str(e))
 
     @testcase.attr('negative')
     def test_delete_non_existent_container_valid_uuid(self):
@@ -296,7 +296,7 @@ class RSAContainersTestCase(BaseContainersTestCase):
                               self.barbicanclient.containers.create_rsa,
                               **incorrect_names_rsa_container)
 
-        self.assertIn('got an unexpected keyword argument', e.message)
+        self.assertIn('got an unexpected keyword argument', str(e))
 
     @testcase.attr('negative')
     def test_create_rsa_no_public_key(self):

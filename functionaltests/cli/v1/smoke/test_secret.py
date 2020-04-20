@@ -37,8 +37,8 @@ class SecretTestCase(CmdLineTestCase):
         'symmetric': ['symmetric',
                       'aes',
                       '128',
-                      ('\x00\x01\x02\x03\x04\x05\x06\x07'
-                       '\x00\x01\x02\x03\x04\x05\x06\x07')],
+                      (b'\x00\x01\x02\x03\x04\x05\x06\x07'
+                       b'\x00\x01\x02\x03\x04\x05\x06\x07')],
         'private': ['private',
                     'rsa',
                     '2048',

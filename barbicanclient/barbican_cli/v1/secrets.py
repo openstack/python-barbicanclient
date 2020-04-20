@@ -73,8 +73,13 @@ class GetSecret(show.ShowOne):
         if parsed_args.file:
             if os.path.exists(parsed_args.file):
                 raise ValueError("ERROR: file already exists.")
+
+            # String should be encoded to bytes in Python3
+            secret = data[0].encode('utf-8') if isinstance(data[0], str) \
+                else data[0]
+
             with open(parsed_args.file, 'wb') as f:
-                f.write(data[0])
+                f.write(secret)
 
         else:
             super(GetSecret, self).produce_output(
@@ -182,8 +187,10 @@ class StoreSecret(show.ShowOne):
             with open(args.file, 'rb') as f:
                 data = f.read()
 
+        payload = args.payload.encode('utf-8') if args.payload else data
+
         entity = self.app.client_manager.key_manager.secrets.create(
-            name=args.name, payload=args.payload or data,
+            name=args.name, payload=payload,
             payload_content_type=args.payload_content_type,
             payload_content_encoding=args.payload_content_encoding,
             algorithm=args.algorithm, bit_length=args.bit_length,
