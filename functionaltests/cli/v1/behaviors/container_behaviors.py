@@ -15,7 +15,7 @@
 
 import logging
 
-import base_behaviors
+from functionaltests.cli.v1.behaviors import base_behaviors
 
 
 class ContainerBehaviors(base_behaviors.BaseBehaviors):

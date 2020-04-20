@@ -75,8 +75,8 @@ class ArgMixin(object):
     def get_acls_as_lister(self, acl_entity):
         """Gets per operation ACL data in expected format for lister command"""
 
-        map(lambda acl: setattr(acl, 'columns', acl_entity.columns),
-            acl_entity.operation_acls)
+        for acl in acl_entity.operation_acls:
+            setattr(acl, 'columns', acl_entity.columns)
 
         return acls.ACLFormatter._list_objects(acl_entity.operation_acls)
 

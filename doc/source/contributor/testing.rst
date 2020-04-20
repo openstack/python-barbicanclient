@@ -23,8 +23,8 @@ with the following command:
 
 .. code-block:: bash
 
-    # Executes tests on Python 2.7
-    tox -e py27
+    # Executes tests on Python 3.7
+    tox -e py37
 
 .. note::
 
@@ -40,11 +40,11 @@ with the following command:
 
         # runs a single test with the function named
         # test_should_entity_str
-        tox -e py27 -- test_should_entity_str
+        tox -e py37 -- test_should_entity_str
 
         # runs only tests in the WhenTestingSecrets class and
         # the WhenTestingOrderManager class
-        tox -e py27 -- '(WhenTestingSecrets|WhenTestingOrderManager)'
+        tox -e p37 -- '(WhenTestingSecrets|WhenTestingOrderManager)'
 
     The function name or class specified must be one located in the
     `barbicanclient/tests` directory.

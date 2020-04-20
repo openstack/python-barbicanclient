@@ -1,28 +1,24 @@
 - job:
-    name: python-barbicanclient-dsvm
-    parent: legacy-dsvm-base
-    run: playbooks/python-barbicanclient-dsvm/run.yaml
-    post-run: playbooks/python-barbicanclient-dsvm/post.yaml
+    name: python-barbicanclient-tox-functional
+    parent: devstack-tox-functional
     timeout: 4200
     required-projects:
-      - openstack/devstack-gate
       - openstack/barbican
       - openstack/barbican-tempest-plugin
       - openstack/python-barbicanclient
+    vars:
+      devstack_plugins:
+        barbican: https://opendev.org/openstack/barbican
 
 - project:
     templates:
       - check-requirements
-      - openstack-lower-constraints-jobs
-      - openstack-python-jobs
-      - openstack-python35-jobs
-      - openstack-python36-jobs
-      - openstack-python37-jobs
+      - openstack-python3-train-jobs
       - openstackclient-plugin-jobs
       - publish-openstack-docs-pti
     check:
       jobs:
-        - python-barbicanclient-dsvm
+        - python-barbicanclient-tox-functional
     gate:
       jobs:
-        - python-barbicanclient-dsvm
+        - python-barbicanclient-tox-functional

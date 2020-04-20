@@ -15,7 +15,7 @@
 
 import logging
 
-import base_behaviors
+from functionaltests.cli.v1.behaviors import base_behaviors
 
 
 class SecretBehaviors(base_behaviors.BaseBehaviors):
@@ -54,7 +54,7 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
 
         self.secret_hrefs_to_delete.remove(secret_href)
 
-    def store_secret(self, payload="Payload for testing", store_argv=[]):
+    def store_secret(self, payload=b"Payload for testing", store_argv=[]):
         """Store (aka create) a secret
 
         The store_argv parameter allows additional command line parameters for
@@ -68,6 +68,11 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
         """
         argv = ['secret', 'store']
         self.add_auth_and_endpoint(argv)
+
+        if payload is not None and not isinstance(payload, str):
+            # Payload shouldn't be bytes but string on Python3
+            payload = payload.decode('utf-8')
+
         argv.extend(['--payload', payload])
         argv.extend(store_argv)
 
@@ -197,9 +202,9 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
         :param filename: name of file to write
         :return contents of the file
         """
-        with open(filename, "r") as myfile:
+        with open(filename, "rb") as myfile:
             data = myfile.read()
-        return data
+        return data.decode('utf-8')
 
     def write_secret_test_file(self, filename='/tmp/storesecret',
                                payload="Payload for testing"):
@@ -210,6 +215,6 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
         :return
         """
         myfile = open(filename, "wb")
-        myfile.write(payload)
+        myfile.write(payload.encode('utf-8'))
         myfile.close()
         return

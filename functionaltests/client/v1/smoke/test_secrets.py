@@ -21,11 +21,11 @@ from testtools import testcase
 
 secret_create_defaults_data = {
     "name": "AES key",
-    "expiration": "2020-02-28T19:14:44.180394",
+    "expiration": "2030-02-28T19:14:44.180394",
     "algorithm": "aes",
     "bit_length": 256,
     "mode": "cbc",
-    "payload": "gF6+lLoF3ohA9aPRpt+6bQ=="
+    "payload": b"gF6+lLoF3ohA9aPRpt+6bQ=="
 }
 
 secret_create_nones_data = {
@@ -34,7 +34,7 @@ secret_create_nones_data = {
     "algorithm": None,
     "bit_length": None,
     "mode": None,
-    "payload": "gF6+lLoF3ohA9aPRpt+6bQ==",
+    "payload": b"gF6+lLoF3ohA9aPRpt+6bQ==",
     "payload_content_type": "application/octet-stream",
     "payload_content_encoding": "base64",
 }
@@ -65,8 +65,8 @@ class SecretsTestCase(base.TestCase):
         'symmetric': ['symmetric',
                       'aes',
                       128,
-                      ('\x00\x01\x02\x03\x04\x05\x06\x07'
-                       '\x00\x01\x02\x03\x04\x05\x06\x07')],
+                      (b'\x00\x01\x02\x03\x04\x05\x06\x07'
+                       b'\x00\x01\x02\x03\x04\x05\x06\x07')],
         'private': ['private',
                     'rsa',
                     2048,

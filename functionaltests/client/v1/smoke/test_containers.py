@@ -20,11 +20,11 @@ from testtools import testcase
 
 create_secret_defaults_data = {
     "name": "AES key",
-    "expiration": "2020-02-28T19:14:44.180394",
+    "expiration": "2030-02-28T19:14:44.180394",
     "algorithm": "aes",
     "bit_length": 256,
     "mode": "cbc",
-    "payload": "gF6+lLoF3ohA9aPRpt+6bQ==",
+    "payload": b"gF6+lLoF3ohA9aPRpt+6bQ==",
     "payload_content_type": "application/octet-stream",
     "payload_content_encoding": "base64",
 }
@@ -114,7 +114,7 @@ class ContainersTestCase(base.TestCase):
     @utils.parameterized_dataset({
         'alphanumeric': ['a2j3j6ll9'],
         'punctuation': ['~!@#$%^&*()_+`-={}[]|:;<>,.?'],
-        'len_255': [str(bytearray().zfill(255))],
+        'len_255': ['a' * 255],
         'uuid': ['54262d9d-4bc7-4821-8df0-dc2ca8e112bb'],
         'empty': ['']
     })
@@ -137,7 +137,7 @@ class ContainersTestCase(base.TestCase):
         self.assertEqual(container_ref, container_resp.container_ref)
 
         get_resp_secret_refs = []
-        for name, ref in container_resp.secret_refs.iteritems():
+        for name, ref in container_resp.secret_refs.items():
             get_resp_secret_refs.append(str(ref))
 
         # Verify the secret refs in the response
@@ -164,7 +164,7 @@ class ContainersTestCase(base.TestCase):
         self.assertEqual(container_ref, container_resp.container_ref)
 
         get_resp_secret_refs = []
-        for name, ref in container_resp.secret_refs.iteritems():
+        for name, ref in container_resp.secret_refs.items():
             get_resp_secret_refs.append(str(ref))
         # Verify the secret refs in the response
         self.assertEqual(3, len(container_resp.secret_refs))

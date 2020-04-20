@@ -276,7 +276,7 @@ class ACL(object):
         """Get operation specific ACL instance.
 
         :param str operation_type: Type indicating which operation's ACL
-        setting is needed.
+            setting is needed.
         """
         return self._get_operation_acl(operation_type)
 
