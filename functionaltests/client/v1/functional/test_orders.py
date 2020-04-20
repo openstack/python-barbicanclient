@@ -164,7 +164,7 @@ class OrdersTestCase(base.TestCase):
         e = self.assertRaises(ValueError, self.barbicanclient.orders.get, ref)
 
         # verify that the order get failed
-        self.assertEqual('Order incorrectly specified.', e.message)
+        self.assertEqual('Order incorrectly specified.', str(e))
 
     @testcase.attr('negative')
     def test_get_order_defaults_that_doesnt_exist_valid_uuid(self):
@@ -252,7 +252,7 @@ class OrdersTestCase(base.TestCase):
         self.assertEqual(order.bit_length, order_resp.bit_length)
 
     @utils.parameterized_dataset({
-        'negative_maxint': [-sys.maxint],
+        'negative_maxsize': [-sys.maxsize],
         'negative_7': [-7],
         'negative_1': [-1],
         '0': [0],

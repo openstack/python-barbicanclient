@@ -15,7 +15,7 @@
 
 import logging
 
-import base_behaviors
+from functionaltests.cli.v1.behaviors import base_behaviors
 
 
 class ACLBehaviors(base_behaviors.BaseBehaviors):

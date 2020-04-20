@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import exceptions as exc
 import logging
 import re
 import six
@@ -88,7 +87,7 @@ class BaseBehaviors(object):
             self.cmdline_client.stdout = six.StringIO()
             self.cmdline_client.stderr = six.StringIO()
             self.cmdline_client.run(argv)
-        except exc.SystemExit:
+        except SystemExit:
             pass
 
         outstr = self.cmdline_client.stdout.getvalue()
