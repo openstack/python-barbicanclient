@@ -48,7 +48,7 @@ add_function_parentheses = True
 add_module_names = True
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'native'
 
 # -- Options for HTML output --------------------------------------------------
 
@@ -79,6 +79,7 @@ latex_use_xindy = False
 #intersphinx_mapping = {'http://docs.python.org/': None}
 
 # -- Options for openstackdocstheme -------------------------------------------
-repository_name = 'openstack/python-barbicanclient'
-bug_project = 'python-barbicanclient'
-bug_tag = ''
+openstackdocs_repo_name = 'openstack/python-barbicanclient'
+openstackdocs_pdf_link = True
+openstackdocs_bug_project = 'python-barbicanclient'
+openstackdocs_bug_tag = ''
