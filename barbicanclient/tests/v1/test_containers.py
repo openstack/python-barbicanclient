@@ -200,7 +200,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         container_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.container.name, container_req['name'])
         self.assertEqual('certificate', container_req['type'])
-        self.assertItemsEqual(self.container.certificate_secret_refs_json,
+        self.assertCountEqual(self.container.certificate_secret_refs_json,
                               container_req['secret_refs'])
 
     def test_should_store_certificate_via_constructor(self):
@@ -225,7 +225,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         container_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.container.name, container_req['name'])
         self.assertEqual('certificate', container_req['type'])
-        self.assertItemsEqual(self.container.certificate_secret_refs_json,
+        self.assertCountEqual(self.container.certificate_secret_refs_json,
                               container_req['secret_refs'])
 
     def test_should_store_rsa_via_attributes(self):
@@ -249,7 +249,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         container_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.container.name, container_req['name'])
         self.assertEqual('rsa', container_req['type'])
-        self.assertItemsEqual(self.container.rsa_secret_refs_json,
+        self.assertCountEqual(self.container.rsa_secret_refs_json,
                               container_req['secret_refs'])
 
     def test_should_store_rsa_via_constructor(self):
@@ -274,7 +274,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
         container_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.container.name, container_req['name'])
         self.assertEqual('rsa', container_req['type'])
-        self.assertItemsEqual(self.container.rsa_secret_refs_json,
+        self.assertCountEqual(self.container.rsa_secret_refs_json,
                               container_req['secret_refs'])
 
     def test_should_get_secret_refs_when_created_using_secret_objects(self):
