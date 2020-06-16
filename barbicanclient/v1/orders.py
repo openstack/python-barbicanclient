@@ -417,12 +417,11 @@ class OrderManager(base.BaseEntityManager):
         # validate key_order meta fields.
         if resp_type == 'key' and (
            set(response['meta'].keys()) - set(KeyOrder._validMeta)):
-                invalidFields = ', '.join(
-                                map(str, set(
-                                    response['meta'].keys()) -
-                                    set(KeyOrder._validMeta)))
-                raise TypeError(
-                    'Invalid KeyOrder meta field: [%s]' % invalidFields)
+            invalidFields = ', '.join(
+                map(str, set(response['meta'].keys()) -
+                    set(KeyOrder._validMeta)))
+            raise TypeError(
+                'Invalid KeyOrder meta field: [%s]' % invalidFields)
 
         response.update(response.pop('meta'))
 

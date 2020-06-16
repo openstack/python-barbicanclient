@@ -135,5 +135,5 @@ class CreateContainer(show.ShowOne):
             raise ValueError("Must supply at least one secret.")
         return dict(
             (s.split('=')[0], s.split('=')[1])
-            for s in secrets if s.count('=') is 1
+            for s in secrets if s.count('=') == 1
         )
