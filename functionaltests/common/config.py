@@ -48,7 +48,7 @@ def setup_config(config_file=''):
         cfg.StrOpt('project_name', default='admin'),
         cfg.StrOpt('project_id', default='admin'),
         cfg.StrOpt('project_domain_name', default='Default'),
-        cfg.IntOpt('max_payload_size', default=10000)
+        cfg.IntOpt('max_payload_size', default=20000)
     ]
     TEST_CONF.register_group(keymanager_group)
     TEST_CONF.register_opts(keymanager_options, group=keymanager_group)
