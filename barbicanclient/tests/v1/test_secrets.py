@@ -27,14 +27,14 @@ from barbicanclient.v1 import secrets
 
 class SecretData(object):
     def __init__(self):
-        self.name = u'Self destruction sequence'
-        self.payload = u'the magic words are squeamish ossifrage'
-        self.payload_content_type = u'text/plain'
-        self.algorithm = u'AES'
+        self.name = 'Self destruction sequence'
+        self.payload = 'the magic words are squeamish ossifrage'
+        self.payload_content_type = 'text/plain'
+        self.algorithm = 'AES'
         self.created = str(timeutils.utcnow())
 
         self.secret_dict = {'name': self.name,
-                            'status': u'ACTIVE',
+                            'status': 'ACTIVE',
                             'algorithm': self.algorithm,
                             'created': self.created}
 
@@ -110,9 +110,9 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
         secret_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(self.secret.name, secret_req['name'])
-        self.assertEqual(u'application/octet-stream',
+        self.assertEqual('application/octet-stream',
                          secret_req['payload_content_type'])
-        self.assertEqual(u'base64',
+        self.assertEqual('base64',
                          secret_req['payload_content_encoding'])
         self.assertNotEqual(binary_payload, secret_req['payload'])
 
@@ -121,7 +121,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         data = {'secret_ref': self.entity_href}
         self.responses.post(self.entity_base + '/', json=data)
 
-        text_payload = u'time for an ice cold \U0001f37a'
+        text_payload = 'time for an ice cold \U0001f37a'
 
         secret = self.manager.create()
         secret.payload = text_payload
@@ -129,7 +129,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
         secret_req = jsonutils.loads(self.responses.last_request.text)
         self.assertEqual(text_payload, secret_req['payload'])
-        self.assertEqual(u'text/plain', secret_req['payload_content_type'])
+        self.assertEqual('text/plain', secret_req['payload_content_type'])
 
     def test_should_store_with_deprecated_content_type(self):
         """DEPRECATION WARNING
@@ -141,7 +141,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.responses.post(self.entity_base + '/', json=data)
 
         payload = 'I should be octet-stream'
-        payload_content_type = u'text/plain'
+        payload_content_type = 'text/plain'
 
         secret = self.manager.create()
         secret.payload = payload
@@ -165,8 +165,8 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         encoded_payload = base64.b64encode(
             b'F\x130\x89f\x8e\xd9\xa1\x0e\x1f\r\xf67uu\x8b'
         ).decode('UTF-8')
-        payload_content_type = u'application/octet-stream'
-        payload_content_encoding = u'base64'
+        payload_content_type = 'application/octet-stream'
+        payload_content_encoding = 'base64'
 
         secret = self.manager.create()
         secret.payload = encoded_payload
@@ -444,7 +444,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.test_should_delete_from_object(self.entity_id)
 
     def test_should_update_from_manager(self, secret_ref=None):
-        text_payload = u'time for an ice cold \U0001f37a'
+        text_payload = 'time for an ice cold \U0001f37a'
         secret_ref = secret_ref or self.entity_href
 
         self.responses.put(self.entity_href, status_code=204)
@@ -473,7 +473,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         # Verify the secret has the correct ref for testing updates
         self.assertEqual(secref_ref, secret.secret_ref)
 
-        text_payload = u'time for an ice cold \U0001f37a'
+        text_payload = 'time for an ice cold \U0001f37a'
 
         self.responses.put(self.entity_href, status_code=204)
 

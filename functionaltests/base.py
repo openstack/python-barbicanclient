@@ -23,7 +23,7 @@ CONF = config.get_config()
 
 class BaseTestCase(oslotest.BaseTestCase):
     max_payload_size = CONF.keymanager.max_payload_size
-    max_sized_payload = u'a' * max_payload_size
+    max_sized_payload = 'a' * max_payload_size
     oversized_payload = 'a' * (max_payload_size + 1)
     max_field_size = 255
     max_sized_field = 'a' * max_field_size

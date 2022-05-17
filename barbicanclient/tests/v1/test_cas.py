@@ -19,10 +19,10 @@ from barbicanclient.v1 import cas
 
 
 class CAData(object):
-    def __init__(self, description=u'Test CA description'):
-        self.name = u'Test CA'
+    def __init__(self, description='Test CA description'):
+        self.name = 'Test CA'
         self.description = description
-        self.plugin_name = u'Test CA Plugin'
+        self.plugin_name = 'Test CA Plugin'
         self.plugin_ca_id = 'plugin_uuid'
 
         now = timeutils.utcnow()
@@ -35,7 +35,7 @@ class CAData(object):
             self.meta.append({'description': self.description})
 
         self.ca_dict = {'meta': self.meta,
-                        'status': u'ACTIVE',
+                        'status': 'ACTIVE',
                         'plugin_name': self.plugin_name,
                         'plugin_ca_id': self.plugin_ca_id,
                         'created': self.created}

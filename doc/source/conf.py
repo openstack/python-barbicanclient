@@ -38,7 +38,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-copyright = u'2014, OpenStack Foundation'
+copyright = '2014, OpenStack Foundation'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = True
@@ -69,8 +69,8 @@ htmlhelp_basename = 'python-barbicanclientdoc'
 latex_documents = [
     ('index',
      'doc-python-barbicanclient.tex',
-     u'python-barbicanclient Documentation',
-     u'OpenStack Foundation', 'manual'),
+     'python-barbicanclient Documentation',
+     'OpenStack Foundation', 'manual'),
 ]
 
 latex_use_xindy = False

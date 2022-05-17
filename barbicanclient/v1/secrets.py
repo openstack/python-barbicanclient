@@ -170,7 +170,7 @@ class Secret(SecretFormatter):
         if self._content_types:
             return self._content_types
         elif self._payload_content_type:
-            return {u'default': self.payload_content_type}
+            return {'default': self.payload_content_type}
         return None
 
     @property
@@ -268,7 +268,7 @@ class Secret(SecretFormatter):
         uuid_ref = base.calculate_uuid_ref(self._secret_ref, self._entity)
         payload_url = uuid_ref + '/payload'
         payload = self._api._get_raw(payload_url, headers=headers)
-        if self.payload_content_type == u'text/plain':
+        if self.payload_content_type == 'text/plain':
             self._payload = payload.decode('UTF-8')
         else:
             self._payload = payload
@@ -322,14 +322,14 @@ class Secret(SecretFormatter):
             secret_dict['payload'] = (
                 base64.b64encode(self.payload)
             ).decode('UTF-8')
-            secret_dict['payload_content_type'] = u'application/octet-stream'
-            secret_dict['payload_content_encoding'] = u'base64'
+            secret_dict['payload_content_type'] = 'application/octet-stream'
+            secret_dict['payload_content_encoding'] = 'base64'
         elif type(self.payload) is str:
             '''
             str is stored as text/plain
             '''
             secret_dict['payload'] = self.payload
-            secret_dict['payload_content_type'] = u'text/plain'
+            secret_dict['payload_content_type'] = 'text/plain'
 
         secret_dict = base.filter_null_keys(secret_dict)
         LOG.debug("Request body: {0}".format(base.censored_copy(secret_dict,

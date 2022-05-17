@@ -249,8 +249,8 @@ class Order(object, metaclass=abc.ABCMeta):
 class KeyOrder(Order, KeyOrderFormatter):
     """KeyOrders can be used to request random key material from Barbican"""
     _type = 'key'
-    _validMeta = (u'name', u'algorithm', u'mode', u'bit_length', u'expiration',
-                  u'payload_content_type')
+    _validMeta = ('name', 'algorithm', 'mode', 'bit_length', 'expiration',
+                  'payload_content_type')
 
     def __init__(self, api, name=None, algorithm=None, bit_length=None,
                  mode=None, expiration=None, payload_content_type=None,

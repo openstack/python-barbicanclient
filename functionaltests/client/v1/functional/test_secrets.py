@@ -673,7 +673,7 @@ class SecretsTestCase(base.TestCase):
     @utils.parameterized_dataset({
         'text/plain':
             [
-                u'meowwwwwwwmeowwwwwww',
+                'meowwwwwwwmeowwwwwww',
                 'text/plain'],
         'application/octet-stream':
             [

@@ -45,14 +45,14 @@ Example:
 
     def random_password(length):
         sys_random = random.SystemRandom()
-        return u''.join(
+        return ''.join(
             sys_random.choice(string.ascii_letters + string.digits) for _ in range(length)
         )
 
     barbican = client.Client(...)
 
     my_secret = barbican.secrets.create()
-    my_secret.name = u'Random plain text password'
+    my_secret.name = 'Random plain text password'
     my_secret.payload = random_password(24)
 
     my_secret_ref = my_secret.store()
