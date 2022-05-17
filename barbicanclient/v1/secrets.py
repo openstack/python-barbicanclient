@@ -17,7 +17,6 @@ import functools
 import logging
 
 from oslo_utils.timeutils import parse_isotime
-import six
 
 from barbicanclient import base
 from barbicanclient import exceptions
@@ -293,7 +292,7 @@ class Secret(SecretFormatter):
         }
 
         if self.payload is not None:
-            if not isinstance(self.payload, (six.text_type, six.binary_type)):
+            if not isinstance(self.payload, (str, bytes)):
                 raise exceptions.PayloadException("Invalid Payload Type")
 
             if not len(self.payload):
@@ -307,7 +306,7 @@ class Secret(SecretFormatter):
             for backwards compatibility and should be removed in a future
             release.
             '''
-            if type(self.payload) is six.binary_type:
+            if type(self.payload) is bytes:
                 secret_dict['payload'] = self.payload.decode('utf-8')
             else:
                 secret_dict['payload'] = self.payload
@@ -315,9 +314,9 @@ class Secret(SecretFormatter):
             secret_dict['payload_content_encoding'] = (
                 self.payload_content_encoding
             )
-        elif type(self.payload) is six.binary_type:
+        elif type(self.payload) is bytes:
             '''
-            six.binary_type is stored as application/octet-stream
+            bytes is stored as application/octet-stream
             and it is base64 encoded for a one-step POST
             '''
             secret_dict['payload'] = (
@@ -325,9 +324,9 @@ class Secret(SecretFormatter):
             ).decode('UTF-8')
             secret_dict['payload_content_type'] = u'application/octet-stream'
             secret_dict['payload_content_encoding'] = u'base64'
-        elif type(self.payload) is six.text_type:
+        elif type(self.payload) is str:
             '''
-            six.text_type is stored as text/plain
+            str is stored as text/plain
             '''
             secret_dict['payload'] = self.payload
             secret_dict['payload_content_type'] = u'text/plain'
@@ -350,9 +349,9 @@ class Secret(SecretFormatter):
         if not self.secret_ref:
             raise LookupError("Secret is not yet stored.")
 
-        if type(self.payload) is six.binary_type:
+        if type(self.payload) is bytes:
             headers = {'content-type': "application/octet-stream"}
-        elif type(self.payload) is six.text_type:
+        elif type(self.payload) is str:
             headers = {'content-type': "text/plain"}
         else:
             raise exceptions.PayloadException("Invalid Payload Type")
@@ -479,9 +478,9 @@ class SecretManager(base.BaseEntityManager):
         if not secret_ref:
             raise ValueError('secret_ref is required.')
 
-        if type(payload) is six.binary_type:
+        if type(payload) is bytes:
             headers = {'content-type': "application/octet-stream"}
-        elif type(payload) is six.text_type:
+        elif type(payload) is str:
             headers = {'content-type': "text/plain"}
         else:
             raise exceptions.PayloadException("Invalid Payload Type")

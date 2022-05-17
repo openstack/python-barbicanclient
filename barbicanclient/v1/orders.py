@@ -17,7 +17,6 @@ import functools
 import logging
 
 from oslo_utils.timeutils import parse_isotime
-import six
 
 from barbicanclient import base
 from barbicanclient import formatter
@@ -113,8 +112,7 @@ class CertificateOrderFormatter(formatter.EntityFormatter):
         return data
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Order(object):
+class Order(object, metaclass=abc.ABCMeta):
     """Base order object to hold common functionality
 
     This should be considered an abstract class that should not be

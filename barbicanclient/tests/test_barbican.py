@@ -12,7 +12,7 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import six
+import io
 
 from barbicanclient import barbican as barb
 from barbicanclient.barbican import Barbican
@@ -26,8 +26,8 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
 
     def setUp(self):
         self._setUp('barbican')
-        self.captured_stdout = six.StringIO()
-        self.captured_stderr = six.StringIO()
+        self.captured_stdout = io.StringIO()
+        self.captured_stderr = io.StringIO()
         self.barbican = Barbican(
             stdout=self.captured_stdout,
             stderr=self.captured_stderr

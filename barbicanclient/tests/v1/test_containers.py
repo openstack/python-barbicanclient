@@ -17,7 +17,6 @@ from unittest import mock
 
 from oslo_serialization import jsonutils
 from oslo_utils import timeutils
-import six
 
 from barbicanclient import base
 from barbicanclient.tests import test_client
@@ -524,7 +523,7 @@ class WhenTestingContainers(test_client.BaseEntityResource):
 
         # Verify that the names of the secret_refs in the containers are None
         for container in containers_list:
-            for name in six.iterkeys(container._secret_refs):
+            for name in container._secret_refs.keys():
                 self.assertIsNone(name)
 
     def test_should_fail_get_invalid_container(self):

@@ -19,8 +19,7 @@ import time
 import types
 
 import oslotest.base as oslotest
-import six
-import six.moves.urllib.parse as urlparse
+import urllib.parse as urlparse
 
 
 class BaseTestCase(oslotest.BaseTestCase):
@@ -43,10 +42,10 @@ def construct_new_test_function(original_func, name, build_params):
     :return: A new function object
     """
     new_func = types.FunctionType(
-        six.get_function_code(original_func),
-        six.get_function_globals(original_func),
+        original_func.__code__,
+        original_func.__globals__,
         name=name,
-        argdefs=six.get_function_defaults(original_func)
+        argdefs=original_func.__defaults__
     )
 
     # Support either an arg list or kwarg dict for our data

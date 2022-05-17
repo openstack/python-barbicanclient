@@ -78,13 +78,13 @@ correct Content Type based on the type of the data that is set on the
 `Secret.payload` property.  The following table summarizes the mapping of
 Python types to Barbican Secret Content Types:
 
-+-----------------+---------------+---------------+--------------------------+
-| six Type        | Python 2 Type | Python 3 Type | Barbican Content Type    |
-+=================+===============+===============+==========================+
-| six.binary_type | str           | bytes         | application/octet-stream |
-+-----------------+---------------+---------------+--------------------------+
-| six.text_type   | unicode       | str           | text/plain               |
-+-----------------+---------------+---------------+--------------------------+
++---------------+--------------------------+
+| Python 3 Type | Barbican Content Type    |
++===============+==========================+
+| bytes         | application/octet-stream |
++---------------+--------------------------+
+| str           | text/plain               |
++---------------+--------------------------+
 
 .. WARNING::
    Previous versions of python-barbicanclient allowed the user to set the

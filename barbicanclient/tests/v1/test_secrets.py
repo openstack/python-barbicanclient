@@ -93,7 +93,7 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(self.secret.payload, secret_req['payload'])
 
     def test_should_store_binary_type_as_octet_stream(self):
-        """We use six.binary_type as the canonical binary type.
+        """We use bytes as the canonical binary type.
 
         The client should base64 encode the payload before sending the
         request.
@@ -101,8 +101,6 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         data = {'secret_ref': self.entity_href}
         self.responses.post(self.entity_base + '/', json=data)
 
-        # This literal will have type(str) in Python 2, but will have
-        # type(bytes) in Python 3.  It is six.binary_type in both cases.
         binary_payload = b'F\x130\x89f\x8e\xd9\xa1\x0e\x1f\r\xf67uu\x8b'
 
         secret = self.manager.create()
@@ -119,12 +117,10 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertNotEqual(binary_payload, secret_req['payload'])
 
     def test_should_store_text_type_as_text_plain(self):
-        """We use six.text_type as the canonical text type."""
+        """We use unicode string as the canonical text type."""
         data = {'secret_ref': self.entity_href}
         self.responses.post(self.entity_base + '/', json=data)
 
-        # This literal will have type(unicode) in Python 2, but will have
-        # type(str) in Python 3.  It is six.text_type in both cases.
         text_payload = u'time for an ice cold \U0001f37a'
 
         secret = self.manager.create()
@@ -448,8 +444,6 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.test_should_delete_from_object(self.entity_id)
 
     def test_should_update_from_manager(self, secret_ref=None):
-        # This literal will have type(unicode) in Python 2, but will have
-        # type(str) in Python 3.  It is six.text_type in both cases.
         text_payload = u'time for an ice cold \U0001f37a'
         secret_ref = secret_ref or self.entity_href
 
@@ -479,8 +473,6 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         # Verify the secret has the correct ref for testing updates
         self.assertEqual(secref_ref, secret.secret_ref)
 
-        # This literal will have type(unicode) in Python 2, but will have
-        # type(str) in Python 3.  It is six.text_type in both cases.
         text_payload = u'time for an ice cold \U0001f37a'
 
         self.responses.put(self.entity_href, status_code=204)
