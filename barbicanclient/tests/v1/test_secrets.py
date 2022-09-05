@@ -32,18 +32,24 @@ class SecretData(object):
         self.payload_content_type = 'text/plain'
         self.algorithm = 'AES'
         self.created = str(timeutils.utcnow())
+        self.consumer = {'service': 'service_test',
+                         'resource_type': 'type_test',
+                         'resource_id': 'id_test'}
 
         self.secret_dict = {'name': self.name,
                             'status': 'ACTIVE',
                             'algorithm': self.algorithm,
                             'created': self.created}
 
-    def get_dict(self, secret_ref=None, content_types_dict=None):
+    def get_dict(self, secret_ref=None, content_types_dict=None,
+                 consumers=None):
         secret = self.secret_dict
         if secret_ref:
             secret['secret_ref'] = secret_ref
         if content_types_dict:
             secret['content_types'] = content_types_dict
+        if consumers:
+            secret['consumers'] = consumers
         return secret
 
 
@@ -54,6 +60,9 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
         self.secret = SecretData()
         self.manager = self.client.secrets
+
+        self.consumers_post_resource = self.entity_href + '/consumers/'
+        self.consumers_delete_resource = self.entity_href + '/consumers'
 
     def test_should_entity_str(self):
         secret_obj = self.manager.create(name=self.secret.name)
@@ -557,6 +566,39 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
     def test_should_fail_delete_no_href(self):
         self.assertRaises(ValueError, self.manager.delete, None)
+
+    def test_should_register_consumer(self):
+        data = self.secret.get_dict(self.entity_href,
+                                    consumers=[self.secret.consumer])
+
+        self.responses.post(self.entity_href + '/consumers/', json=data)
+        secret = self.manager.register_consumer(
+            self.entity_href, self.secret.consumer.get('service'),
+            self.secret.consumer.get('resource_type'),
+            self.secret.consumer.get('resource_id')
+        )
+        self.assertIsInstance(secret, secrets.Secret)
+        self.assertEqual(self.entity_href, secret.secret_ref)
+
+        body = jsonutils.loads(self.responses.last_request.text)
+        self.assertEqual(self.consumers_post_resource,
+                         self.responses.last_request.url)
+        self.assertEqual(self.secret.consumer, body)
+        self.assertEqual([self.secret.consumer], secret.consumers)
+
+    def test_should_remove_consumer(self):
+        self.responses.delete(self.entity_href + '/consumers', status_code=204)
+
+        self.manager.remove_consumer(
+            self.entity_href, self.secret.consumer.get('service'),
+            self.secret.consumer.get('resource_type'),
+            self.secret.consumer.get('resource_id')
+        )
+
+        body = jsonutils.loads(self.responses.last_request.text)
+        self.assertEqual(self.consumers_delete_resource,
+                         self.responses.last_request.url)
+        self.assertEqual(self.secret.consumer, body)
 
     def test_should_get_total(self):
         self.responses.get(self.entity_base, json={'total': 1})

@@ -251,6 +251,44 @@ class GenericContainersTestCase(BaseContainersTestCase):
         self.assertIsNotNone(container_entity.acls.read)
         self.assertEqual([], container_entity.acls.read.users)
 
+    @utils.parameterized_dataset({
+        'remove_one': [[{'name': 'ab', 'URL': 'http://c.d/e/1'},
+                        {'name': 'ab', 'URL': 'http://c.d/e/2'}],
+                       [{'name': 'ab', 'URL': 'http://c.d/e/1'}]],
+        'remove_all': [[{'name': 'ab', 'URL': 'http://c.d/e/1'},
+                        {'name': 'ab', 'URL': 'http://c.d/e/2'}],
+                       [{'name': 'ab', 'URL': 'http://c.d/e/1'},
+                        {'name': 'ab', 'URL': 'http://c.d/e/2'}]]
+    })
+    @testcase.attr('positive')
+    def test_container_create_and_registering_removing_consumers(
+            self,
+            register_consumers,
+            remove_consumers):
+
+        new_container = self.barbicanclient.containers.create(
+            **create_container_defaults_data)
+
+        container_ref = self.cleanup.add_entity(new_container)
+        self.assertIsNotNone(container_ref)
+
+        for consumer in register_consumers:
+            container = self.barbicanclient.containers.register_consumer(
+                container_ref, consumer['name'], consumer['URL'])
+            self.assertEqual(container_ref, container.container_ref)
+        self.assertCountEqual(register_consumers, container.consumers)
+
+        for consumer in remove_consumers:
+            self.barbicanclient.containers.remove_consumer(
+                container_ref, consumer['name'], consumer['URL'])
+
+        container = self.barbicanclient.containers.get(container_ref)
+
+        removed_urls = set([v['URL'] for v in remove_consumers])
+        remaining_consumers = [v for v in register_consumers
+                               if v['URL'] not in removed_urls]
+        self.assertCountEqual(remaining_consumers, container.consumers)
+
 
 @utils.parameterized_test_case
 class RSAContainersTestCase(BaseContainersTestCase):

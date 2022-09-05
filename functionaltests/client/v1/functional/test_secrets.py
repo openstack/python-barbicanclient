@@ -133,6 +133,161 @@ class SecretsTestCase(base.TestCase):
         resp = self.barbicanclient.secrets.get(secret_ref)
         self.assertEqual(secret.mode, resp.mode)
 
+    @utils.parameterized_dataset({
+        'remove_one': [[{'service': 'service_test1',
+                         'resource_type': 'type_test1',
+                         'resource_id': 'id_test1'},
+                        {'service': 'service_test2',
+                         'resource_type': 'type_test2',
+                         'resource_id': 'id_test2'}],
+                       [{'service': 'service_test1',
+                         'resource_type': 'type_test1',
+                         'resource_id': 'id_test1'}]],
+        'remove_all': [[{'service': 'service_test1',
+                         'resource_type': 'type_test1',
+                         'resource_id': 'id_test1'},
+                        {'service': 'service_test2',
+                         'resource_type': 'type_test2',
+                         'resource_id': 'id_test2'}],
+                       [{'service': 'service_test1',
+                         'resource_type': 'type_test1',
+                         'resource_id': 'id_test1'},
+                        {'service': 'service_test2',
+                         'resource_type': 'type_test2',
+                         'resource_id': 'id_test2'}]],
+        'add_duplicate_remove_one': [[{'service': 'service_test1',
+                                       'resource_type': 'type_test1',
+                                       'resource_id': 'id_test1'},
+                                      {'service': 'service_test1',
+                                       'resource_type': 'type_test1',
+                                       'resource_id': 'id_test1'},
+                                      {'service': 'service_test2',
+                                       'resource_type': 'type_test2',
+                                       'resource_id': 'id_test2'}],
+                                     [{'service': 'service_test1',
+                                       'resource_type': 'type_test1',
+                                       'resource_id': 'id_test1'}]]
+    })
+    @testcase.attr('positive')
+    def test_secret_create_and_registering_removing_consumers(
+            self,
+            register_consumers,
+            remove_consumers):
+        """The following activities are carried:
+
+        Create a secret, then register each consumer
+        in the register_consumers list, then remove each consumer
+        in the remove_consumers list.
+        """
+        new_secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+
+        secret_ref = self.cleanup.add_entity(new_secret)
+        self.assertIsNotNone(secret_ref)
+
+        for consumer in register_consumers:
+            secret = self.barbicanclient.secrets.register_consumer(
+                secret_ref, **consumer)
+            self.assertEqual(secret_ref, secret.secret_ref)
+
+        # We expect that duplicate calls to register_consumers don't
+        # create new consumers even though the API returns HTTP 200 OK
+        deduplicated_consumers_count = len(set(
+            [c['resource_id'] for c in register_consumers]))
+
+        self.assertEqual(deduplicated_consumers_count,
+                         len(secret.consumers))
+
+        for consumer in remove_consumers:
+            self.barbicanclient.secrets.remove_consumer(
+                secret_ref, **consumer)
+
+        secret = self.barbicanclient.secrets.get(secret_ref)
+
+        removed_ids = set([v['resource_id'] for v in remove_consumers])
+        remaining_consumers = [v for v in register_consumers
+                               if v['resource_id'] not in removed_ids]
+        self.assertCountEqual(remaining_consumers, secret.consumers)
+
+    @utils.parameterized_dataset({
+        'no_args': [[{}]],
+        'one_arg_1': [[{'service': 'service1'}]],
+        'one_arg_2': [[{'resource_type': 'type1'}]],
+        'one_arg_3': [[{'resource_id': 'id1'}]],
+        'two_args_1': [[{'service': 'service1',
+                         'resource_type': 'type1'}]],
+        'two_args_2': [[{'service': 'service1',
+                         'resource_id': 'id1'}]],
+        'two_args_3': [[{'resource_type': 'type1',
+                         'resource_id': 'id'}]]
+    })
+    @testcase.attr('negative')
+    def test_consumer_register_missing_positional_arguments(
+            self,
+            register_consumers):
+        """Missing Positional Arguments - Registration
+
+        Tries to register a secret consumer without
+        providing all of the required positional arguments
+        (service, resource_type, resource_id).
+        """
+        new_secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+
+        secret_ref = self.cleanup.add_entity(new_secret)
+        self.assertIsNotNone(secret_ref)
+
+        for consumer in register_consumers:
+            e = self.assertRaises(
+                TypeError,
+                self.barbicanclient.secrets.register_consumer,
+                secret_ref, **consumer
+            )
+        self.assertIn('register_consumer() missing', str(e))
+
+    @utils.parameterized_dataset({
+        'no_args': [[{}]],
+        'one_arg_1': [[{'service': 'service1'}]],
+        'one_arg_2': [[{'resource_type': 'type1'}]],
+        'one_arg_3': [[{'resource_id': 'id1'}]],
+        'two_args_1': [[{'service': 'service1',
+                         'resource_type': 'type1'}]],
+        'two_args_2': [[{'service': 'service1',
+                         'resource_id': 'id1'}]],
+        'two_args_3': [[{'resource_type': 'type1',
+                         'resource_id': 'id'}]]
+    })
+    @testcase.attr('negative')
+    def test_consumer_remove_missing_positional_arguments(
+            self,
+            register_consumers):
+        """Missing Positional Arguments - Removal
+
+        Tries to remove a secret consumer without
+        providing all of the required positional arguments
+        (service, resource_type, resource_id).
+        """
+        new_secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+
+        secret_ref = self.cleanup.add_entity(new_secret)
+        self.assertIsNotNone(secret_ref)
+
+        secret = self.barbicanclient.secrets.register_consumer(
+            secret_ref,
+            service="service1",
+            resource_type="type1",
+            resource_id="id1"
+        )
+        self.assertEqual(secret_ref, secret.secret_ref)
+        for consumer in register_consumers:
+            e = self.assertRaises(
+                TypeError,
+                self.barbicanclient.secrets.remove_consumer,
+                secret_ref, **consumer
+            )
+        self.assertIn('remove_consumer() missing', str(e))
+
     @testcase.attr('negative')
     def test_secret_delete_doesnt_exist(self):
         """Deletes a non-existent secret.

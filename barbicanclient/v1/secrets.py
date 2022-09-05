@@ -616,3 +616,67 @@ class SecretManager(base.BaseEntityManager):
             Secret(api=self._api, **s)
             for s in response.get('secrets', [])
         ]
+
+    def register_consumer(self, secret_ref, service, resource_type,
+                          resource_id):
+        """Add a consumer to the secret
+
+        :param secret_ref: Full HATEOAS reference to a secret, or a UUID
+        :param service: Name of the consuming service
+        :param resource_type: Type of the consuming resource
+        :param resource_id: ID of the consuming resource
+        :returns: A secret object per the get() method
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
+        :raises NotImplementedError: When using microversion 1.0
+        """
+        LOG.debug('Creating consumer registration for secret '
+                  '{0} of service {1} for resource type {2}'
+                  'with resource id {3}'.format(secret_ref, service,
+                                                resource_type, resource_id))
+        if self._api.microversion == (1, 0):
+            raise NotImplementedError(
+                "Server does not support secret consumers.  Minimum "
+                "key-manager microversion required: 1.1")
+        secret_uuid = base.validate_ref_and_return_uuid(
+            secret_ref, 'Secret')
+        href = '{0}/{1}/consumers'.format(self._entity, secret_uuid)
+        consumer_dict = dict()
+        consumer_dict['service'] = service
+        consumer_dict['resource_type'] = resource_type
+        consumer_dict['resource_id'] = resource_id
+
+        response = self._api.post(href, json=consumer_dict)
+        return Secret(api=self._api, **response)
+
+    def remove_consumer(self, secret_ref, service,
+                        resource_type, resource_id):
+        """Remove a consumer from the secret
+
+        :param secret_ref: Full HATEOAS reference to a secret, or a UUID
+        :param service: Name of the previously consuming service
+        :param resource_type: type of the previously consuming resource
+        :param resource_id: ID of the previously consuming resource
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
+        """
+        LOG.debug('Deleting consumer registration for secret '
+                  '{0} of service {1} for resource type {2}'
+                  'with resource id {3}'.format(secret_ref, service,
+                                                resource_type, resource_id))
+        if self._api.microversion == (1, 0):
+            raise NotImplementedError(
+                "Server does not support secret consumers.  Minimum "
+                "key-manager microversion required: 1.1")
+        secret_uuid = base.validate_ref_and_return_uuid(
+            secret_ref, 'secret')
+        href = '{0}/{1}/consumers'.format(self._entity, secret_uuid)
+        consumer_dict = {
+            'service': service,
+            'resource_type': resource_type,
+            'resource_id': resource_id
+        }
+
+        self._api.delete(href, json=consumer_dict)
