@@ -16,15 +16,17 @@ refer to the `tox documentation`_ for assistance.
 Unit Tests
 ----------
 
-Currently, we provide tox environments for Python 2.7. By default
-all available test environments within the tox configuration will execute
+We follow the `Tested Runtimes <https://governance.openstack.org/tc/reference/project-testing-interface.html#tested-runtimes>`
+as defined by the Technical Committe every cycle.
+
+All available test environments within the tox configuration will execute
 when calling ``tox``. If you want to run them independently, you can do so
 with the following command:
 
 .. code-block:: bash
 
-    # Executes tests on Python 3.7
-    tox -e py37
+    # Executes tests on Python 3.9
+    tox -e py39
 
 .. note::
 
@@ -40,18 +42,18 @@ with the following command:
 
         # runs a single test with the function named
         # test_should_entity_str
-        tox -e py37 -- test_should_entity_str
+        tox -e py39 -- test_should_entity_str
 
         # runs only tests in the WhenTestingSecrets class and
         # the WhenTestingOrderManager class
-        tox -e p37 -- '(WhenTestingSecrets|WhenTestingOrderManager)'
+        tox -e p39 -- '(WhenTestingSecrets|WhenTestingOrderManager)'
 
     The function name or class specified must be one located in the
     `barbicanclient/tests` directory.
 
     Groups of tests can also be run with a regex match after the ``--``.
-    For more information on what can be done with ``testr``, please see:
-    http://testrepository.readthedocs.org/en/latest/MANUAL.html
+    For more information on what can be done with ``stestr``, please see:
+    https://stestr.readthedocs.io/en/latest/
 
 You can also setup breakpoints in the unit tests. This can be done by
 adding ``import pdb; pdb.set_trace()`` to the line of the unit test you
@@ -59,7 +61,6 @@ want to examine, then running the following command:
 
 .. code-block:: bash
 
-    # Executes tests on Python 2.7
     tox -e debug
 
 .. note::
@@ -123,11 +124,6 @@ the functional tests through tox.
 
     # Execute Barbican Functional Tests
     tox -e functional
-
-
-By default, the functional tox job will use nosetests to execute the functional
-tests. This is primarily due to nose being a very well known and common
-workflow among developers.
 
 .. note::
 
