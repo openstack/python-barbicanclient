@@ -15,6 +15,8 @@
 
 import logging
 
+from keystoneauth1 import discover
+
 from barbicanclient import client as base_client
 from barbicanclient.v1 import acls
 from barbicanclient.v1 import cas
@@ -22,44 +24,41 @@ from barbicanclient.v1 import containers
 from barbicanclient.v1 import orders
 from barbicanclient.v1 import secrets
 
+
 LOG = logging.getLogger(__name__)
+_SUPPORTED_MICROVERSIONS = [(1, 0),
+                            (1, 1)]
+# For microversion 1.0, API status is "stable"
+_STABLE = "STABLE"
 
 
 class Client(object):
 
     def __init__(self, session=None, *args, **kwargs):
-        """Barbican client object used to interact with barbican service.
+        """Barbican client implementation for API version v1
 
-        :param session: An instance of keystoneauth1.session.Session that
-            can be either authenticated, or not authenticated.  When using
-            a non-authenticated Session, you must provide some additional
-            parameters.  When no session is provided it will default to a
-            non-authenticated Session.
-        :param endpoint: Barbican endpoint url. Required when a session is not
-            given, or when using a non-authenticated session.
-            When using an authenticated session, the client will attempt
-            to get an endpoint from the session.
-        :param project_id: The project ID used for context in Barbican.
-            Required when a session is not given, or when using a
-            non-authenticated session.
-            When using an authenticated session, the project ID will be
-            provided by the authentication mechanism.
-        :param verify: When a session is not given, the client will create
-            a non-authenticated session.  This parameter is passed to the
-            session that is created.  If set to False, it allows
-            barbicanclient to perform "insecure" TLS (https) requests.
-            The server's certificate will not be verified against any
-            certificate authorities.
-            WARNING: This option should be used with caution.
-        :param service_type: Used as an endpoint filter when using an
-            authenticated keystone session. Defaults to 'key-management'.
-        :param service_name: Used as an endpoint filter when using an
-            authenticated keystone session.
-        :param interface: Used as an endpoint filter when using an
-            authenticated keystone session. Defaults to 'public'.
-        :param region_name: Used as an endpoint filter when using an
-            authenticated keystone session.
+        This class is dynamically loaded by the factory function
+        `barbicanclient.client.Client`.  It's recommended to use that
+        function instead of making instances of this class directly.
         """
+        microversion = kwargs.pop('microversion', None)
+        if microversion:
+            if not self._validate_microversion(
+                session,
+                kwargs.get('endpoint'),
+                kwargs.get('version'),
+                kwargs.get('service_type'),
+                kwargs.get('service_name'),
+                kwargs.get('interface'),
+                kwargs.get('region_name'),
+                microversion
+            ):
+                raise ValueError(
+                    "Endpoint does not support microversion {}".format(
+                        microversion))
+            kwargs['default_microversion'] = microversion
+
+        # TODO(dmendiza): This should be a private member
         self.client = base_client._HTTPClient(session=session, *args, **kwargs)
 
         self.secrets = secrets.SecretManager(self.client)
@@ -67,3 +66,46 @@ class Client(object):
         self.containers = containers.ContainerManager(self.client)
         self.cas = cas.CAManager(self.client)
         self.acls = acls.ACLManager(self.client)
+
+    def _validate_microversion(self, session, endpoint, version, service_type,
+                               service_name, interface, region_name,
+                               microversion):
+        # first we make sure that the microversion is something we understand
+        normalized = discover.normalize_version_number(microversion)
+        if normalized not in _SUPPORTED_MICROVERSIONS:
+            raise ValueError("Invalid microversion {}".format(microversion))
+        microversion = discover.version_to_string(normalized)
+
+        if not endpoint:
+            endpoint = session.get_endpoint(
+                service_type=service_type,
+                service_name=service_name,
+                interface=interface,
+                region_name=region_name,
+                version=version
+            )
+
+        resp = discover.get_version_data(
+            session, endpoint,
+            version_header='key-manager ' + microversion)
+        if resp:
+            resp = resp[0]
+            status = resp['status'].upper()
+
+            if status == _STABLE:
+                # status is only set to STABLE in two cases
+                # 1. when the server is older and is ignoring the microversion
+                #    header
+                # 2. when we ask for microversion 1.0 and the server
+                #    undertsands the header
+                # in either case min/max will be 1.0
+                min_ver = '1.0'
+                max_ver = '1.0'
+            else:
+                # any other status will have a min/max
+                min_ver = resp['version']['min_version']
+                max_ver = resp['version']['max_version']
+            return discover.version_between(min_ver, max_ver, microversion)
+
+        # TODO(afariasa) What should be returned? error?
+        return False

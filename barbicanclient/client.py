@@ -30,21 +30,22 @@ LOG = logging.getLogger(__name__)
 _DEFAULT_SERVICE_TYPE = 'key-manager'
 _DEFAULT_SERVICE_INTERFACE = 'public'
 _DEFAULT_API_VERSION = 'v1'
+# TODO(dmendiza) Default to '1.1'
+_DEFAULT_API_MICROVERSION = '1.0'
 _SUPPORTED_API_VERSION_MAP = {'v1': 'barbicanclient.v1.client.Client'}
 
 
 class _HTTPClient(adapter.Adapter):
 
     def __init__(self, session, project_id=None, **kwargs):
-        kwargs.setdefault('interface', _DEFAULT_SERVICE_INTERFACE)
-        kwargs.setdefault('service_type', _DEFAULT_SERVICE_TYPE)
-        kwargs.setdefault('version', _DEFAULT_API_VERSION)
         endpoint = kwargs.pop('endpoint', None)
-
-        super(_HTTPClient, self).__init__(session, **kwargs)
-
         if endpoint:
-            self.endpoint_override = '{0}/{1}'.format(endpoint, self.version)
+            kwargs['endpoint_override'] = "{}/{}/".format(
+                endpoint.rstrip('/'),
+                kwargs.get('version')
+            )
+
+        super().__init__(session, **kwargs)
 
         if project_id is None:
             self._default_headers = dict()
@@ -122,61 +123,73 @@ class _HTTPClient(adapter.Adapter):
 def Client(version=None, session=None, *args, **kwargs):
     """Barbican client used to interact with barbican service.
 
-    :param version: The API version to use.
     :param session: An instance of keystoneauth1.session.Session that
         can be either authenticated, or not authenticated.  When using
         a non-authenticated Session, you must provide some additional
         parameters.  When no session is provided it will default to a
-        non-authenticated Session.
-    :param endpoint: Barbican endpoint url. Required when a session is not
-        given, or when using a non-authenticated session.
+        non-authenticated Session. (optional)
+    :param endpoint: Barbican endpoint url override. Required when a
+        session is not given, or when using a non-authenticated session.
         When using an authenticated session, the client will attempt
-        to get an endpoint from the session.
+        to get the endpoint from the Keystone service catalog. (optional)
     :param project_id: The project ID used for context in Barbican.
         Required when a session is not given, or when using a
         non-authenticated session.
         When using an authenticated session, the project ID will be
-        provided by the authentication mechanism.
+        provided by the authentication mechanism and this parameter
+        will be ignored. (optional)
     :param verify: When a session is not given, the client will create
         a non-authenticated session.  This parameter is passed to the
         session that is created.  If set to False, it allows
         barbicanclient to perform "insecure" TLS (https) requests.
         The server's certificate will not be verified against any
-        certificate authorities.
+        certificate authorities. (optional)
         WARNING: This option should be used with caution.
+    :param version: Used as an endpoint filter when using an authenticated
+        keystone session.  When using a non-authenticated keystone session,
+        this value is appended to the required endpoint url override.
+        Defaults to 'v1'.
     :param service_type: Used as an endpoint filter when using an
-        authenticated keystone session. Defaults to 'key-manager'.
+        authenticated keystone session.
+        Defaults to 'key-manager'.
     :param service_name: Used as an endpoint filter when using an
         authenticated keystone session.
     :param interface: Used as an endpoint filter when using an
         authenticated keystone session. Defaults to 'public'.
     :param region_name: Used as an endpoint filter when using an
         authenticated keystone session.
+    :param microversion: Specifiy an API Microversion to be used.
+        Defaults to '1.1'.
     """
     LOG.debug("Creating Client object")
 
     if not session:
         session = ks_session.Session(verify=kwargs.pop('verify', True))
 
-    if session.auth is None and kwargs.get('auth') is None:
-        if not kwargs.get('endpoint'):
-            raise ValueError('Barbican endpoint url must be provided when '
-                             'not using auth in the Keystone Session.')
+    if session.auth is None:
+        if kwargs.get('auth') is None:
+            if not kwargs.get('endpoint'):
+                raise ValueError('Barbican endpoint url must be provided when'
+                                 ' not using auth in the Keystone Session.')
+            if kwargs.get('project_id') is None:
+                raise ValueError('Project ID must be provided when not using '
+                                 'auth in the Keystone Session')
+        else:
+            session.auth = kwargs['auth']
 
-        if kwargs.get('project_id') is None:
-            raise ValueError('Project ID must be provided when not using '
-                             'auth in the Keystone Session')
-    if not version:
-        version = _DEFAULT_API_VERSION
+    kwargs['version'] = version or _DEFAULT_API_VERSION
+    kwargs.setdefault('service_type', _DEFAULT_SERVICE_TYPE)
+    kwargs.setdefault('interface', _DEFAULT_SERVICE_INTERFACE)
+    kwargs.setdefault('microversion', _DEFAULT_API_MICROVERSION)
 
     try:
-        client_path = _SUPPORTED_API_VERSION_MAP[version]
+        client_path = _SUPPORTED_API_VERSION_MAP[kwargs['version']]
         client_class = importutils.import_class(client_path)
         return client_class(session=session, *args, **kwargs)
     except (KeyError, ValueError):
         supported_versions = ', '.join(_SUPPORTED_API_VERSION_MAP.keys())
         msg = ("Invalid client version %(version)s; must be one of: "
-               "%(versions)s") % {'version': version,
+               "%(versions)s") % {'version': kwargs.get('version'),
                                   'versions': supported_versions}
         raise exceptions.UnsupportedVersion(msg)
 

@@ -14,18 +14,59 @@
 # limitations under the License.
 import io
 
+from requests_mock.contrib import fixture
+import testtools
+
 from barbicanclient import barbican as barb
 from barbicanclient.barbican import Barbican
 from barbicanclient import client
 from barbicanclient import exceptions
 from barbicanclient.tests import keystone_client_fixtures
-from barbicanclient.tests import test_client
 
 
-class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
+class WhenTestingBarbicanCLI(testtools.TestCase):
 
     def setUp(self):
-        self._setUp('barbican')
+        super().setUp()
+        self.endpoint = 'http://localhost:9311/'
+        self.project_id = '1234567890abcdef1234567890abcdef'
+        self.responses = self.useFixture(fixture.Fixture())
+        self.responses.get(
+            'http://localhost:9311/v1/',
+            json={
+                'version': {
+                    'id': 'v1',
+                    'status': 'CURRENT',
+                    'min_version': '1.0',
+                    'max_version': '1.1',
+                    'links': [{
+                        'rel': 'self',
+                        'href': 'http://192.168.122.110/key-manager/v1/'
+                    }, {
+                        'rel': 'describedby',
+                        'type': 'text/html',
+                        'href': 'https://docs.openstack.org/'}]}})
+        self.responses.get(
+            'http://localhost:9311/',
+            json={
+                "versions": {
+                    "values": [{
+                        "id": "v1",
+                        "status": "stable",
+                        "links": [{
+                            "rel": "self",
+                            "href": "http://localhost:9311/v1/"
+                        }, {
+                            "rel": "describedby",
+                            "type": "text/html",
+                            "href": "https://docs.openstack.org/"
+                        }],
+                        "media-types": [{
+                            "type": "application/vnd.openstack.key-manager-v1"
+                                    "+json",
+                            "base": "application/json",
+                        }]}]}}
+        )
         self.captured_stdout = io.StringIO()
         self.captured_stderr = io.StringIO()
         self.barbican = Barbican(
@@ -86,12 +127,15 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
             '--no-auth --endpoint {0} --os-tenant-id {1}'
             'secret list'.format(self.endpoint, self.project_id)
         )
-        list_secrets_url = '{0}/v1/secrets'.format(self.endpoint)
+        list_secrets_url = '{0}/v1/secrets'.format(self.endpoint.rstrip('/'))
         self.responses.get(list_secrets_url, json={"secrets": [], "total": 0})
         client = self.create_and_assert_client(args)
         secret_list = client.secrets.list()
         self.assertTrue(self.responses._adapter.called)
-        self.assertEqual(1, self.responses._adapter.call_count)
+        # there should be two requests
+        # 1. requests sent by microversions check
+        # 2. the request under test.
+        self.assertEqual(2, self.responses._adapter.call_count)
         self.assertEqual([], secret_list)
 
     def test_should_error_if_required_keystone_auth_arguments_are_missing(
@@ -158,7 +202,7 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
         self.assertEqual(1, response)
 
     def test_default_endpoint_filter_kwargs_set_correctly(self):
-        auth_args = ('--no-auth --endpoint http://barbican_endpoint:9311/v1 '
+        auth_args = ('--no-auth --endpoint http://localhost:9311/ '
                      '--os-project-id project1')
         argv, remainder = self.parser.parse_known_args(auth_args.split())
         barbican_client = self.barbican.create_client(argv)
@@ -171,7 +215,7 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
         self.assertIsNone(httpclient.service_name)
 
     def test_endpoint_filter_kwargs_set_correctly(self):
-        auth_args = ('--no-auth --endpoint http://barbican_endpoint:9311 '
+        auth_args = ('--no-auth --endpoint http://localhost:9311/ '
                      '--os-project-id project1')
         endpoint_filter_args = ('--interface private '
                                 '--service-type custom-type '
@@ -190,7 +234,7 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
         self.assertEqual('v1', httpclient.version)
 
     def test_should_fail_if_provide_unsupported_api_version(self):
-        auth_args = ('--no-auth --endpoint http://barbican_endpoint:9311/v1 '
+        auth_args = ('--no-auth --endpoint http://localhost:9311/ '
                      '--os-project-id project1')
         endpoint_filter_args = ('--interface private '
                                 '--service-type custom-type '
@@ -210,16 +254,16 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
             '--file foo --payload'
             'secret get'.format(self.endpoint, self.project_id)
         )
-        list_secrets_url = '{0}/v1/secrets'.format(self.endpoint)
+        list_secrets_url = '{0}/v1/secrets'.format(self.endpoint.rstrip('/'))
         self.responses.get(list_secrets_url, json={"secrets": [], "total": 0})
         client = self.create_and_assert_client(args)
         secret_list = client.secrets.list()
         self.assertTrue(self.responses._adapter.called)
-        self.assertEqual(1, self.responses._adapter.call_count)
+        self.assertEqual(2, self.responses._adapter.call_count)
         self.assertEqual([], secret_list)
 
     def test_insecure_true_kwargs_set_correctly(self):
-        auth_args = ('--no-auth --endpoint https://barbican_endpoint:9311/v1 '
+        auth_args = ('--no-auth --endpoint http://localhost:9311/ '
                      '--os-project-id project1')
         endpoint_filter_args = ('--interface public '
                                 '--service-type custom-type '
@@ -234,29 +278,6 @@ class WhenTestingBarbicanCLI(test_client.BaseEntityResource):
         barbican_client = self.barbican.create_client(argv)
         httpclient = barbican_client.secrets._api
         self.assertFalse(httpclient.session.verify)
-
-    def test_cafile_certfile_keyfile_kwargs_set_correctly(self):
-        auth_args = ('no_auth '
-                     '--os-auth-url https://keystone_endpoint:5000/v2 '
-                     '--os-auth-token f554ccb5-e157-4824-b67b-d139c87bc555 '
-                     '--os-project-id project1')
-        endpoint_filter_args = ('--interface public '
-                                '--service-type custom-type '
-                                '--service-name Burrbican '
-                                '--region-name RegionTwo '
-                                '--barbican-api-version v1')
-        args = auth_args + ' ' + endpoint_filter_args
-        argv, remainder = self.parser.parse_known_args(args.split())
-        argv.os_cacert = 'ca.pem'
-        argv.os_cert = 'cert.pem'
-        argv.os_key = 'key.pem'
-        argv.os_identity_api_version = '2.0'
-        argv.os_tenant_name = 'my_tenant_name'
-        barbican_client = self.barbican.create_client(argv)
-        httpclient = barbican_client.secrets._api
-        self.assertEqual('ca.pem', httpclient.session.verify)
-        self.assertEqual('cert.pem', httpclient.session.cert[0])
-        self.assertEqual('key.pem', httpclient.session.cert[1])
 
 
 class TestBarbicanWithKeystonePasswordAuth(

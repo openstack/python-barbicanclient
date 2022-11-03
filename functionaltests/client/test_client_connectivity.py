@@ -70,14 +70,6 @@ class WhenTestingClientConnectivity(BaseTestCase):
         self.assertRaises(exceptions.HTTPClientError, client.orders.list)
         self.assertRaises(exceptions.HTTPClientError, client.secrets.list)
 
-    def assert_client_cannot_get_endpoint(self, client):
-        self.assertRaises(ks_exceptions.EndpointNotFound,
-                          client.containers.list)
-        self.assertRaises(ks_exceptions.EndpointNotFound,
-                          client.orders.list)
-        self.assertRaises(ks_exceptions.EndpointNotFound,
-                          client.secrets.list)
-
     def test_can_access_server_if_endpoint_and_session_specified(self):
         barbicanclient = client.Client(
             endpoint=CONF.keymanager.url,
@@ -112,25 +104,27 @@ class WhenTestingClientConnectivity(BaseTestCase):
         self.assert_client_can_contact_barbican(barbicanclient)
 
     def test_client_cannot_access_server_if_endpoint_filter_wrong(self):
-        barbicanclient = client.Client(
+        self.assertRaises(
+            ks_exceptions.EndpointNotFound,
+            client.Client,
             project_id=CONF.keymanager.project_id,
             auth=self.auth,
             interface=client._DEFAULT_SERVICE_INTERFACE,
             service_type='wrong-service-type',
             version=client._DEFAULT_API_VERSION)
 
-        self.assert_client_cannot_get_endpoint(barbicanclient)
-
-        barbicanclient = client.Client(
+        self.assertRaises(
+            ks_exceptions.EndpointNotFound,
+            client.Client,
             project_id=CONF.keymanager.project_id,
             auth=self.auth,
             interface='wrong-interface',
             service_type=client._DEFAULT_SERVICE_TYPE,
             version=client._DEFAULT_API_VERSION)
 
-        self.assert_client_cannot_get_endpoint(barbicanclient)
-
-        barbicanclient = client.Client(
+        self.assertRaises(
+            ks_exceptions.EndpointNotFound,
+            client.Client,
             project_id=CONF.keymanager.project_id,
             auth=self.auth,
             interface=client._DEFAULT_SERVICE_INTERFACE,
@@ -138,17 +132,15 @@ class WhenTestingClientConnectivity(BaseTestCase):
             service_name='wrong-service-name',
             version=client._DEFAULT_API_VERSION)
 
-        self.assert_client_cannot_get_endpoint(barbicanclient)
-
-        barbicanclient = client.Client(
+        self.assertRaises(
+            ks_exceptions.EndpointNotFound,
+            client.Client,
             project_id=CONF.keymanager.project_id,
             auth=self.auth,
             interface=client._DEFAULT_SERVICE_INTERFACE,
             service_type=client._DEFAULT_SERVICE_TYPE,
             region_name='wrong-region-name',
             version=client._DEFAULT_API_VERSION)
-
-        self.assert_client_cannot_get_endpoint(barbicanclient)
 
     def test_cannot_create_client_if_nonexistent_version_specified(self):
         self.assertRaises(exceptions.UnsupportedVersion,

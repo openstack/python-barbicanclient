@@ -27,8 +27,45 @@ class TestClient(testtools.TestCase):
 
     def setUp(self):
         super(TestClient, self).setUp()
-        self.responses = self.useFixture(fixture.Fixture())
         self.endpoint = 'http://localhost:9311'
+        self.responses = self.useFixture(fixture.Fixture())
+        self.responses.get(
+            'http://localhost:9311/v1/',
+            json={
+                'version': {
+                    'id': 'v1',
+                    'status': 'CURRENT',
+                    'min_version': '1.0',
+                    'max_version': '1.1',
+                    'links': [{
+                        'rel': 'self',
+                        'href': 'http://192.168.122.110/key-manager/v1/'
+                    }, {
+                        'rel': 'describedby',
+                        'type': 'text/html',
+                        'href': 'https://docs.openstack.org/'}]}})
+        self.responses.get(
+            'http://localhost:9311/',
+            json={
+                "versions": {
+                    "values": [{
+                        "id": "v1",
+                        "status": "stable",
+                        "links": [{
+                            "rel": "self",
+                            "href": "http://localhost:9311/v1/"
+                        }, {
+                            "rel": "describedby",
+                            "type": "text/html",
+                            "href": "https://docs.openstack.org/"
+                        }],
+                        "media-types": [{
+                            "type": "application/vnd.openstack.key-manager-v1"
+                                    "+json",
+                            "base": "application/json",
+                        }]}]}}
+        )
+
         self.project_id = 'project_id'
         self.session = session.Session()
         self.httpclient = client._HTTPClient(session=self.session,
@@ -39,10 +76,11 @@ class TestClient(testtools.TestCase):
 class WhenTestingClientInit(TestClient):
 
     def test_api_version_is_appended_to_endpoint(self):
-        c = client._HTTPClient(session=self.session,
-                               endpoint=self.endpoint,
-                               project_id=self.project_id)
-        self.assertEqual('http://localhost:9311/v1', c.endpoint_override)
+        c = client.Client(session=self.session,
+                          endpoint=self.endpoint,
+                          project_id=self.project_id)
+        self.assertEqual('http://localhost:9311/v1/',
+                         c.client.endpoint_override)
 
     def test_default_headers_are_empty(self):
         c = client._HTTPClient(session=self.session, endpoint=self.endpoint)
@@ -65,17 +103,18 @@ class WhenTestingClientInit(TestClient):
                           **{"endpoint": self.endpoint})
 
     def test_endpoint_override_starts_with_endpoint_url(self):
-        c = client._HTTPClient(session=self.session,
-                               endpoint=self.endpoint,
-                               project_id=self.project_id)
-        self.assertTrue(c.endpoint_override.startswith(self.endpoint))
+        c = client.Client(session=self.session,
+                          endpoint=self.endpoint,
+                          project_id=self.project_id)
+        self.assertTrue(c.client.endpoint_override.startswith(self.endpoint))
 
     def test_endpoint_override_ends_with_default_api_version(self):
-        c = client._HTTPClient(session=self.session,
-                               endpoint=self.endpoint,
-                               project_id=self.project_id)
-        self.assertTrue(
-            c.endpoint_override.endswith(client._DEFAULT_API_VERSION))
+        c = client.Client(session=self.session,
+                          endpoint=self.endpoint,
+                          project_id=self.project_id)
+        self.assertTrue(c.client.endpoint_override.rstrip('/').endswith(
+            client._DEFAULT_API_VERSION
+        ))
 
 
 class WhenTestingClientPost(TestClient):
@@ -83,7 +122,8 @@ class WhenTestingClientPost(TestClient):
     def setUp(self):
         super(WhenTestingClientPost, self).setUp()
         self.httpclient = client._HTTPClient(session=self.session,
-                                             endpoint=self.endpoint)
+                                             endpoint=self.endpoint,
+                                             version='v1')
         self.href = self.endpoint + '/v1/secrets/'
         self.post_mock = self.responses.post(self.href, json={})
 
@@ -274,13 +314,11 @@ class WhenTestingGetErrorMessage(TestClient):
         self.assertEqual('test_text: oopsie', msg)
 
 
-class BaseEntityResource(testtools.TestCase):
+class BaseEntityResource(TestClient):
 
     def _setUp(self, entity, entity_id='abcd1234-eabc-5678-9abc-abcdef012345'):
+        # TODO(dmendiza) Why are we calling super().setUp() from _setUp()?
         super(BaseEntityResource, self).setUp()
-        self.responses = self.useFixture(fixture.Fixture())
-        self.endpoint = 'http://localhost:9311'
-        self.project_id = '1234567'
 
         self.entity = entity
         self.entity_id = entity_id
