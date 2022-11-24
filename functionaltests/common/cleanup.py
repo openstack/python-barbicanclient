@@ -58,6 +58,24 @@ class CleanUp(object):
         self.created_entities[entity_type].append(entity_ref)
         return entity_ref
 
+    def delete_entity(self, entity):
+        """Deletes an entity from Barbican
+
+        Used for testing. Individually deletes an entity.
+
+        """
+        entity_type = entity.lower()
+        if 'acl' in entity_type:
+            entity_type = 'acl'
+        elif 'secret' in entity_type:
+            entity_type = 'secret'
+        elif 'container' in entity_type:
+            entity_type = 'container'
+        else:
+            entity_type = 'order'
+
+        self.created_entities[entity_type].remove(entity)
+
     def _delete_all_containers(self):
         """Helper method to delete all containers used for testing"""
         for container_ref in self.created_entities['container']:
@@ -66,7 +84,7 @@ class CleanUp(object):
     def _delete_all_secrets(self):
         """Helper method to delete all secrets used for testing"""
         for secret_ref in self.created_entities['secret']:
-            self.barbicanclient.secrets.delete(secret_ref)
+            self.barbicanclient.secrets.delete(secret_ref, True)
 
     def _delete_all_acls(self):
         """Helper method to delete all acls used for testing"""

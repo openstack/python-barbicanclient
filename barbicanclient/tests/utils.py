@@ -110,3 +110,28 @@ def get_server_supported_versions(min_version, max_version):
     if min_version and max_version:
         return get_custom_current_response(min_version, max_version)
     return STABLE_RESPONSE
+
+
+def mock_get_secret_for_client(client, consumers=[]):
+    api_get_return = {
+        'created': '2022-11-25T15:17:56',
+        'updated': '2022-11-25T15:17:56',
+        'status': 'ACTIVE',
+        'name': 'Dummy secret',
+        'secret_type': 'opaque',
+        'expiration': None,
+        'algorithm': None,
+        'bit_length': None,
+        'mode': None,
+        'creator_id': '8ddfdbc4d92440369569af0589a20fa4',
+        'consumers': consumers or [],
+        'content_types': {'default': 'text/plain'},
+        'secret_ref': 'http://192.168.1.23/key-manager/v1/'
+                      'secrets/d46cfe10-c8ba-452f-a82f-a06834e45604'
+    }
+    client.client.get = mock.MagicMock()
+    client.client.get.return_value = api_get_return
+
+
+def mock_delete_secret_for_responses(responses, entity_href):
+    responses.delete(entity_href, status_code=204)

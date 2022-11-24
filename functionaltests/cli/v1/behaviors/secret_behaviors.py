@@ -46,7 +46,7 @@ class SecretBehaviors(base_behaviors.BaseBehaviors):
 
         :param secret_href the href to the secret to delete
         """
-        argv = ['secret', 'delete']
+        argv = ['secret', 'delete', '--force']
         self.add_auth_and_endpoint(argv)
         argv.extend([secret_href])
 

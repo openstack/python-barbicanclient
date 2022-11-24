@@ -288,6 +288,83 @@ class SecretsTestCase(base.TestCase):
             )
         self.assertIn('remove_consumer() missing', str(e))
 
+    @testcase.attr('positive')
+    def test_secret_delete_without_consumers_no_force(self):
+        new_secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+
+        secret_ref = self.cleanup.add_entity(new_secret)
+
+        self.barbicanclient.secrets.delete(secret_ref, force=False)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertRaises(exceptions.HTTPClientError, getattr, resp, "name")
+        self.cleanup.delete_entity(secret_ref)
+
+    @testcase.attr('positive')
+    def test_secret_delete_without_consumers_with_force(self):
+        new_secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+
+        secret_ref = self.cleanup.add_entity(new_secret)
+
+        self.barbicanclient.secrets.delete(secret_ref, force=True)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertRaises(exceptions.HTTPClientError, getattr, resp, "name")
+        self.cleanup.delete_entity(secret_ref)
+
+    @testcase.attr('negative')
+    def test_secret_delete_with_consumers_no_force(self):
+        """Deleting a secret with consumers.
+
+        Tries to delete a secret with consumers, but
+        without providing the 'force' parameter.
+        """
+        new_secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+
+        secret_ref = self.cleanup.add_entity(new_secret)
+        self.assertIsNotNone(secret_ref)
+
+        secret = self.barbicanclient.secrets.register_consumer(
+            secret_ref,
+            service="service1",
+            resource_type="type1",
+            resource_id="id1"
+        )
+        self.assertEqual(secret_ref, secret.secret_ref)
+
+        e = self.assertRaises(ValueError, self.barbicanclient.secrets.delete,
+                              secret.secret_ref)
+
+        self.assertIn("Secret has consumers! Remove them first or use the "
+                      "force parameter to delete it.", str(e))
+
+    @testcase.attr('positive')
+    def test_secret_delete_with_consumers_with_force(self):
+        """Deleting a secret with consumers.
+
+        Tries to delete a secret with consumers,
+        making the 'force' parameter equals True.
+        """
+        new_secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+
+        secret_ref = self.cleanup.add_entity(new_secret)
+        self.assertIsNotNone(secret_ref)
+
+        secret = self.barbicanclient.secrets.register_consumer(
+            secret_ref,
+            service="service1",
+            resource_type="type1",
+            resource_id="id1"
+        )
+        self.assertEqual(secret_ref, secret.secret_ref)
+
+        self.barbicanclient.secrets.delete(secret.secret_ref, True)
+        resp = self.barbicanclient.secrets.get(secret_ref)
+        self.assertRaises(exceptions.HTTPClientError, getattr, resp, "name")
+        self.cleanup.delete_entity(secret_ref)
+
     @testcase.attr('negative')
     def test_secret_delete_doesnt_exist(self):
         """Deletes a non-existent secret.

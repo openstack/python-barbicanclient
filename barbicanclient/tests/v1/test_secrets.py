@@ -21,6 +21,7 @@ from oslo_utils import timeutils
 from barbicanclient import base
 from barbicanclient import exceptions
 from barbicanclient.tests import test_client
+from barbicanclient.tests.utils import mock_get_secret_for_client
 from barbicanclient.v1 import acls
 from barbicanclient.v1 import secrets
 
@@ -409,22 +410,26 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         bad_href = "http://badsite.com/" + self.entity_id
         self.test_should_decrypt(bad_href)
 
-    def test_should_delete_from_manager(self, secret_ref=None):
-        secret_ref = secret_ref or self.entity_href
-
+    def _mock_delete_secret(self):
         self.responses.delete(self.entity_href, status_code=204)
 
-        self.manager.delete(secret_ref=secret_ref)
+    def _delete_from_manager(self, secret_ref, force=False):
+        mock_get_secret_for_client(self.client)
+        self._mock_delete_secret()
+        self.manager.delete(secret_ref=secret_ref, force=force)
 
         # Verify the correct URL was used to make the call.
         self.assertEqual(self.entity_href, self.responses.last_request.url)
 
+    def test_should_delete_from_manager(self):
+        self._delete_from_manager(self.entity_href)
+
     def test_should_delete_from_manager_using_stripped_uuid(self):
         bad_href = "http://badsite.com/" + self.entity_id
-        self.test_should_delete_from_manager(bad_href)
+        self._delete_from_manager(secret_ref=bad_href)
 
     def test_should_delete_from_manager_using_only_uuid(self):
-        self.test_should_delete_from_manager(self.entity_id)
+        self._delete_from_manager(secret_ref=self.entity_id)
 
     def test_should_delete_from_object(self, secref_ref=None):
         secref_ref = secref_ref or self.entity_href
@@ -566,39 +571,6 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
     def test_should_fail_delete_no_href(self):
         self.assertRaises(ValueError, self.manager.delete, None)
-
-    def test_should_register_consumer(self):
-        data = self.secret.get_dict(self.entity_href,
-                                    consumers=[self.secret.consumer])
-
-        self.responses.post(self.entity_href + '/consumers/', json=data)
-        secret = self.manager.register_consumer(
-            self.entity_href, self.secret.consumer.get('service'),
-            self.secret.consumer.get('resource_type'),
-            self.secret.consumer.get('resource_id')
-        )
-        self.assertIsInstance(secret, secrets.Secret)
-        self.assertEqual(self.entity_href, secret.secret_ref)
-
-        body = jsonutils.loads(self.responses.last_request.text)
-        self.assertEqual(self.consumers_post_resource,
-                         self.responses.last_request.url)
-        self.assertEqual(self.secret.consumer, body)
-        self.assertEqual([self.secret.consumer], secret.consumers)
-
-    def test_should_remove_consumer(self):
-        self.responses.delete(self.entity_href + '/consumers', status_code=204)
-
-        self.manager.remove_consumer(
-            self.entity_href, self.secret.consumer.get('service'),
-            self.secret.consumer.get('resource_type'),
-            self.secret.consumer.get('resource_id')
-        )
-
-        body = jsonutils.loads(self.responses.last_request.text)
-        self.assertEqual(self.consumers_delete_resource,
-                         self.responses.last_request.url)
-        self.assertEqual(self.secret.consumer, body)
 
     def test_should_get_total(self):
         self.responses.get(self.entity_base, json={'total': 1})
