@@ -16,6 +16,7 @@
 import logging
 
 from keystoneauth1 import discover
+from keystoneauth1.exceptions.http import NotAcceptable
 
 from barbicanclient import client as base_client
 from barbicanclient.v1 import acls
@@ -41,25 +42,27 @@ class Client(object):
         `barbicanclient.client.Client`.  It's recommended to use that
         function instead of making instances of this class directly.
         """
-        microversion = kwargs.pop('microversion', None)
-        if microversion:
-            if not self._validate_microversion(
-                session,
-                kwargs.get('endpoint'),
-                kwargs.get('version'),
-                kwargs.get('service_type'),
-                kwargs.get('service_name'),
-                kwargs.get('interface'),
-                kwargs.get('region_name'),
-                microversion
-            ):
-                raise ValueError(
-                    "Endpoint does not support microversion {}".format(
-                        microversion))
-            kwargs['default_microversion'] = microversion
+        microversion = self._get_normalized_microversion(
+            kwargs.pop('microversion', None))
+        normalized_microversion = self._get_max_supported_version(
+            session,
+            kwargs.get('endpoint'),
+            kwargs.get('version'),
+            kwargs.get('service_type'),
+            kwargs.get('service_name'),
+            kwargs.get('interface'),
+            kwargs.get('region_name'),
+            microversion)
+
+        if normalized_microversion is None:
+            raise ValueError(
+                "Endpoint does not support selected microversion"
+            )
+        kwargs['default_microversion'] = normalized_microversion
 
         # TODO(dmendiza): This should be a private member
-        self.client = base_client._HTTPClient(session=session, *args, **kwargs)
+        self.client = base_client._HTTPClient(
+            session, normalized_microversion, *args, **kwargs)
 
         self.secrets = secrets.SecretManager(self.client)
         self.orders = orders.OrderManager(self.client)
@@ -67,15 +70,43 @@ class Client(object):
         self.cas = cas.CAManager(self.client)
         self.acls = acls.ACLManager(self.client)
 
-    def _validate_microversion(self, session, endpoint, version, service_type,
-                               service_name, interface, region_name,
-                               microversion):
-        # first we make sure that the microversion is something we understand
+    def _get_normalized_microversion(self, microversion):
+        if microversion is None:
+            return
+
+        # We need to make sure that the microversion is something we understand
         normalized = discover.normalize_version_number(microversion)
         if normalized not in _SUPPORTED_MICROVERSIONS:
-            raise ValueError("Invalid microversion {}".format(microversion))
-        microversion = discover.version_to_string(normalized)
+            raise ValueError(
+                "Invalid microversion {}: Microversion requested is not "
+                "supported by the client".format(microversion))
+        return discover.version_to_string(normalized)
 
+    def _get_max_supported_version(self, session, endpoint, version,
+                                   service_type, service_name, interface,
+                                   region_name, microversion):
+        min_ver, max_ver = self._get_min_max_server_supported_microversion(
+            session, endpoint, version, service_type, service_name, interface,
+            region_name)
+
+        if microversion is None:
+            for client_version in _SUPPORTED_MICROVERSIONS[::-1]:
+                if discover.version_between(min_ver, max_ver, client_version):
+                    return self._get_normalized_microversion(client_version)
+            raise ValueError(
+                "Couldn't find a version supported by both client and server")
+
+        if discover.version_between(min_ver, max_ver, microversion):
+            return microversion
+
+        raise ValueError(
+            "Invalid microversion {}: Microversion requested is not "
+            "supported by the server".format(microversion))
+
+    def _get_min_max_server_supported_microversion(self, session, endpoint,
+                                                   version, service_type,
+                                                   service_name, interface,
+                                                   region_name):
         if not endpoint:
             endpoint = session.get_endpoint(
                 service_type=service_type,
@@ -85,27 +116,31 @@ class Client(object):
                 version=version
             )
 
-        resp = discover.get_version_data(
-            session, endpoint,
-            version_header='key-manager ' + microversion)
-        if resp:
-            resp = resp[0]
-            status = resp['status'].upper()
+        return self._get_min_max_version(session, endpoint, '1.1')
 
-            if status == _STABLE:
-                # status is only set to STABLE in two cases
-                # 1. when the server is older and is ignoring the microversion
-                #    header
-                # 2. when we ask for microversion 1.0 and the server
-                #    undertsands the header
-                # in either case min/max will be 1.0
-                min_ver = '1.0'
-                max_ver = '1.0'
-            else:
-                # any other status will have a min/max
-                min_ver = resp['version']['min_version']
-                max_ver = resp['version']['max_version']
-            return discover.version_between(min_ver, max_ver, microversion)
+    def _get_min_max_version(self, session, endpoint, microversion):
+        try:
+            # If the microversion requested in the version_header is outside of
+            # the range of microversions supported, return 406 Not Acceptable.
+            resp = discover.get_version_data(
+                session, endpoint,
+                version_header='key-manager ' + microversion)
+        except NotAcceptable:
+            return None, None
 
-        # TODO(afariasa) What should be returned? error?
-        return False
+        resp = resp[0]
+        status = resp['status'].upper()
+        if status == _STABLE:
+            # status is only set to STABLE in two cases
+            # 1. when the server is older and is ignoring the microversion
+            #    header
+            # 2. when we ask for microversion 1.0 and the server
+            #    understands the header
+            # in either case min/max will be 1.0
+            min_ver = '1.0'
+            max_ver = '1.0'
+        else:
+            # any other status will have a min/max
+            min_ver = resp['min_version']
+            max_ver = resp['max_version']
+        return min_ver, max_ver

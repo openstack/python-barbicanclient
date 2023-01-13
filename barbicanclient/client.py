@@ -30,14 +30,12 @@ LOG = logging.getLogger(__name__)
 _DEFAULT_SERVICE_TYPE = 'key-manager'
 _DEFAULT_SERVICE_INTERFACE = 'public'
 _DEFAULT_API_VERSION = 'v1'
-# TODO(dmendiza) Default to '1.1'
-_DEFAULT_API_MICROVERSION = '1.0'
 _SUPPORTED_API_VERSION_MAP = {'v1': 'barbicanclient.v1.client.Client'}
 
 
 class _HTTPClient(adapter.Adapter):
 
-    def __init__(self, session, project_id=None, **kwargs):
+    def __init__(self, session, microversion, project_id=None, **kwargs):
         endpoint = kwargs.pop('endpoint', None)
         if endpoint:
             kwargs['endpoint_override'] = "{}/{}/".format(
@@ -46,6 +44,7 @@ class _HTTPClient(adapter.Adapter):
             )
 
         super().__init__(session, **kwargs)
+        self.microversion = microversion
 
         if project_id is None:
             self._default_headers = dict()
@@ -180,7 +179,6 @@ def Client(version=None, session=None, *args, **kwargs):
     kwargs['version'] = version or _DEFAULT_API_VERSION
     kwargs.setdefault('service_type', _DEFAULT_SERVICE_TYPE)
     kwargs.setdefault('interface', _DEFAULT_SERVICE_INTERFACE)
-    kwargs.setdefault('microversion', _DEFAULT_API_MICROVERSION)
 
     try:
         client_path = _SUPPORTED_API_VERSION_MAP[kwargs['version']]

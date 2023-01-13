@@ -21,6 +21,15 @@ import testtools
 
 from barbicanclient import client
 from barbicanclient import exceptions
+from barbicanclient.exceptions import UnsupportedVersion
+from barbicanclient.tests.utils import get_server_supported_versions
+from barbicanclient.tests.utils import get_version_endpoint
+from barbicanclient.tests.utils import mock_session
+from barbicanclient.tests.utils import mock_session_get
+from barbicanclient.tests.utils import mock_session_get_endpoint
+
+
+_DEFAULT_MICROVERSION = (1, 1)
 
 
 class TestClient(testtools.TestCase):
@@ -47,30 +56,26 @@ class TestClient(testtools.TestCase):
         self.responses.get(
             'http://localhost:9311/',
             json={
-                "versions": {
-                    "values": [{
-                        "id": "v1",
-                        "status": "stable",
-                        "links": [{
-                            "rel": "self",
-                            "href": "http://localhost:9311/v1/"
-                        }, {
-                            "rel": "describedby",
-                            "type": "text/html",
-                            "href": "https://docs.openstack.org/"
-                        }],
-                        "media-types": [{
-                            "type": "application/vnd.openstack.key-manager-v1"
-                                    "+json",
-                            "base": "application/json",
-                        }]}]}}
-        )
+                "versions": [{
+                    "id": "v1",
+                    "status": "CURRENT",
+                    "min_version": "1.0",
+                    "max_version": "1.1",
+                    "links": [{
+                        "rel": "self",
+                        "href": "http://localhost:9311/v1/"
+                    }, {
+                        "rel": "describedby",
+                        "type": "text/html",
+                        "href": "https://docs.openstack.org/"}]}]})
 
         self.project_id = 'project_id'
         self.session = session.Session()
-        self.httpclient = client._HTTPClient(session=self.session,
-                                             endpoint=self.endpoint,
-                                             project_id=self.project_id)
+        self.httpclient = client._HTTPClient(
+            session=self.session,
+            microversion=_DEFAULT_MICROVERSION,
+            endpoint=self.endpoint,
+            project_id=self.project_id)
 
 
 class WhenTestingClientInit(TestClient):
@@ -83,12 +88,14 @@ class WhenTestingClientInit(TestClient):
                          c.client.endpoint_override)
 
     def test_default_headers_are_empty(self):
-        c = client._HTTPClient(session=self.session, endpoint=self.endpoint)
+        c = client._HTTPClient(
+            session=self.session, microversion='1.1', endpoint=self.endpoint)
         self.assertIsInstance(c._default_headers, dict)
         self.assertFalse(bool(c._default_headers))
 
     def test_project_id_is_added_to_default_headers(self):
         c = client._HTTPClient(session=self.session,
+                               microversion=_DEFAULT_MICROVERSION,
                                endpoint=self.endpoint,
                                project_id=self.project_id)
         self.assertIn('X-Project-Id', c._default_headers.keys())
@@ -121,9 +128,11 @@ class WhenTestingClientPost(TestClient):
 
     def setUp(self):
         super(WhenTestingClientPost, self).setUp()
-        self.httpclient = client._HTTPClient(session=self.session,
-                                             endpoint=self.endpoint,
-                                             version='v1')
+        self.httpclient = client._HTTPClient(
+            session=self.session,
+            microversion=_DEFAULT_MICROVERSION,
+            endpoint=self.endpoint,
+            version='v1')
         self.href = self.endpoint + '/v1/secrets/'
         self.post_mock = self.responses.post(self.href, json={})
 
@@ -153,8 +162,10 @@ class WhenTestingClientPut(TestClient):
 
     def setUp(self):
         super(WhenTestingClientPut, self).setUp()
-        self.httpclient = client._HTTPClient(session=self.session,
-                                             endpoint=self.endpoint)
+        self.httpclient = client._HTTPClient(
+            session=self.session,
+            microversion=_DEFAULT_MICROVERSION,
+            endpoint=self.endpoint)
         self.href = 'http://test_href/'
         self.put_mock = self.responses.put(self.href, status_code=204)
 
@@ -184,8 +195,10 @@ class WhenTestingClientGet(TestClient):
 
     def setUp(self):
         super(WhenTestingClientGet, self).setUp()
-        self.httpclient = client._HTTPClient(session=self.session,
-                                             endpoint=self.endpoint)
+        self.httpclient = client._HTTPClient(
+            session=self.session,
+            microversion=_DEFAULT_MICROVERSION,
+            endpoint=self.endpoint)
         self.headers = dict()
         self.href = 'http://test_href/'
         self.get_mock = self.responses.get(self.href, json={})
@@ -242,8 +255,10 @@ class WhenTestingClientDelete(TestClient):
 
     def setUp(self):
         super(WhenTestingClientDelete, self).setUp()
-        self.httpclient = client._HTTPClient(session=self.session,
-                                             endpoint=self.endpoint)
+        self.httpclient = client._HTTPClient(
+            session=self.session,
+            microversion=_DEFAULT_MICROVERSION,
+            endpoint=self.endpoint)
         self.href = 'http://test_href/'
         self.del_mock = self.responses.delete(self.href, status_code=204)
 
@@ -328,3 +343,140 @@ class BaseEntityResource(TestClient):
 
         self.client = client.Client(endpoint=self.endpoint,
                                     project_id=self.project_id)
+
+
+class WhenTestingClientMicroversion(TestClient):
+    def _create_mock_session(
+            self, requested_version, server_max_version, server_min_version,
+            endpoint):
+        sess = mock_session()
+
+        mock_session_get_endpoint(sess, get_version_endpoint(endpoint))
+        mock_session_get(
+            sess, get_server_supported_versions(
+                server_min_version, server_max_version))
+
+        return sess
+
+    def _test_client_creation_with_endpoint(
+            self, requested_version, server_max_version, server_min_version,
+            endpoint):
+        sess = self._create_mock_session(
+            requested_version, server_max_version, server_min_version,
+            endpoint)
+
+        client.Client(session=sess, microversion=requested_version)
+
+        headers = {
+            'Accept': 'application/json',
+            'OpenStack-API-Version': 'key-manager 1.1'
+        }
+
+        sess.get.assert_called_with(
+            get_version_endpoint(endpoint), headers=headers,
+            authenticated=None)
+
+    def _mock_session_and_get_client(
+            self, requested_version, server_max_version, server_min_version,
+            endpoint=None):
+        sess = self._create_mock_session(
+            requested_version, server_max_version, server_min_version,
+            endpoint)
+
+        return client.Client(session=sess, microversion=requested_version)
+
+    def test_fails_when_requesting_invalid_microversion(self):
+        self.assertRaises(TypeError,
+                          client.Client, session=self.session,
+                          endpoint=self.endpoint, project_id=self.project_id,
+                          microversion="a")
+
+    def test_fails_when_requesting_unsupported_microversion(self):
+        self.assertRaises(UnsupportedVersion,
+                          client.Client, session=self.session,
+                          endpoint=self.endpoint, project_id=self.project_id,
+                          microversion="1.9")
+
+    def test_fails_when_requesting_unsupported_version(self):
+        self.assertRaises(UnsupportedVersion,
+                          client.Client, session=self.session,
+                          endpoint=self.endpoint, project_id=self.project_id,
+                          version="v0")
+
+    def test_passes_without_providing_endpoint(self):
+        requested_version = None
+        server_max_version = (1, 1)
+        server_min_version = (1, 0)
+        endpoint = None
+
+        self._test_client_creation_with_endpoint(
+            requested_version, server_max_version, server_min_version,
+            endpoint)
+
+    def test_passes_with_custom_endpoint(self):
+        requested_version = None
+        server_max_version = (1, 1)
+        server_min_version = (1, 0)
+        endpoint = self.endpoint
+
+        self._test_client_creation_with_endpoint(
+            requested_version, server_max_version, server_min_version,
+            endpoint)
+
+    def test_passes_with_default_microversion_as_1_1(self):
+        requested_version = None
+        server_max_version = (1, 1)
+        server_min_version = (1, 0)
+
+        c = self._mock_session_and_get_client(
+            requested_version, server_max_version, server_min_version)
+
+        self.assertEqual("1.1", c.client.microversion)
+
+    def test_passes_with_default_microversion_as_1_0(self):
+        requested_version = None
+        server_max_version = (1, 0)
+        server_min_version = (1, 0)
+
+        c = self._mock_session_and_get_client(
+            requested_version, server_max_version, server_min_version)
+
+        self.assertEqual("1.0", c.client.microversion)
+
+    def test_fails_requesting_higher_microversion_than_supported_by_server(
+            self):
+        requested_version = "1.1"
+        server_max_version = (1, 0)
+        server_min_version = (1, 0)
+
+        sess = self._create_mock_session(
+            requested_version, server_max_version, server_min_version,
+            self.endpoint)
+
+        self.assertRaises(
+            UnsupportedVersion, client.Client, session=sess,
+            endpoint=self.endpoint, microversion=requested_version)
+
+    def test_fails_requesting_lower_microversion_than_supported_by_server(
+            self):
+        requested_version = "1.0"
+        server_max_version = (1, 1)
+        server_min_version = (1, 1)
+
+        sess = self._create_mock_session(
+            requested_version, server_max_version, server_min_version,
+            self.endpoint)
+
+        self.assertRaises(
+            UnsupportedVersion, client.Client, session=sess,
+            endpoint=self.endpoint, microversion=requested_version)
+
+    def test_passes_with_stable_server_version(self):
+        requested_version = "1.0"
+        server_max_version = None
+        server_min_version = None
+
+        c = self._mock_session_and_get_client(
+            requested_version, server_max_version, server_min_version)
+
+        self.assertEqual(requested_version, c.client.microversion)

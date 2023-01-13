@@ -88,7 +88,7 @@ class Secret(SecretFormatter):
                  payload_content_type=None, payload_content_encoding=None,
                  secret_ref=None, created=None, updated=None,
                  content_types=None, status=None, secret_type=None,
-                 creator_id=None):
+                 creator_id=None, consumers=None):
         """Secret objects should not be instantiated directly.
 
         You should use the `create` or `get` methods of the
@@ -110,7 +110,8 @@ class Secret(SecretFormatter):
             updated=updated,
             content_types=content_types,
             status=status,
-            creator_id=creator_id
+            creator_id=creator_id,
+            consumers=consumers
         )
         self._acl_manager = acl_manager.ACLManager(api)
         self._acls = None
@@ -201,6 +202,15 @@ class Secret(SecretFormatter):
         if self.secret_ref and not self._acls:
             self._acls = self._acl_manager.get(self.secret_ref)
         return self._acls
+
+    @property
+    @lazy
+    def consumers(self):
+        return self._consumers
+
+    @consumers.setter
+    def consumers(self, value):
+        self._consumers = value
 
     @name.setter
     @immutable_after_save
@@ -375,7 +385,7 @@ class Secret(SecretFormatter):
                         payload=None, payload_content_type=None,
                         payload_content_encoding=None, created=None,
                         updated=None, content_types=None, status=None,
-                        creator_id=None):
+                        creator_id=None, consumers=None):
         self._name = name
         self._algorithm = algorithm
         self._bit_length = bit_length
@@ -385,6 +395,7 @@ class Secret(SecretFormatter):
         self._payload_content_encoding = payload_content_encoding
         self._expiration = expiration
         self._creator_id = creator_id
+        self._consumers = consumers or list()
         if not self._secret_type:
             self._secret_type = "opaque"
         if self._expiration:
@@ -428,7 +439,8 @@ class Secret(SecretFormatter):
                 created=result.get('created'),
                 updated=result.get('updated'),
                 content_types=result.get('content_types'),
-                status=result.get('status')
+                status=result.get('status'),
+                consumers=result.get('consumers', [])
             )
 
     def __repr__(self):

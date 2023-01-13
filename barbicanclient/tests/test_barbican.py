@@ -49,24 +49,19 @@ class WhenTestingBarbicanCLI(testtools.TestCase):
         self.responses.get(
             'http://localhost:9311/',
             json={
-                "versions": {
-                    "values": [{
-                        "id": "v1",
-                        "status": "stable",
-                        "links": [{
-                            "rel": "self",
-                            "href": "http://localhost:9311/v1/"
-                        }, {
-                            "rel": "describedby",
-                            "type": "text/html",
-                            "href": "https://docs.openstack.org/"
-                        }],
-                        "media-types": [{
-                            "type": "application/vnd.openstack.key-manager-v1"
-                                    "+json",
-                            "base": "application/json",
-                        }]}]}}
-        )
+                "versions": [{
+                    "id": "v1",
+                    "status": "CURRENT",
+                    "min_version": "1.0",
+                    "max_version": "1.1",
+                    "links": [{
+                        "rel": "self",
+                        "href": "http://localhost:9311/v1/"
+                    }, {
+                        "rel": "describedby",
+                        "type": "text/html",
+                        "href": "https://docs.openstack.org/"}]}]})
+
         self.captured_stdout = io.StringIO()
         self.captured_stderr = io.StringIO()
         self.barbican = Barbican(
