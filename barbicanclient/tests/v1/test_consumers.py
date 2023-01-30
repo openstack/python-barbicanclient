@@ -127,3 +127,35 @@ class WhenTestingConsumers(test_client.BaseEntityResource):
 
     def test_should_delete_from_manager_without_consumers_and_force(self):
         self._delete_from_manager(self.entity_href, force=True)
+
+    def _list_consumers(self, secret_ref, consumers=[]):
+        mock_get_secret_for_client(self.client, consumers)
+        return self.manager.list_consumers(secret_ref)
+
+    def test_list_consumers_from_secret_without_consumers(self):
+        consumer_list = self._list_consumers(self.entity_href)
+        self.assertTrue(len(consumer_list) == 0)
+
+    def test_list_consumers_from_secret_with_consumers(self):
+        consumers = [{'service': 'service_test1',
+                      'resource_type': 'type_test1',
+                      'resource_id': 'id_test1'},
+                     {'service': 'service_test2',
+                      'resource_type': 'type_test2',
+                      'resource_id': 'id_test2'}]
+        consumer_list = self._list_consumers(self.entity_href, consumers)
+
+        for elem in range(len(consumers)):
+            self.assertTrue(
+                consumer_list[elem].service ==
+                consumers[elem]['service'])
+            self.assertTrue(
+                consumer_list[elem].resource_type ==
+                consumers[elem]['resource_type'])
+            self.assertTrue(
+                consumer_list[elem].resource_id ==
+                consumers[elem]['resource_id'])
+
+    def test_should_fail_list_consumers_invalid_secret(self):
+        self.assertRaises(ValueError, self.manager.list_consumers,
+                          **{'secret_ref': '12345'})

@@ -69,14 +69,20 @@ class SecretsTestCase(base.TestCase):
         self.cleanup.delete_all_entities()
         super(SecretsTestCase, self).tearDown()
 
+    def _create_test_secret(self):
+        """Helper module to create a secret withouth consumers"""
+        new_secret = self.barbicanclient.secrets.create(
+            **secret_create_defaults_data)
+
+        secret_ref = self.cleanup.add_entity(new_secret)
+        self.assertIsNotNone(secret_ref)
+
+        return secret_ref
+
     @testcase.attr('positive')
     def test_secret_create_defaults_check_content_types(self):
         """Check that set content-type attribute is retained in metadata."""
-        secret = self.barbicanclient.secrets.create(
-            **secret_create_defaults_data)
-
-        secret_ref = self.cleanup.add_entity(secret)
-        self.assertIsNotNone(secret_ref)
+        secret_ref = self._create_test_secret()
 
         resp = self.barbicanclient.secrets.get(secret_ref)
         content_types = resp.content_types
@@ -106,11 +112,7 @@ class SecretsTestCase(base.TestCase):
 
         By default, 'read' ACL settings are there for a secret.
          """
-        test_model = self.barbicanclient.secrets.create(
-            **secret_create_defaults_data)
-
-        secret_ref = self.cleanup.add_entity(test_model)
-        self.assertIsNotNone(secret_ref)
+        secret_ref = self._create_test_secret()
 
         secret_entity = self.barbicanclient.secrets.get(secret_ref)
         self.assertIsNotNone(secret_entity.acls)
@@ -179,11 +181,7 @@ class SecretsTestCase(base.TestCase):
         in the register_consumers list, then remove each consumer
         in the remove_consumers list.
         """
-        new_secret = self.barbicanclient.secrets.create(
-            **secret_create_defaults_data)
-
-        secret_ref = self.cleanup.add_entity(new_secret)
-        self.assertIsNotNone(secret_ref)
+        secret_ref = self._create_test_secret()
 
         for consumer in register_consumers:
             secret = self.barbicanclient.secrets.register_consumer(
@@ -231,11 +229,7 @@ class SecretsTestCase(base.TestCase):
         providing all of the required positional arguments
         (service, resource_type, resource_id).
         """
-        new_secret = self.barbicanclient.secrets.create(
-            **secret_create_defaults_data)
-
-        secret_ref = self.cleanup.add_entity(new_secret)
-        self.assertIsNotNone(secret_ref)
+        secret_ref = self._create_test_secret()
 
         for consumer in register_consumers:
             e = self.assertRaises(
@@ -267,11 +261,7 @@ class SecretsTestCase(base.TestCase):
         providing all of the required positional arguments
         (service, resource_type, resource_id).
         """
-        new_secret = self.barbicanclient.secrets.create(
-            **secret_create_defaults_data)
-
-        secret_ref = self.cleanup.add_entity(new_secret)
-        self.assertIsNotNone(secret_ref)
+        secret_ref = self._create_test_secret()
 
         secret = self.barbicanclient.secrets.register_consumer(
             secret_ref,
@@ -290,10 +280,7 @@ class SecretsTestCase(base.TestCase):
 
     @testcase.attr('positive')
     def test_secret_delete_without_consumers_no_force(self):
-        new_secret = self.barbicanclient.secrets.create(
-            **secret_create_defaults_data)
-
-        secret_ref = self.cleanup.add_entity(new_secret)
+        secret_ref = self._create_test_secret()
 
         self.barbicanclient.secrets.delete(secret_ref, force=False)
         resp = self.barbicanclient.secrets.get(secret_ref)
@@ -302,10 +289,7 @@ class SecretsTestCase(base.TestCase):
 
     @testcase.attr('positive')
     def test_secret_delete_without_consumers_with_force(self):
-        new_secret = self.barbicanclient.secrets.create(
-            **secret_create_defaults_data)
-
-        secret_ref = self.cleanup.add_entity(new_secret)
+        secret_ref = self._create_test_secret()
 
         self.barbicanclient.secrets.delete(secret_ref, force=True)
         resp = self.barbicanclient.secrets.get(secret_ref)
@@ -319,11 +303,7 @@ class SecretsTestCase(base.TestCase):
         Tries to delete a secret with consumers, but
         without providing the 'force' parameter.
         """
-        new_secret = self.barbicanclient.secrets.create(
-            **secret_create_defaults_data)
-
-        secret_ref = self.cleanup.add_entity(new_secret)
-        self.assertIsNotNone(secret_ref)
+        secret_ref = self._create_test_secret()
 
         secret = self.barbicanclient.secrets.register_consumer(
             secret_ref,
@@ -346,11 +326,7 @@ class SecretsTestCase(base.TestCase):
         Tries to delete a secret with consumers,
         making the 'force' parameter equals True.
         """
-        new_secret = self.barbicanclient.secrets.create(
-            **secret_create_defaults_data)
-
-        secret_ref = self.cleanup.add_entity(new_secret)
-        self.assertIsNotNone(secret_ref)
+        secret_ref = self._create_test_secret()
 
         secret = self.barbicanclient.secrets.register_consumer(
             secret_ref,
@@ -364,6 +340,83 @@ class SecretsTestCase(base.TestCase):
         resp = self.barbicanclient.secrets.get(secret_ref)
         self.assertRaises(exceptions.HTTPClientError, getattr, resp, "name")
         self.cleanup.delete_entity(secret_ref)
+
+    @testcase.attr('positive')
+    def test_consumers_list_secret_without_consumers(self):
+        """Lists consumers from a secret without consumers"""
+        secret_ref = self._create_test_secret()
+
+        consumers_list = self.barbicanclient.secrets.list_consumers(
+            secret_ref)
+        self.assertTrue(len(consumers_list) == 0)
+
+        self.cleanup.delete_entity(secret_ref)
+        self.barbicanclient.secrets.delete(secret_ref, True)
+
+    @testcase.attr('positive')
+    def test_consumers_list_secret_with_consumers(self):
+        """Lists consumers from a secret with consumers"""
+        secret_ref = self._create_test_secret()
+
+        consumers = [{
+            'service': 'service1',
+            'resource_type': 'type1',
+            'resource_id': 'id1'}, {
+            'service': 'service2',
+            'resource_type': 'type2',
+            'resource_id': 'id2'}]
+
+        for consumer in consumers:
+            _ = self.barbicanclient.secrets.register_consumer(
+                secret_ref,
+                service=consumer['service'],
+                resource_type=consumer['resource_type'],
+                resource_id=consumer['resource_id']
+            )
+
+        consumers_list = self.barbicanclient.secrets.list_consumers(
+            secret_ref)
+
+        for elem in range(len(consumers)):
+            self.assertTrue(
+                consumers_list[elem].service ==
+                consumers[elem]['service'])
+            self.assertTrue(
+                consumers_list[elem].resource_type ==
+                consumers[elem]['resource_type'])
+            self.assertTrue(
+                consumers_list[elem].resource_id ==
+                consumers[elem]['resource_id'])
+
+        self.cleanup.delete_entity(secret_ref)
+        self.barbicanclient.secrets.delete(secret_ref, True)
+
+    @testcase.attr('negative')
+    def test_consumers_list_secret_doesnt_exist(self):
+        """Tries to list consumers from a non-existent secret"""
+        e = self.assertRaises(exceptions.HTTPClientError,
+                              self.barbicanclient.secrets.list_consumers,
+                              '9999999f-f99f-49f9-9fff-f99f999ff9ff')
+
+        self.assertIn("Secret not found", str(e))
+
+    @testcase.attr('negative')
+    def test_consumers_list_secret_invalid_uuid(self):
+        """Tries to list consumers providing an invalid secret UUID"""
+        e = self.assertRaises(exceptions.HTTPClientError,
+                              self.barbicanclient.secrets.list_consumers,
+                              '9999999f-ffff-ffff-9fff-f99f999ff9ff')
+
+        self.assertIn("Provided secret id is invalid.", str(e))
+
+    @testcase.attr('negative')
+    def test_consumers_list_invalid_secret(self):
+        """Tries to list consumers providing an invalid secret"""
+        e = self.assertRaises(ValueError,
+                              self.barbicanclient.secrets.list_consumers,
+                              'abcde')
+
+        self.assertIn("secret incorrectly specified.", str(e))
 
     @testcase.attr('negative')
     def test_secret_delete_doesnt_exist(self):

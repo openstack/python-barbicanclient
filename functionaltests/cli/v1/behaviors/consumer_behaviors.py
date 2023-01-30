@@ -46,3 +46,17 @@ class ConsumerBehaviors(base_behaviors.BaseBehaviors):
         argv.extend([secret_href])
 
         stdout, stderr = self.issue_barbican_command(argv)
+
+    def list_consumers(self, secret_href):
+        argv = ['secret', 'consumer', 'list']
+        self.add_auth_and_endpoint(argv)
+
+        argv.extend([secret_href])
+
+        stdout, stderr = self.issue_barbican_command(argv)
+
+        if len(stderr) > 0 or stdout == '\n':
+            return []
+        else:
+            consumers = self._prettytable_to_list(stdout)
+            return consumers

@@ -44,6 +44,49 @@ def immutable_after_save(func):
     return wrapper
 
 
+class SecretConsumersFormatter(formatter.EntityFormatter):
+
+    columns = ("Service",
+               "Resource type",
+               "Resource id",
+               "Created"
+               )
+
+    def _get_formatted_data(self):
+        data = (self.service,
+                self.resource_type,
+                self.resource_id,
+                self.created
+                )
+        return data
+
+
+class SecretConsumers(SecretConsumersFormatter):
+    """Secrets consumers managed by Barbican
+
+    Secrets might or might not have consumers.
+    """
+
+    def __init__(self, secret_ref, service, resource_type, resource_id,
+                 created=None, updated=None, status=None):
+
+        self.secret_ref = secret_ref
+        self.service = service
+        self.resource_type = resource_type
+        self.resource_id = resource_id
+        self.created = created
+        self.updated = updated
+        self.status = status
+
+    def __repr__(self):
+        return ('SecretConsumers(secret_ref="{0}", service="{1}", '
+                'resource_type="{2}", resource_id="{3}", '
+                'created="{4}", updated="{5}", status="{6}")'
+                .format(self.secret_ref, self.service,
+                        self.resource_type, self.resource_id,
+                        self.created, self.updated, self.status))
+
+
 class SecretFormatter(formatter.EntityFormatter):
 
     columns = ("Secret href",
@@ -689,3 +732,27 @@ class SecretManager(base.BaseEntityManager):
         }
 
         self._api.delete(href, json=consumer_dict)
+
+    def list_consumers(self, secret_ref, limit=10, offset=0):
+        """List consumers of the secret
+
+        :param secret_ref: Full HATEOAS reference to a secret, or a UUID
+        :param limit: Max number of consumers returned
+        :param offset: Offset secrets to begin list
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
+        """
+        LOG.debug('Listing consumers of secret {0}'.format(secret_ref))
+        self._enforce_microversion()
+        secret_uuid = base.validate_ref_and_return_uuid(
+            secret_ref, 'secret')
+        href = '{0}/{1}/consumers'.format(self._entity, secret_uuid)
+
+        params = {'limit': limit, 'offset': offset}
+        response = self._api.get(href, params=params)
+
+        return [
+            SecretConsumers(secret_ref=secret_ref, **s)
+            for s in response.get('consumers', [])
+        ]

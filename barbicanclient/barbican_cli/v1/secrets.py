@@ -252,3 +252,27 @@ class DeleteConsumer(command.Command):
             args.service_type_name,
             args.resource_type,
             args.resource_id)
+
+
+class ListConsumer(lister.Lister):
+    """List consumers of a secret."""
+
+    def get_parser(self, prog_name):
+        parser = super(ListConsumer, self).get_parser(prog_name)
+        parser.add_argument('URI', help='The URI reference for the secret')
+        parser.add_argument('--limit', '-l', default=10,
+                            help='specify the limit to the number of items '
+                                 'to list per page (default: %(default)s; '
+                                 'maximum: 100)',
+                            type=int)
+        parser.add_argument('--offset', '-o', default=0,
+                            help='specify the page offset '
+                                 '(default: %(default)s)',
+                            type=int)
+        return parser
+
+    def take_action(self, args):
+        obj_list = self.app.client_manager.key_manager.secrets.list_consumers(
+            secret_ref=args.URI, limit=args.limit, offset=args.offset)
+
+        return secrets.SecretConsumers._list_objects(obj_list)
