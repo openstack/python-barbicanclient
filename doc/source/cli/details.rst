@@ -57,7 +57,7 @@ barbican usage
                    [--region-name <barbican-region-name>]
                    [--barbican-api-version <barbican-api-version>] [--insecure]
                    [--os-cacert <ca-certificate>] [--os-cert <certificate>]
-                   [--os-key <key>] [--timeout <seconds>]
+                   [--os-key <key>] [--timeout <seconds>] [--collect-timing]
 
 .. _barbican_command_options:
 
@@ -489,7 +489,7 @@ barbican secret delete
 
 .. code-block:: console
 
-   usage: barbican secret delete [-h] URI
+   usage: barbican secret delete [-h] [--force] URI
 
 Delete a secret by providing its URI.
 
@@ -502,6 +502,9 @@ Delete a secret by providing its URI.
 
 ``-h, --help``
   show this help message and exit
+
+``--force, -f``
+  if specified, forces the deletion of secrets that have consumers.
 
 .. _barbican_secret_get:
 
@@ -820,3 +823,137 @@ Update a secret with no payload in Barbican.
 ``-h, --help``
   show this help message and exit
 
+.. _barbican_secret_consumer_create:
+
+barbican secret consumer create
+-------------------------------
+
+.. code-block:: console
+
+   usage: barbican secret consumer create [-h] --service-type-name SERVICE_TYPE_NAME
+                                               --resource-type RESOURCE_TYPE
+                                               --resource-id RESOURCE_ID URI
+
+Create a consumer for a secret.
+
+**Positional arguments:**
+
+``URI``
+  The URI reference for the secret.
+
+**Optional arguments:**
+
+``-h, --help``
+  show this help message and exit
+
+``--service-type-name SERVICE_TYPE_NAME, -s SERVICE_TYPE_NAME``
+  the service that will consume the secret
+
+``--resource-type RESOURCE_TYPE, -t RESOURCE_TYPE``
+   the type of resource that will consume the secret
+
+``--resource-id RESOURCE_ID, -i RESOURCE_ID``
+  the id of the resource that will consume the secret
+
+.. _barbican_secret_consumer_delete:
+
+barbican secret consumer delete
+-------------------------------
+
+.. code-block:: console
+
+   usage: barbican secret consumer delete [-h] --service-type-name SERVICE_TYPE_NAME
+                                               --resource-type RESOURCE_TYPE
+                                               --resource-id RESOURCE_ID URI
+
+Delete a consumer from a secret.
+
+**Positional arguments:**
+
+``URI``
+  The URI reference for the secret.
+
+**Optional arguments:**
+
+``-h, --help``
+  show this help message and exit
+
+``--service-type-name SERVICE_TYPE_NAME, -s SERVICE_TYPE_NAME``
+  the service that will consume the secret
+
+``--resource-type RESOURCE_TYPE, -t RESOURCE_TYPE``
+  the type of resource that will consume the secret
+
+``--resource-id RESOURCE_ID, -i RESOURCE_ID``
+  the id of the resource that will consume the secret
+
+.. _barbican_secret_consumer_list:
+
+barbican secret consumer list
+-----------------------------
+
+.. code-block:: console
+
+   usage: barbican secret consumer list [-h] [-f {csv,json,table,value,yaml}]
+                                        [-c COLUMN] [--quote {all,minimal,none,nonnumeric}]
+                                        [--noindent] [--max-width <integer>]
+                                        [--fit-width] [--print-empty] [--sort-column SORT_COLUMN]
+                                        [--sort-ascending | --sort-descending] [--limit LIMIT]
+                                        [--offset OFFSET]
+                                        URI
+
+List consumers of a secret.
+
+**Positional arguments:**
+
+``URI``
+  The URI reference for the secret
+
+**Optional arguments:**
+
+``-h, --help``
+  show this help message and exit
+
+``--limit LIMIT, -l LIMIT``
+  specify the limit to the number of items to list per page (default: 10; maximum: 100)
+
+``--offset OFFSET, -o OFFSET``
+  specify the page offset (default: 0)
+
+**Output formatters:**
+
+``-f {csv,json,table,value,yaml}, --format {csv,json,table,value,yaml}``
+  the output format, defaults to table
+
+``-c COLUMN, --column COLUMN``
+  specify the column(s) to include, can be repeated to show multiple columns
+
+``--sort-column SORT_COLUMN``
+  specify the column(s) to sort the data (columns specified first have a priority, non-existing columns are ignored), can be repeated
+
+``--sort-ascending``
+  sort the column(s) in ascending order
+
+``--sort-descending``
+  sort the column(s) in descending order
+
+**CSV Formatter:**
+
+``--quote {all,minimal,none,nonnumeric}``
+  when to include quotes, defaults to nonnumeric
+
+**json formatter:**
+
+``--noindent``
+  whether to disable indenting the JSON
+
+**table formatter:**
+
+``--max-width <integer>``
+  Maximum display width, <1 to disable. You can also use the CLIFF_MAX_TERM_WIDTH environment variable, but the parameter takes precedence.
+
+``--fit-width``
+  Fit the table to the display width. Implied if --max-width greater than 0. Set the environment variable CLIFF_FIT_WIDTH=1 to always enable
+
+``--print-empty``
+  Print empty table if there is no data to show.

@@ -186,6 +186,52 @@ Example:
 
     retrieved_container = barbican.containers.get(my_container_ref)
 
+Secret Consumers
+================
+
+Secret consumers are represented by three attributes: service, resource type and resource id.
+Callers can register secret consumers to indicate that they are using a secret.
+For instance, in the example  below, the caller creates a secret consumer to indicate that
+the created secret is being used to encrypt a specific Glance image.
+
+Secret consumers should be managed using the
+:class:`barbicanclient.secrets.SecretManager` instance in the
+`secrets` attribute of the `Client` and by the corresponding
+`register_consumer`, `remove_consumer` and `list_consumers` methods.
+
+Example:
+
+  .. code-block:: python
+
+    # Creating a secret and adding a consumer to it
+
+    secret = barbican.secrets.create(name='image encryption key',
+                                     payload='encryption_key')
+    secret.store()
+
+    barbican.secrets.register_consumer(
+        secret.secret_ref,
+        service="image",
+        resource_type="image",
+        resource_id="123e4567-e89b-12d3-a456-426614174002"
+    )
+
+    # Listing all the secret's consumers
+
+    consumers = barbican.secrets.list_consumers(secret.secret_ref)
+    for consumer in consumers:
+        print(f"Service: {consumer['service']}\t"
+              f"Resource Type: {consumer['resource_type']}\t"
+              f"Resource id: {consumer['resource_id']}")
+
+    # Removing the previously created consumer
+
+    barbican.secrets.remove_consumer(
+        secret.secret_ref,
+        service="image",
+        resource_type="image",
+        resource_id="123e4567-e89b-12d3-a456-426614174002"
+    )
 
 ACLs
 ====
@@ -325,7 +371,7 @@ Example:
     # Case 2 - Remove same users from ACL settings for each operation type
     # --------------------------------------------------------------------
 
-    # Get ACL entity from server
+    # Get ACL from server
     acl_entity = barbican.acls.get(secret_ref)
 
     # Go through each operation ACL setting and remove users from existing list

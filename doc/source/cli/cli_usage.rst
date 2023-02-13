@@ -44,10 +44,11 @@ Subcommand actions that a user can take for secrets are:
 
 .. code-block:: bash
 
-    secret delete  Delete a secret by providing its URI.
-    secret get     Retrieve a secret by providing its URI.
-    secret list    List secrets.
-    secret store   Store a secret in Barbican.
+    secret consumer Allow operations with secret consumers.
+    secret delete   Delete a secret by providing its URI.
+    secret get      Retrieve a secret by providing its URI.
+    secret list     List secrets.
+    secret store    Store a secret in Barbican.
 
 Each subcommand takes in a different set of arguments, and the help message
 varies from one to another. The help message for **get** can be seen below.
@@ -161,9 +162,21 @@ the secret may be written to a file.  For this method the
 Secret Delete
 ~~~~~~~~~~~~~
 
+If a secret to be deleted has at least one consumer, the secret can only be deleted after removing all consumers,
+or by using the `--force` parameter
+
 .. code-block:: bash
 
     $ barbican secret delete http://localhost:9311/v1/secrets/a70a45d8-4076-42a2-b111-8893d3b92a3e
+
+.. code-block:: bash
+
+    $ barbican secret delete http://localhost:9311/v1/secrets/0207414d-c23b-47f6-9cef-f44e907ac7a8
+    Secret has consumers! Remove them first or use the force parameter to delete it.
+
+.. code-block:: bash
+
+    $ barbican secret delete --force http://localhost:9311/v1/secrets/0207414d-c23b-47f6-9cef-f44e907ac7a8
 
 Secret Update
 ~~~~~~~~~~~~~
@@ -188,6 +201,120 @@ Secret List
     | http://localhost:9311/v1/secrets/bb3d8c20-8ea5-4bfc-9645-c8da79c8b371 | None | 2015-04-15 20:37:37.501475+00:00 | ACTIVE | {'default': 'application/octet-stream'} | aes       |        256 | cbc  | None       |
     +-----------------------------------------------------------------------+------+----------------------------------+--------+-----------------------------------------+-----------+------------+------+------------+
 
+Secret Consumers
+----------------
+
+.. code-block:: bash
+
+    $ barbican secret consumer <action>
+
+A subcommand describing the action to be performed should follow. The
+subcommands are mostly the same as for container consumers, although
+some optional arguments might not apply.
+
+For all subcommands, the secret URI must be specified.
+Subcommand actions that a user can take for secret consumers are:
+
+.. code-block:: bash
+
+    secret consumer create  Create a secret consumer.
+    secret consumer delete  Delete a secret consumer
+    secret consumer list    List consumers of a secret.
+
+The help message for **list** can be seen below.
+
+.. code-block:: bash
+
+    $ barbican help secret consumer list
+    usage: barbican secret consumer list [-h] [-f {csv,json,table,value,yaml}] [-c COLUMN]
+                                         [--quote {all,minimal,none,nonnumeric}] [--noindent]
+                                         [--max-width <integer>] [--fit-width] [--print-empty]
+                                         [--sort-column SORT_COLUMN]
+                                         [--sort-ascending | --sort-descending] [--limit LIMIT]
+                                         [--offset OFFSET]
+                                         URI
+
+    List consumers of a secret.
+
+    positional arguments:
+    URI           The URI reference for the secret
+
+    optional arguments:
+    -h, --help          show this help message and exit
+    --limit LIMIT, -l LIMIT
+                        specify the limit to the number of items to list per page
+                        (default: 10; maximum: 100)
+    --offset OFFSET, -o OFFSET
+                        specify the page offset (default: 0)
+
+    output formatters:
+    output formatter options
+
+    -f {csv,json,table,value,yaml}, --format {csv,json,table,value,yaml}
+                        the output format, defaults to table
+    -c COLUMN, --column COLUMN
+                        specify the column(s) to include, can be repeated to show multiple columns
+    --sort-column SORT_COLUMN
+                        specify the column(s) to sort the data (columns specified first have a
+                        priority, non-existing columns are ignored), can be repeated
+    --sort-ascending    sort the column(s) in ascending order
+    --sort-descending   sort the column(s) in descending order
+
+    CSV Formatter:
+    --quote {all,minimal,none,nonnumeric}
+                        when to include quotes, defaults to nonnumeric
+
+    json formatter:
+    --noindent          whether to disable indenting the JSON
+
+    table formatter:
+    --max-width <integer>
+                        Maximum display width, <1 to disable. You can also use the CLIFF_MAX_TERM_WIDTH
+                        environment variable, but the parameter takes precedence.
+    --fit-width         Fit the table to the display width. Implied if --max-width greater than 0.
+                        Set the environment variable CLIFF_FIT_WIDTH=1 to always enable
+    --print-empty       Print empty table if there is no data to show.
+
+Secret Consumer Create
+----------------------
+
+.. code-block:: bash
+
+    $ barbican secret consumer create --service-type-name image \
+                                      --resource-type image \
+                                      --resource-id 123e4567-e89b-12d3-a456-426614174002 \
+                                      0207414d-c23b-47f6-9cef-f44e907ac7a8
+
+Consumers are uniquely defined by the three attributes (service, resource_type, resource_id).
+It is not possible to add a second consumer with exactly the same attributes. The CLI will not
+throw any error message If the creation of a new consumer with all the three same attributes
+of an existent consumer is attempted. However, the new consumer will not be actually created.
+
+Secret Consumer List
+--------------------
+
+.. code-block:: bash
+
+    $ barbican secret consumer list 0207414d-c23b-47f6-9cef-f44e907ac7a8
+    +--------------+---------------+--------------------------------------+---------------------+
+    | Service      | Resource type | Resource id                          | Created             |
+    +--------------+---------------+--------------------------------------+---------------------+
+    | image        | image         | 123e4567-e89b-12d3-a456-426614174002 | 2023-01-30T15:54:10 |
+    +--------------+---------------+--------------------------------------+---------------------+
+
+Secret Consumer Delete
+----------------------
+
+.. code-block:: bash
+
+    $ barbican secret consumer delete --service-type-name image \
+                                      --resource-type image \
+                                      --resource-id 123e4567-e89b-12d3-a456-426614174002 \
+                                      0207414d-c23b-47f6-9cef-f44e907ac7a8
+
+To delete a secret consumer, all three attributes must be provided. Attempting to delete
+a non-existing consumer will cause the CLI to throw the following error message:
+``Not Found: Consumer not found.``
 
 ACLS
 ----
