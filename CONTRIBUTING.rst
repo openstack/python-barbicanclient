@@ -11,6 +11,6 @@ the workflow documented at:
 
 Pull requests submitted through GitHub will be ignored.
 
-Bugs should be filed on OpenStack StoryBoard, not GitHub:
+Bugs should be filed on Launchpad, not GitHub:
 
-   https://storyboard.openstack.org/#!/project/984
+   https://bugs.launchpad.net/python-barbicanclient
