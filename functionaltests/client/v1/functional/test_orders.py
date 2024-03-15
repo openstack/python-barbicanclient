@@ -12,7 +12,7 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pytz
+import datetime
 import sys
 
 from functionaltests.client import base
@@ -432,7 +432,7 @@ class OrdersTestCase(base.TestCase):
         timestamp = utils.create_timestamp_w_tz_and_offset(**kwargs)
 
         date = timeutils.parse_isotime(timestamp)
-        date = date.astimezone(pytz.utc)
+        date = date.astimezone(datetime.timezone.utc)
 
         order = self.barbicanclient.orders.create_key(**order_create_key_data)
         order.expiration = timestamp
