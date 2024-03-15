@@ -86,32 +86,6 @@ class AsymmetricOrderFormatter(formatter.EntityFormatter):
         return data
 
 
-class CertificateOrderFormatter(formatter.EntityFormatter):
-
-    columns = ("Order href",
-               "Type",
-               "Container href",
-               "Secret href",
-               "Created",
-               "Status",
-               "Error code",
-               "Error message"
-               )
-
-    def _get_formatted_data(self):
-        created = self.created.isoformat() if self.created else None
-        data = (self.order_ref,
-                "Certificate",
-                self.container_ref,
-                "N/A",
-                created,
-                self.status,
-                self.error_status_code,
-                self.error_reason
-                )
-        return data
-
-
 class Order(object, metaclass=abc.ABCMeta):
     """Base order object to hold common functionality
 
@@ -336,49 +310,12 @@ class AsymmetricOrder(Order, AsymmetricOrderFormatter):
         return 'AsymmetricOrder(order_ref={0})'.format(self.order_ref)
 
 
-class CertificateOrder(Order, CertificateOrderFormatter):
-    _type = 'certificate'
-
-    def __init__(self, api, name=None,
-                 status=None, created=None, updated=None, order_ref=None,
-                 container_ref=None, error_status_code=None, error_reason=None,
-                 sub_status=None, sub_status_message=None, creator_id=None,
-                 request_type=None, subject_dn=None,
-                 source_container_ref=None, ca_id=None, profile=None,
-                 request_data=None, requestor_name=None, requestor_email=None,
-                 requestor_phone=None):
-        super(CertificateOrder, self).__init__(
-            api, self._type, status=status, created=created, updated=updated,
-            meta={
-                'name': name,
-                'request_type': request_type,
-                'subject_dn': subject_dn,
-                'container_ref': source_container_ref,
-                'ca_id': ca_id,
-                'profile': profile,
-                'request_data': request_data,
-                'requestor_name': requestor_name,
-                'requestor_email': requestor_email,
-                'requestor_phone': requestor_phone},
-            order_ref=order_ref, error_status_code=error_status_code,
-            error_reason=error_reason)
-        self._container_ref = container_ref
-
-    @property
-    def container_ref(self):
-        return self._container_ref
-
-    def __repr__(self):
-        return 'CertificateOrder(order_ref={0})'.format(self.order_ref)
-
-
 class OrderManager(base.BaseEntityManager):
     """Entity Manager for Order entitites"""
 
     _order_type_to_class_map = {
         'key': KeyOrder,
-        'asymmetric': AsymmetricOrder,
-        'certificate': CertificateOrder
+        'asymmetric': AsymmetricOrder
     }
 
     def __init__(self, api):
@@ -406,11 +343,6 @@ class OrderManager(base.BaseEntityManager):
     def _create_typed_order(self, response):
         resp_type = response.pop('type').lower()
         order_type = self._order_type_to_class_map.get(resp_type)
-
-        if (resp_type == 'certificate' and
-                'container_ref' in response.get('meta', ())):
-            response['source_container_ref'] = response['meta'].pop(
-                'container_ref')
 
         # validate key_order meta fields.
         if resp_type == 'key' and (
@@ -485,33 +417,6 @@ class OrderManager(base.BaseEntityManager):
                                bit_length=bit_length, passphrase=pass_phrase,
                                payload_content_type=payload_content_type,
                                expiration=expiration)
-
-    def create_certificate(self, name=None, request_type=None, subject_dn=None,
-                           source_container_ref=None, ca_id=None,
-                           profile=None, request_data=None):
-        """Factory method for `CertificateOrder` objects
-
-        `CertificateOrder` objects returned by this method have not yet been
-        submitted to the Barbican service.
-
-        :param name: A friendly name for the container to be created
-        :param request_type: The type of the certificate request
-        :param subject_dn: A subject for the certificate
-        :param source_container_ref: A container with a public/private key pair
-            to use as source for stored-key requests
-        :param ca_id: The identifier of the CA to use
-        :param profile: The profile of certificate to use
-        :param request_data: The CSR content
-        :returns: CertificateOrder
-        :rtype: :class:`barbicanclient.v1.orders.CertificateOrder`
-        """
-        return CertificateOrder(api=self._api, name=name,
-                                request_type=request_type,
-                                subject_dn=subject_dn,
-                                source_container_ref=source_container_ref,
-                                ca_id=ca_id,
-                                profile=profile,
-                                request_data=request_data)
 
     def delete(self, order_ref):
         """Delete an Order from Barbican
