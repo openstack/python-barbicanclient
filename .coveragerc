@@ -1,3 +1,7 @@
 [run]
 branch = True
-omit = barbicanclient/openstack/*,barbicanclient/tests/*
+source = barbicanclient
+omit = barbicanclient/tests/*
+
+[report]
+ignore_errors = True
