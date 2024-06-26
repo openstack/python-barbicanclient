@@ -1,0 +1,4 @@
+---
+upgrade:
+  - |
+    Support for certificate order has been removed.
