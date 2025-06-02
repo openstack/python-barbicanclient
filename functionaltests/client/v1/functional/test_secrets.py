@@ -18,6 +18,8 @@ import datetime
 import sys
 import time
 
+from oslo_utils import timeutils
+
 from barbicanclient import exceptions
 from functionaltests.client import base
 from functionaltests.common import cleanup
@@ -1157,7 +1159,7 @@ class SecretsTestCase(base.TestCase):
     })
     @testcase.attr('positive')
     def test_secret_list_with_date_filter(self, date_type):
-        now = datetime.datetime.utcnow()
+        now = timeutils.utcnow()
         expiration_1 = (now + datetime.timedelta(days=3)).isoformat()
         expiration_2 = (now + datetime.timedelta(days=5)).isoformat()
         secret_1 = self.barbicanclient.secrets.create(expiration=expiration_1)
