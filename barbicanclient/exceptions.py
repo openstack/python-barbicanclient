@@ -27,6 +27,13 @@ class UnsupportedVersion(BarbicanException):
     pass
 
 
+class SecretHasConsumers(BarbicanException):
+    """The secret has consumers."""
+    def __init__(self):
+        super(SecretHasConsumers, self).__init__(
+            'Secret cannot be deleted as it has consumers.')
+
+
 class HTTPError(Exception):
 
     """Base exception for HTTP errors."""

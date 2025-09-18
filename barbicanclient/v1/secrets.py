@@ -587,20 +587,31 @@ class SecretManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
+        :raises barbicanclient.exceptions.SecretHasConsumers: when secret
+            has consumers and force is False.
         """
         base.validate_ref_and_return_uuid(secret_ref, 'Secret')
         if not secret_ref:
             raise ValueError('secret_ref is required.')
+
         secret_object = self.get(secret_ref=secret_ref)
         uuid_ref = base.calculate_uuid_ref(secret_ref, self._entity)
-        # If secret has no consumers OR
-        # if secret has consumers but force==True, then delete it.
-        if not secret_object.consumers or force:
-            self._api.delete(uuid_ref)
+
+        if self._api.is_supported_microversion('1.2'):
+            params = {'force': 1} if force else None
+            try:
+                self._api.delete(uuid_ref, params=params)
+            except exceptions.HTTPClientError as e:
+                new_exc = exceptions.SecretHasConsumers()
+                if str(new_exc) in str(e):
+                    raise new_exc
+                else:
+                    raise e
         else:
-            raise ValueError(
-                "Secret has consumers! Remove them first or use the force "
-                "parameter to delete it.")
+            if not secret_object.consumers or force:
+                self._api.delete(uuid_ref)
+            else:
+                raise exceptions.SecretHasConsumers()
 
     def list(self, limit=10, offset=0, name=None, algorithm=None, mode=None,
              bits=0, secret_type=None, created=None, updated=None,
@@ -669,8 +680,8 @@ class SecretManager(base.BaseEntityManager):
             for s in response.get('secrets', [])
         ]
 
-    def _enforce_microversion(self):
-        if self._api.microversion == "1.0":
+    def _enforce_consumer_microversion(self):
+        if not self._api.is_supported_microversion(min_version='1.1'):
             raise NotImplementedError(
                 "Server does not support secret consumers.  Minimum "
                 "key-manager microversion required: 1.1")
@@ -693,7 +704,7 @@ class SecretManager(base.BaseEntityManager):
                   '{0} of service {1} for resource type {2}'
                   'with resource id {3}'.format(secret_ref, service,
                                                 resource_type, resource_id))
-        self._enforce_microversion()
+        self._enforce_consumer_microversion()
         secret_uuid = base.validate_ref_and_return_uuid(
             secret_ref, 'Secret')
         href = '{0}/{1}/consumers'.format(self._entity, secret_uuid)
@@ -721,7 +732,7 @@ class SecretManager(base.BaseEntityManager):
                   '{0} of service {1} for resource type {2}'
                   'with resource id {3}'.format(secret_ref, service,
                                                 resource_type, resource_id))
-        self._enforce_microversion()
+        self._enforce_consumer_microversion()
         secret_uuid = base.validate_ref_and_return_uuid(
             secret_ref, 'secret')
         href = '{0}/{1}/consumers'.format(self._entity, secret_uuid)
@@ -744,7 +755,7 @@ class SecretManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         LOG.debug('Listing consumers of secret {0}'.format(secret_ref))
-        self._enforce_microversion()
+        self._enforce_consumer_microversion()
         secret_uuid = base.validate_ref_and_return_uuid(
             secret_ref, 'secret')
         href = '{0}/{1}/consumers'.format(self._entity, secret_uuid)

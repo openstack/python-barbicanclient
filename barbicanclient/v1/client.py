@@ -28,7 +28,8 @@ from barbicanclient.v1 import secrets
 
 LOG = logging.getLogger(__name__)
 _SUPPORTED_MICROVERSIONS = [(1, 0),
-                            (1, 1)]
+                            (1, 1),
+                            (1, 2)]
 # For microversion 1.0, API status is "stable"
 _STABLE = "STABLE"
 
@@ -69,6 +70,9 @@ class Client(object):
         self.containers = containers.ContainerManager(self.client)
         self.cas = cas.CAManager(self.client)
         self.acls = acls.ACLManager(self.client)
+
+    def _set_microversion(self, microversion):
+        self.client._set_microversion(microversion)
 
     def _get_normalized_microversion(self, microversion):
         if microversion is None:

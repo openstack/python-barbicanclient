@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from barbicanclient import client
+from barbicanclient import exceptions
 from barbicanclient.tests import test_client
 from barbicanclient.tests.utils import mock_delete_secret_for_responses
 from barbicanclient.tests.utils import mock_get_secret_for_client
@@ -118,7 +119,7 @@ class WhenTestingConsumers(test_client.BaseEntityResource):
 
     def test_delete_from_manager_fails_with_consumers_without_force(self):
         self.assertRaises(
-            ValueError,
+            exceptions.SecretHasConsumers,
             self._delete_from_manager_with_consumers, self.entity_href,
             force=False)
 
