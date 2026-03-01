@@ -396,9 +396,11 @@ class ACL(object):
         # Utility for identifying ACL type from given entity URI.
         if not entity_ref:
             raise ValueError('Secret or container href is required.')
-        if '/secrets' in entity_ref:
+
+        elems = entity_ref.split('/')
+        if 'secrets' in elems:
             ref_type = 'secret'
-        elif '/containers' in entity_ref:
+        elif 'containers' in elems:
             ref_type = 'container'
         else:
             raise ValueError('Secret or container URI is not specified.')

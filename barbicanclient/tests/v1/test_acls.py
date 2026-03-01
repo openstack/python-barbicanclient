@@ -16,6 +16,7 @@
 from oslo_utils import timeutils
 import requests_mock
 
+from barbicanclient import base
 from barbicanclient.tests import test_client
 from barbicanclient.v1 import acls
 
@@ -114,6 +115,16 @@ class WhenTestingACLManager(ACLTestCase):
 
         self.assertRaises(ValueError, self.manager.get,
                           self.endpoint + '/containers/consumers')
+        self.assertRaises(ValueError, self.manager.get,
+                          self.endpoint + '/v1/badsecrets/' + self.secret_uuid)
+        self.assertRaises(ValueError, self.manager.get,
+                          self.endpoint + '/v1/secretsbad/' + self.secret_uuid)
+        self.assertRaises(
+            ValueError, self.manager.get,
+            self.endpoint + '/v1/badcontainers/' + self.container_uuid)
+        self.assertRaises(
+            ValueError, self.manager.get,
+            self.endpoint + '/v1/containersbad/' + self.container_uuid)
 
     def test_should_create_secret_acl(self):
         entity = self.manager.create(entity_ref=self.secret_ref + '///',
@@ -127,13 +138,24 @@ class WhenTestingACLManager(ACLTestCase):
         self.assertEqual(self.users1, read_acl.users)
         self.assertEqual(acls.DEFAULT_OPERATION_TYPE, read_acl.operation_type)
         # acl ref removes extra trailing slashes if there
-        self.assertIn(self.secret_ref, read_acl.acl_ref,
-                      'ACL ref has additional /acl')
+        self.assertEqual(self.secret_acl_ref, read_acl.acl_ref)
         self.assertIsNone(read_acl.created)
         self.assertIsNone(read_acl.updated)
 
         read_acl_via_get = entity.get('read')
         self.assertEqual(read_acl, read_acl_via_get)
+
+    def test_should_create_secret_acl_for_uuid_ref(self):
+        entity = self.manager.create(
+            entity_ref=base.calculate_uuid_ref(self.secret_uuid, 'secrets'),
+            users=self.users1, project_access=True)
+        self.assertIsInstance(entity, acls.SecretACL)
+
+        read_acl = entity.read
+        self.assertEqual('secrets/' + self.secret_uuid,
+                         read_acl.entity_ref)
+        self.assertEqual('secrets/' + self.secret_uuid + '/acl',
+                         read_acl.acl_ref)
 
     def test_should_create_acl_with_users(self, entity_ref=None):
         entity_ref = entity_ref or self.container_ref
