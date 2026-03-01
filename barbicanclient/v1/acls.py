@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import logging
+import uuid
 
 from oslo_utils.timeutils import parse_isotime
 
@@ -60,7 +61,8 @@ class _PerOperationACL(ACLFormatter):
         This class not to be instantiated outside of this module.
 
         :param parent_acl: acl entity to this per operation data belongs to
-        :param str entity_ref: Full HATEOAS reference to a secret or container
+        :param str entity_ref: Full HATEOAS reference to a secret or container,
+            or a UUID.
         :param users: List of Keystone userid(s) to be used for ACL.
         :type users: List or None
         :param bool project_access: Flag indicating project access behavior
@@ -179,7 +181,8 @@ class ACL(object):
         method.
 
         :param api: client instance reference
-        :param str entity_ref: Full HATEOAS reference to a secret or container
+        :param str entity_ref: Full HATEOAS reference to a secret or container,
+            or a UUID.
         :param users: List of Keystone userid(s) to be used for ACL.
         :type users: str List or None
         :param bool project_access: Flag indicating project access behavior
@@ -365,14 +368,18 @@ class ACL(object):
         res_title = self._acl_type.title()
         if not self.entity_ref:
             raise ValueError('{0} href is required.'.format(res_title))
+
         if self._parent_entity_path in self.entity_ref:
             if '/acl' in self.entity_ref:
                 raise ValueError('{0} ACL URI provided. Expecting {0} URI.'
                                  .format(res_title))
-            ref_type = self._acl_type
         else:
-            raise ValueError('{0} URI is not specified.'.format(res_title))
+            try:
+                uuid.UUID(self.entity_ref)
+            except Exception:
+                raise ValueError('{0} URI is not specified.'.format(res_title))
 
+        ref_type = self._acl_type
         base.validate_ref_and_return_uuid(self.entity_ref, ref_type)
         return ref_type
 
@@ -392,10 +399,15 @@ class ACL(object):
                                         ACL._resource_name)
 
     @staticmethod
-    def identify_ref_type(entity_ref):
+    def identify_ref_type(entity_ref, ref_type=None):
         # Utility for identifying ACL type from given entity URI.
         if not entity_ref:
             raise ValueError('Secret or container href is required.')
+
+        if ref_type:
+            if ref_type not in ['secret', 'container']:
+                raise ValueError('Invalid ref_type: %s' % ref_type)
+            return ref_type
 
         elems = entity_ref.split('/')
         if 'secrets' in elems:
@@ -444,7 +456,8 @@ class ACLManager(base.BaseEntityManager):
         super(ACLManager, self).__init__(api, ACL._resource_name)
 
     def create(self, entity_ref=None, users=None, project_access=None,
-               operation_type=DEFAULT_OPERATION_TYPE):
+               operation_type=DEFAULT_OPERATION_TYPE,
+               ref_type=None):
         """Factory method for creating `ACL` entity.
 
         `ACL` object returned by this method have not yet been
@@ -454,17 +467,20 @@ class ACLManager(base.BaseEntityManager):
         ACL object type needs to be :class:`barbicanclient.acls.SecretACL`
         or  :class:`barbicanclient.acls.ContainerACL`.
 
-        :param str entity_ref: Full HATEOAS reference to a secret or container
+        :param str entity_ref: Full HATEOAS reference to a secret or container,
+            or a UUID.
         :param users: List of Keystone userid(s) to be used in ACL.
         :type users: List or None
         :param bool project_access: Flag indicating project access behavior
         :param str operation_type: Type indicating which class of Barbican
             operations this ACL is defined for e.g. 'read' operations
+        :param str ref_type: Type of the resource referenced by entity_ref.
+            This is required when UUID is used for entity_ref
         :returns: ACL object instance
         :rtype: :class:`barbicanclient.v1.acls.SecretACL` or
             :class:`barbicanclient.v1.acls.ContainerACL`
         """
-        entity_type = ACL.identify_ref_type(entity_ref)
+        entity_type = ACL.identify_ref_type(entity_ref, ref_type)
 
         entity_class = ACLManager.acl_class_map.get(entity_type)
         # entity_class cannot be None as entity_ref is already validated above
@@ -472,29 +488,32 @@ class ACLManager(base.BaseEntityManager):
                             project_access=project_access,
                             operation_type=operation_type)
 
-    def get(self, entity_ref):
+    def get(self, entity_ref, ref_type=None):
         """Retrieve existing ACLs for a secret or container found in Barbican
 
-        :param str entity_ref: Full HATEOAS reference to a secret or container.
+        :param str entity_ref: Full HATEOAS reference to a secret or container,
+            or a UUID.
         :returns: ACL entity object instance
         :rtype: :class:`barbicanclient.v1.acls.SecretACL` or
             :class:`barbicanclient.v1.acls.ContainerACL`
+        :param str ref_type: Type of the resource referenced by entity_ref.
+            This is required when UUID is used for entity_ref
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         """
-        entity = self._validate_acl_ref(entity_ref)
+        entity = self._validate_acl_ref(entity_ref, ref_type)
         LOG.debug('Getting ACL for {0} href: {1}'
                   .format(entity.acl_type, entity.acl_ref))
         entity.load_acls_data()
         return entity
 
-    def _validate_acl_ref(self, entity_ref):
+    def _validate_acl_ref(self, entity_ref, ref_type=None):
         if entity_ref is None:
             raise ValueError('Expected secret or container URI is not '
                              'specified.')
 
         entity_ref = entity_ref.rstrip('/')
-        entity_type = ACL.identify_ref_type(entity_ref)
+        entity_type = ACL.identify_ref_type(entity_ref, ref_type)
 
         entity_class = ACLManager.acl_class_map.get(entity_type)
         acl_entity = entity_class(api=self._api, entity_ref=entity_ref)
