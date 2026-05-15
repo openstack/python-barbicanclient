@@ -756,3 +756,60 @@ class SecretManager(base.BaseEntityManager):
             SecretConsumers(secret_ref=secret_ref, **s)
             for s in response.get('consumers', [])
         ]
+
+    def get_secret_metadata(self, secret_ref, key=None):
+        """Get secret metadata
+
+        :param str secret_ref: Full HATEOAS reference to a Secret, or a UUID
+        :param str key: Optional specific metadata key to retrieve
+        :returns: Dictionary containing metadata
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
+        """
+        LOG.debug("Getting secret metadata - Secret href: {0}, "
+                  "key: {1}".format(secret_ref, key))
+        secret_uuid = base.validate_ref_and_return_uuid(secret_ref, 'Secret')
+
+        if key:
+            href = '{0}/{1}/metadata/{2}'.format(
+                self._entity, secret_uuid, key)
+
+        else:
+            href = '{0}/{1}/metadata'.format(self._entity, secret_uuid)
+
+        return self._api.get(href)
+
+    def set_secret_metadata(self, secret_ref, metadata):
+        """Set secret metadata (replaces all existing metadata)"""
+        secret_uuid = base.validate_ref_and_return_uuid(secret_ref, 'Secret')
+        href = f"{self._entity}/{secret_uuid}/metadata"
+        response = self._api.request(href, 'PUT',
+                                     json={'metadata': metadata})
+        return response.json()
+
+    def add_secret_metadata(self, secret_ref, key, value):
+        """Add or update a single metadata key-value pair"""
+        LOG.debug("Adding secret metadata - Secret href: {0}, "
+                  "key: {1}".format(secret_ref, key))
+        secret_uuid = base.validate_ref_and_return_uuid(secret_ref, 'Secret')
+        href = f"{self._entity}/{secret_uuid}/metadata/{key}"
+        response = self._api.request(href, 'POST',
+                                     json={'key': key, 'value': value})
+        return response.json()
+
+    def delete_secret_metadata(self, secret_ref, key):
+        """Delete a specific metadata key
+
+        :param str secret_ref: Full HATEOAS reference to a Secret, or a UUID
+        :param str key: Metadata key to delete
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
+        """
+        LOG.debug("Deleting secret metadata - Secret href: {0}, "
+                  "key: {1}".format(secret_ref, key))
+        secret_uuid = base.validate_ref_and_return_uuid(secret_ref, 'Secret')
+        href = '{0}/{1}/metadata/{2}'.format(self._entity, secret_uuid, key)
+
+        self._api.delete(href)

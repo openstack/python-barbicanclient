@@ -586,3 +586,215 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(
             timeutils.parse_isotime(data['created']).isoformat(),
             f_data[2])
+
+
+class WhenTestingSecretMetadata(test_client.BaseEntityResource):
+
+    def setUp(self):
+        self._setUp('secrets')
+        self.secret = SecretData()
+        self.manager = self.client.secrets
+        self.metadata_base = self.entity_href + '/metadata'
+
+    def test_should_get_all_metadata(self):
+        """Test GET /v1/secrets/{uuid}/metadata"""
+        metadata_response = {
+            'metadata': {
+                'description': 'contains the AES key',
+                'geolocation': '12.3456, -98.7654'
+            }
+        }
+        m = self.responses.get(self.metadata_base, json=metadata_response)
+
+        result = self.manager.get_secret_metadata(self.entity_href)
+
+        self.assertEqual(metadata_response, result)
+        self.assertEqual(self.metadata_base, m.last_request.url)
+
+    def test_should_get_specific_metadata_key(self):
+        """Test GET /v1/secrets/{uuid}/metadata/{key}"""
+        key = 'description'
+        metadata_key_response = {
+            'key': 'description',
+            'value': 'contains the AES key'
+        }
+        metadata_key_url = self.metadata_base + '/' + key
+        m = self.responses.get(metadata_key_url, json=metadata_key_response)
+
+        result = self.manager.get_secret_metadata(self.entity_href, key=key)
+
+        self.assertEqual(metadata_key_response, result)
+        self.assertEqual(metadata_key_url, m.last_request.url)
+
+    def test_should_get_metadata_using_stripped_uuid(self):
+        """Test with stripped UUID"""
+        bad_href = "http://badsite.com/" + self.entity_id
+        metadata_response = {'metadata': {'test': 'value'}}
+        m = self.responses.get(self.metadata_base, json=metadata_response)
+
+        result = self.manager.get_secret_metadata(bad_href)
+
+        self.assertEqual(metadata_response, result)
+        self.assertEqual(self.metadata_base, m.last_request.url)
+
+    def test_should_get_metadata_using_only_uuid(self):
+        """Test with UUID only"""
+        metadata_response = {'metadata': {'test': 'value'}}
+        m = self.responses.get(self.metadata_base, json=metadata_response)
+
+        result = self.manager.get_secret_metadata(self.entity_id)
+
+        self.assertEqual(metadata_response, result)
+        self.assertEqual(self.metadata_base, m.last_request.url)
+
+    def test_should_set_metadata(self):
+        """Test PUT /v1/secrets/{uuid}/metadata"""
+        metadata = {
+            'description': 'updated description',
+            'environment': 'production'
+        }
+        set_response = {
+            'metadata_ref': self.entity_href + '/metadata'
+        }
+        m = self.responses.put(self.metadata_base, json=set_response)
+
+        result = self.manager.set_secret_metadata(self.entity_href, metadata)
+
+        self.assertEqual(set_response, result)
+        self.assertEqual(self.metadata_base, m.last_request.url)
+
+        request_data = jsonutils.loads(m.last_request.text)
+        self.assertEqual({'metadata': metadata}, request_data)
+
+    def test_should_set_metadata_using_stripped_uuid(self):
+        """Test PUT with stripped UUID"""
+        bad_href = "http://badsite.com/" + self.entity_id
+        metadata = {'test': 'value'}
+        set_response = {'metadata_ref': self.entity_href + '/metadata'}
+        m = self.responses.put(self.metadata_base, json=set_response)
+
+        result = self.manager.set_secret_metadata(bad_href, metadata)
+
+        self.assertEqual(set_response, result)
+        self.assertEqual(self.metadata_base, m.last_request.url)
+
+    def test_should_set_metadata_using_only_uuid(self):
+        """Test PUT with UUID only"""
+        metadata = {'test': 'value'}
+        set_response = {'metadata_ref': self.entity_href + '/metadata'}
+        m = self.responses.put(self.metadata_base, json=set_response)
+
+        result = self.manager.set_secret_metadata(self.entity_id, metadata)
+
+        self.assertEqual(set_response, result)
+        self.assertEqual(self.metadata_base, m.last_request.url)
+
+    def test_should_add_metadata_key(self):
+        """Test POST /v1/secrets/{uuid}/metadata/{key}"""
+        key = 'owner'
+        value = 'admin@example.com'
+        add_response = {
+            'metadata_ref': self.entity_href + '/metadata/' + key
+        }
+        metadata_key_url = self.metadata_base + '/' + key
+        m = self.responses.post(metadata_key_url, json=add_response)
+
+        result = self.manager.add_secret_metadata(
+            self.entity_href, key, value)
+
+        self.assertEqual(add_response, result)
+        self.assertEqual(metadata_key_url, m.last_request.url)
+
+        request_data = jsonutils.loads(m.last_request.text)
+        expected_payload = {'key': key, 'value': value}
+        self.assertEqual(expected_payload, request_data)
+
+    def test_should_add_metadata_key_using_stripped_uuid(self):
+        """Test POST with stripped UUID"""
+        bad_href = "http://badsite.com/" + self.entity_id
+        key = 'test'
+        value = 'value'
+        add_response = {
+            'metadata_ref': self.entity_href + '/metadata/' + key
+        }
+        metadata_key_url = self.metadata_base + '/' + key
+        m = self.responses.post(metadata_key_url, json=add_response)
+
+        result = self.manager.add_secret_metadata(bad_href, key, value)
+
+        self.assertEqual(add_response, result)
+        self.assertEqual(metadata_key_url, m.last_request.url)
+
+    def test_should_add_metadata_key_using_only_uuid(self):
+        """Test POST with UUID only"""
+        key = 'test'
+        value = 'value'
+        add_response = {
+            'metadata_ref': self.entity_href + '/metadata/' + key
+        }
+        metadata_key_url = self.metadata_base + '/' + key
+        m = self.responses.post(metadata_key_url, json=add_response)
+
+        result = self.manager.add_secret_metadata(self.entity_id, key, value)
+
+        self.assertEqual(add_response, result)
+        self.assertEqual(metadata_key_url, m.last_request.url)
+
+    def test_should_delete_metadata_key(self):
+        """Test DELETE /v1/secrets/{uuid}/metadata/{key}"""
+        key = 'description'
+        metadata_key_url = self.metadata_base + '/' + key
+        m = self.responses.delete(metadata_key_url, status_code=204)
+
+        self.manager.delete_secret_metadata(self.entity_href, key)
+
+        self.assertEqual(metadata_key_url, m.last_request.url)
+
+    def test_should_delete_metadata_key_using_stripped_uuid(self):
+        """Test DELETE with stripped UUID"""
+        bad_href = "http://badsite.com/" + self.entity_id
+        key = 'test'
+        metadata_key_url = self.metadata_base + '/' + key
+        m = self.responses.delete(metadata_key_url, status_code=204)
+
+        self.manager.delete_secret_metadata(bad_href, key)
+
+        self.assertEqual(metadata_key_url, m.last_request.url)
+
+    def test_should_delete_metadata_key_using_only_uuid(self):
+        """Test DELETE with UUID only"""
+        key = 'test'
+        metadata_key_url = self.metadata_base + '/' + key
+        m = self.responses.delete(metadata_key_url, status_code=204)
+
+        self.manager.delete_secret_metadata(self.entity_id, key)
+
+        self.assertEqual(metadata_key_url, m.last_request.url)
+
+    def test_should_fail_get_metadata_invalid_secret(self):
+        self.assertRaises(
+            ValueError,
+            self.manager.get_secret_metadata,
+            **{'secret_ref': '12345'}
+        )
+
+    def test_should_fail_set_metadata_invalid_secret(self):
+        self.assertRaises(
+            ValueError,
+            self.manager.set_secret_metadata,
+            **{'secret_ref': '12345', 'metadata': {}}
+        )
+
+    def test_should_fail_add_metadata_invalid_secret(self):
+        self.assertRaises(
+            ValueError,
+            self.manager.add_secret_metadata,
+            **{'secret_ref': '12345', 'key': 'test', 'value': 'value'}
+        )
+
+    def test_should_fail_delete_metadata_invalid_secret(self):
+        self.assertRaises(
+            ValueError,
+            self.manager.delete_secret_metadata,
+            **{'secret_ref': '12345', 'key': 'test'}
+        )
