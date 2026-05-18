@@ -16,6 +16,7 @@
 import importlib
 import logging
 import os
+import re
 import sys
 import warnings
 
@@ -51,6 +52,40 @@ class _HTTPClient(adapter.Adapter):
         else:
             # If provided we'll include the project ID in all requests.
             self._default_headers = {'X-Project-Id': project_id}
+
+    def _set_microversion(self, microversion):
+        self.microversion = microversion
+        self.default_microversion = microversion
+
+    def _parse_version(self, version):
+        """Parse microversion to tuple."""
+        match = re.match(r"^([1-9]\d*)\.([1-9]\d*|0)$",
+                         version)
+        if match:
+            ver_major = int(match.group(1))
+            ver_minor = int(match.group(2))
+        else:
+            raise ValueError(
+                f"Invalid version: {version}")
+        return (ver_major, ver_minor)
+
+    def is_supported_microversion(self, min_version, max_version=None):
+        """Check if the microversion is supported.
+
+        :param min_version: minimal version of API
+        :param max_version: maximum version of API
+
+        :returns: True if server supports minimal and maximum API version
+             requirements. False in other case.
+        """
+        version = self._parse_version(self.microversion)
+        minv = self._parse_version(min_version)
+
+        if max_version is not None:
+            maxv = self._parse_version(max_version)
+            return (maxv >= version >= minv)
+
+        return (version >= minv)
 
     def request(self, *args, **kwargs):
         headers = kwargs.setdefault('headers', {})

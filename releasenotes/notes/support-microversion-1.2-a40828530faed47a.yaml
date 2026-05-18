@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    Added support for Barbican microversion 1.2
+upgrade:
+  - |
+    When trying to delete a secret that has consumers without using ``force``
+    the client now raises the new ``barbicanclient.exceptions.SecretHasConsumers``
+    exception instead of the old behaviour of raising a ``ValueError`` exception.
