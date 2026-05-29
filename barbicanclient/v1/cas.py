@@ -198,7 +198,7 @@ class CAManager(base.BaseEntityManager):
     def get(self, ca_ref):
         """Retrieve an existing CA from Barbican
 
-        :param str ca_ref: Full HATEOAS reference to a CA
+        :param str ca_ref: Full HATEOAS reference to a CA or UUID
         :returns: CA object retrieved from Barbican
         :rtype: :class:`barbicanclient.v1.cas.CA`
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
