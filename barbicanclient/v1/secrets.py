@@ -701,7 +701,7 @@ class SecretManager(base.BaseEntityManager):
         :raises NotImplementedError: When using microversion 1.0
         """
         LOG.debug('Creating consumer registration for secret '
-                  '{0} of service {1} for resource type {2}'
+                  '{0} of service {1} for resource type {2} '
                   'with resource id {3}'.format(secret_ref, service,
                                                 resource_type, resource_id))
         self._enforce_consumer_microversion()
