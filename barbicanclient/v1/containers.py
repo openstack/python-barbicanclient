@@ -200,7 +200,7 @@ class Container(ContainerFormatter):
             'secret_refs': secret_refs
         })
 
-        LOG.debug("Request body: {0}".format(container_dict))
+        LOG.debug("Request body: %s", container_dict)
 
         # Save, store container_ref and return
         response = self._api.post(self._entity, json=container_dict)
@@ -223,8 +223,8 @@ class Container(ContainerFormatter):
 
     def _get_secrets_and_store_them_if_necessary(self):
         # Save all secrets if they are not yet saved
-        LOG.debug("Storing secrets: {0}".format(base.censored_copy(
-                                                self.secrets, ['payload'])))
+        LOG.debug("Storing secrets: %s",
+                  base.censored_copy(self.secrets, ['payload']))
         secret_refs = []
         for name, secret in self.secrets.items():
             if secret and not secret.secret_ref:
@@ -235,8 +235,8 @@ class Container(ContainerFormatter):
     def _reload(self):
         if not self._container_ref:
             raise AttributeError("container_ref not set, cannot reload data.")
-        LOG.debug('Getting container - Container href: {0}'
-                  .format(self._container_ref))
+        LOG.debug('Getting container - Container href: %s',
+                  self._container_ref)
         uuid_ref = base.calculate_uuid_ref(self._container_ref,
                                            self._entity)
         try:
@@ -536,8 +536,7 @@ class ContainerManager(base.BaseEntityManager):
         :param container_ref: Full HATEOAS reference to a Container, or a UUID
         :returns: Container object or a subclass of the appropriate type
         """
-        LOG.debug('Getting container - Container href: {0}'
-                  .format(container_ref))
+        LOG.debug('Getting container - Container href: %s', container_ref)
         uuid_ref = base.calculate_uuid_ref(container_ref, self._entity)
         try:
             response = self._api.get(uuid_ref)
@@ -716,8 +715,8 @@ class ContainerManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        LOG.debug('Listing containers - offset {0} limit {1} name {2} type {3}'
-                  .format(offset, limit, name, type))
+        LOG.debug('Listing containers - offset %d limit %d name %s type %s',
+                  offset, limit, name, type)
         params = {'limit': limit, 'offset': offset}
         if name:
             params['name'] = name
@@ -740,8 +739,8 @@ class ContainerManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        LOG.debug('Creating consumer registration for container '
-                  '{0} as {1}: {2}'.format(container_ref, name, url))
+        LOG.debug('Creating consumer registration for container %s as %s: %s',
+                  container_ref, name, url)
         container_uuid = base.validate_ref_and_return_uuid(
             container_ref, 'Container')
         href = '{0}/{1}/consumers'.format(self._entity, container_uuid)
@@ -762,8 +761,8 @@ class ContainerManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        LOG.debug('Deleting consumer registration for container '
-                  '{0} as {1}: {2}'.format(container_ref, name, url))
+        LOG.debug('Deleting consumer registration for container %s as %s: %s',
+                  container_ref, name, url)
         container_uuid = base.validate_ref_and_return_uuid(
             container_ref, 'Container')
         href = '{0}/{1}/consumers'.format(self._entity, container_uuid)

@@ -385,8 +385,8 @@ class Secret(SecretFormatter):
             secret_dict['payload_content_type'] = 'text/plain'
 
         secret_dict = base.filter_null_keys(secret_dict)
-        LOG.debug("Request body: {0}".format(base.censored_copy(secret_dict,
-                                                                ['payload'])))
+        LOG.debug("Request body: %s",
+                  base.censored_copy(secret_dict, ['payload']))
 
         # Save, store secret_ref and return
         response = self._api.post(self._entity, json=secret_dict)
@@ -511,7 +511,7 @@ class SecretManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        LOG.debug("Getting secret - Secret href: {0}".format(secret_ref))
+        LOG.debug("Getting secret - Secret href: %s", secret_ref)
         base.validate_ref_and_return_uuid(secret_ref, 'Secret')
         return Secret(
             api=self._api,
@@ -651,8 +651,8 @@ class SecretManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        LOG.debug('Listing secrets - offset {0} limit {1}'.format(offset,
-                                                                  limit))
+        LOG.debug('Listing secrets - offset %d limit %d',
+                  offset, limit)
         params = {'limit': limit, 'offset': offset}
         if name:
             params['name'] = name
@@ -701,9 +701,9 @@ class SecretManager(base.BaseEntityManager):
         :raises NotImplementedError: When using microversion 1.0
         """
         LOG.debug('Creating consumer registration for secret '
-                  '{0} of service {1} for resource type {2} '
-                  'with resource id {3}'.format(secret_ref, service,
-                                                resource_type, resource_id))
+                  '%s of service %s for resource type %s '
+                  'with resource id %s',
+                  secret_ref, service, resource_type, resource_id)
         self._enforce_consumer_microversion()
         secret_uuid = base.validate_ref_and_return_uuid(
             secret_ref, 'Secret')
@@ -729,9 +729,9 @@ class SecretManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
         LOG.debug('Deleting consumer registration for secret '
-                  '{0} of service {1} for resource type {2}'
-                  'with resource id {3}'.format(secret_ref, service,
-                                                resource_type, resource_id))
+                  '%s of service %s for resource type %s'
+                  'with resource id %s',
+                  secret_ref, service, resource_type, resource_id)
         self._enforce_consumer_microversion()
         secret_uuid = base.validate_ref_and_return_uuid(
             secret_ref, 'secret')
@@ -754,7 +754,7 @@ class SecretManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        LOG.debug('Listing consumers of secret {0}'.format(secret_ref))
+        LOG.debug('Listing consumers of secret %s', secret_ref)
         self._enforce_consumer_microversion()
         secret_uuid = base.validate_ref_and_return_uuid(
             secret_ref, 'secret')
@@ -778,8 +778,8 @@ class SecretManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        LOG.debug("Getting secret metadata - Secret href: {0}, "
-                  "key: {1}".format(secret_ref, key))
+        LOG.debug("Getting secret metadata - Secret href: %s, key: %s",
+                  secret_ref, key)
         secret_uuid = base.validate_ref_and_return_uuid(secret_ref, 'Secret')
 
         if key:
@@ -801,8 +801,8 @@ class SecretManager(base.BaseEntityManager):
 
     def add_secret_metadata(self, secret_ref, key, value):
         """Add or update a single metadata key-value pair"""
-        LOG.debug("Adding secret metadata - Secret href: {0}, "
-                  "key: {1}".format(secret_ref, key))
+        LOG.debug("Adding secret metadata - Secret href: %s, key: %s",
+                  secret_ref, key)
         secret_uuid = base.validate_ref_and_return_uuid(secret_ref, 'Secret')
         href = f"{self._entity}/{secret_uuid}/metadata/{key}"
         response = self._api.request(href, 'POST',
@@ -818,8 +818,8 @@ class SecretManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        LOG.debug("Deleting secret metadata - Secret href: {0}, "
-                  "key: {1}".format(secret_ref, key))
+        LOG.debug("Deleting secret metadata - Secret href: %s, key: %s",
+                  secret_ref, key)
         secret_uuid = base.validate_ref_and_return_uuid(secret_ref, 'Secret')
         href = '{0}/{1}/metadata/{2}'.format(self._entity, secret_uuid, key)
 

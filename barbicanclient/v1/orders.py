@@ -204,7 +204,7 @@ class Order(object, metaclass=abc.ABCMeta):
         is called.
         """
         order_dict = {'type': self._type, 'meta': self._meta}
-        LOG.debug("Request body: {0}".format(order_dict))
+        LOG.debug("Request body: %s", order_dict)
         response = self._api.post(self._entity, json=order_dict)
         if response:
             self._order_ref = response.get('order_ref')
@@ -330,7 +330,7 @@ class OrderManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        LOG.debug("Getting order - Order href: {0}".format(order_ref))
+        LOG.debug("Getting order - Order href: %s", order_ref)
         uuid_ref = base.calculate_uuid_ref(order_ref, self._entity)
         try:
             response = self._api.get(uuid_ref)
@@ -440,8 +440,7 @@ class OrderManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        LOG.debug('Listing orders - offset {0} limit {1}'.format(offset,
-                                                                 limit))
+        LOG.debug('Listing orders - offset %d limit %d', offset, limit)
         params = {'limit': limit, 'offset': offset}
         response = self._api.get(self._entity, params=params)
 

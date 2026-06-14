@@ -205,7 +205,7 @@ class CAManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        LOG.debug("Getting ca - CA href: {0}".format(ca_ref))
+        LOG.debug("Getting ca - CA href: %s", ca_ref)
         base.validate_ref_and_return_uuid(ca_ref, 'CA')
         return CA(
             api=self._api,
@@ -228,7 +228,7 @@ class CAManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        LOG.debug('Listing CAs - offset {0} limit {1}'.format(offset, limit))
+        LOG.debug('Listing CAs - offset %d limit %d', offset, limit)
         params = {'limit': limit, 'offset': offset}
         if name:
             params['name'] = name
