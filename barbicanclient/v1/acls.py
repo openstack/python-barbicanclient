@@ -140,8 +140,8 @@ class _PerOperationACL(ACLFormatter):
         :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         """
-        LOG.debug('Removing {0} operation specific ACL for href: {1}'
-                  .format(self.operation_type, self.acl_ref))
+        LOG.debug('Removing %s operation specific ACL for href: %s',
+                  self.operation_type, self.acl_ref)
 
         self._parent_acl.load_acls_data()
         acl_entity = self._parent_acl
@@ -303,8 +303,8 @@ class ACL(object):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
         """
-        LOG.debug('Submitting complete {0} ACL for href: {1}'
-                  .format(self.acl_type, self.entity_ref))
+        LOG.debug('Submitting complete %s ACL for href: %s',
+                  self.acl_type, self.entity_ref)
         if not self.operation_acls:
             raise ValueError('ACL data for {0} is not provided.'.
                              format(self._acl_type))
@@ -334,8 +334,8 @@ class ACL(object):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         """
         self.validate_input_ref()
-        LOG.debug('Removing ACL for {0} for href: {1}'
-                  .format(self.acl_type, self.entity_ref))
+        LOG.debug('Removing ACL for %s for href: %s',
+                  self.acl_type, self.entity_ref)
         self._api.delete(self.acl_ref_relative)
 
     def load_acls_data(self):
@@ -502,8 +502,8 @@ class ACLManager(base.BaseEntityManager):
         :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
         """
         entity = self._validate_acl_ref(entity_ref, ref_type)
-        LOG.debug('Getting ACL for {0} href: {1}'
-                  .format(entity.acl_type, entity.acl_ref))
+        LOG.debug('Getting ACL for %s href: %s',
+                  entity.acl_type, entity.acl_ref)
         entity.load_acls_data()
         return entity
 
