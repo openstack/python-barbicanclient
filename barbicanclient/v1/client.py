@@ -29,7 +29,8 @@ from barbicanclient.v1 import secrets
 LOG = logging.getLogger(__name__)
 _SUPPORTED_MICROVERSIONS = [(1, 0),
                             (1, 1),
-                            (1, 2)]
+                            (1, 2),
+                            (1, 3)]
 # For microversion 1.0, API status is "stable"
 _STABLE = "STABLE"
 

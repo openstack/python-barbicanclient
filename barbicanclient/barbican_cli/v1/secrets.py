@@ -108,6 +108,25 @@ class UpdateSecret(command.Command):
                                                            args.payload)
 
 
+class MigrateSecret(command.Command):
+    """Migrate a secret to a different secret store."""
+
+    def get_parser(self, prog_name):
+        parser = super(MigrateSecret, self).get_parser(prog_name)
+        parser.add_argument('URI', help='The URI reference for the secret.')
+        parser.add_argument('--secret-store',
+                            dest='secret_store',
+                            required=True,
+                            help='URI or UUID of the destination secret '
+                                 'store.')
+        return parser
+
+    def take_action(self, args):
+        self.app.client_manager.key_manager.secrets.migrate_store(
+            args.URI,
+            secret_store=args.secret_store)
+
+
 class ListSecret(lister.Lister):
     """List secrets."""
 

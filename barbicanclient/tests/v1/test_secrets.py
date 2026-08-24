@@ -475,6 +475,47 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
     def test_should_update_from_manager_using_only_uuid(self):
         self.test_should_update_from_manager(self.entity_id)
 
+    def test_should_migrate_store_from_manager(self):
+        self.manager._api._set_microversion('1.3')
+        store_id = '11111111-1111-1111-1111-111111111111'
+        href = self.entity_href + '/secret-store/' + store_id
+        self.responses.put(href, status_code=204)
+
+        self.manager.migrate_store(
+            self.entity_href, secret_store=store_id)
+
+        self.assertEqual(href, self.responses.last_request.url)
+        self.assertFalse(self.responses.last_request.text)
+
+    def test_should_migrate_store_from_href(self):
+        """``secret_store`` accepts a store URI as well as a UUID."""
+        self.manager._api._set_microversion('1.3')
+        store_id = '11111111-1111-1111-1111-111111111111'
+        store_ref = 'http://localhost:9311/v1/secret-stores/' + store_id
+        href = self.entity_href + '/secret-store/' + store_id
+        self.responses.put(href, status_code=204)
+
+        self.manager.migrate_store(
+            self.entity_href, secret_store=store_ref)
+
+        self.assertEqual(href, self.responses.last_request.url)
+        self.assertFalse(self.responses.last_request.text)
+
+    def test_should_raise_migrate_store_without_target(self):
+        self.manager._api._set_microversion('1.3')
+        self.assertRaises(
+            ValueError,
+            self.manager.migrate_store,
+            self.entity_href,
+            secret_store=None)
+
+    def test_should_raise_migrate_store_on_old_microversion(self):
+        self.assertRaises(
+            NotImplementedError,
+            self.manager.migrate_store,
+            self.entity_href,
+            secret_store='11111111-1111-1111-1111-111111111111')
+
     def test_should_update_from_object(self, secref_ref=None):
         secref_ref = secref_ref or self.entity_href
         data = {'secret_ref': secref_ref}
@@ -579,6 +620,10 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
 
     def test_get_formatted_data(self):
         data = self.secret.get_dict(self.entity_href)
+        store_id = '11111111-1111-1111-1111-111111111111'
+        data['secret_store_id'] = store_id
+        data['secret_store_ref'] = (
+            'http://localhost:9311/v1/secret-stores/' + store_id)
         self.responses.get(self.entity_href, json=data)
 
         secret = self.manager.get(secret_ref=self.entity_href)
@@ -586,6 +631,8 @@ class WhenTestingSecrets(test_client.BaseEntityResource):
         self.assertEqual(
             timeutils.parse_isotime(data['created']).isoformat(),
             f_data[2])
+        self.assertEqual(store_id, f_data[-2])
+        self.assertEqual(data['secret_store_ref'], f_data[-1])
 
 
 class WhenTestingSecretMetadata(test_client.BaseEntityResource):

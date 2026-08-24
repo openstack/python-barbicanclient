@@ -99,6 +99,8 @@ class SecretFormatter(formatter.EntityFormatter):
                "Secret type",
                "Mode",
                "Expiration",
+               "Secret store id",
+               "Secret store href",
                )
 
     def _get_formatted_data(self):
@@ -114,6 +116,8 @@ class SecretFormatter(formatter.EntityFormatter):
                 self.secret_type,
                 self.mode,
                 expiration,
+                self.secret_store_id,
+                self.secret_store_ref,
                 )
         return data
 
@@ -131,7 +135,8 @@ class Secret(SecretFormatter):
                  payload_content_type=None, payload_content_encoding=None,
                  secret_ref=None, created=None, updated=None,
                  content_types=None, status=None, secret_type=None,
-                 creator_id=None, consumers=None):
+                 creator_id=None, consumers=None,
+                 secret_store_id=None, secret_store_ref=None):
         """Secret objects should not be instantiated directly.
 
         You should use the `create` or `get` methods of the
@@ -154,7 +159,9 @@ class Secret(SecretFormatter):
             content_types=content_types,
             status=status,
             creator_id=creator_id,
-            consumers=consumers
+            consumers=consumers,
+            secret_store_id=secret_store_id,
+            secret_store_ref=secret_store_ref,
         )
         self._acl_manager = acl_manager.ACLManager(api)
         self._acls = None
@@ -254,6 +261,26 @@ class Secret(SecretFormatter):
     @consumers.setter
     def consumers(self, value):
         self._consumers = value
+
+    @property
+    @lazy
+    def secret_store_id(self):
+        """UUID of the secret store holding the payload (microversion 1.3+).
+
+        May be ``None`` when multiple backends are disabled or the secret
+        has no payload.
+        """
+        return self._secret_store_id
+
+    @property
+    @lazy
+    def secret_store_ref(self):
+        """HREF of the secret store holding the payload (microversion 1.3+).
+
+        May be ``None`` when multiple backends are disabled or the secret
+        has no payload.
+        """
+        return self._secret_store_ref
 
     @name.setter
     @immutable_after_save
@@ -428,7 +455,8 @@ class Secret(SecretFormatter):
                         payload=None, payload_content_type=None,
                         payload_content_encoding=None, created=None,
                         updated=None, content_types=None, status=None,
-                        creator_id=None, consumers=None):
+                        creator_id=None, consumers=None,
+                        secret_store_id=None, secret_store_ref=None):
         self._name = name
         self._algorithm = algorithm
         self._bit_length = bit_length
@@ -439,6 +467,8 @@ class Secret(SecretFormatter):
         self._expiration = expiration
         self._creator_id = creator_id
         self._consumers = consumers or list()
+        self._secret_store_id = secret_store_id
+        self._secret_store_ref = secret_store_ref
         if not self._secret_type:
             self._secret_type = "opaque"
         if self._expiration:
@@ -483,7 +513,9 @@ class Secret(SecretFormatter):
                 updated=result.get('updated'),
                 content_types=result.get('content_types'),
                 status=result.get('status'),
-                consumers=result.get('consumers', [])
+                consumers=result.get('consumers', []),
+                secret_store_id=result.get('secret_store_id'),
+                secret_store_ref=result.get('secret_store_ref'),
             )
 
     def __repr__(self):
@@ -544,6 +576,34 @@ class SecretManager(base.BaseEntityManager):
         self._api.put(uuid_ref,
                       headers=headers,
                       data=payload)
+
+    def migrate_store(self, secret_ref, secret_store):
+        """Migrate a secret onto a different secret store.
+
+        Requires key-manager microversion 1.3.
+
+        :param secret_ref: Full HATEOAS reference to a Secret, or a UUID
+        :param secret_store: Destination store as a UUID or a URI
+        :raises barbicanclient.exceptions.HTTPAuthError: 401 Responses
+        :raises barbicanclient.exceptions.HTTPClientError: 4xx Responses
+        :raises barbicanclient.exceptions.HTTPServerError: 5xx Responses
+        :raises NotImplementedError: When using a microversion below 1.3
+        :raises ValueError: When ``secret_store`` is missing or is not a
+            URI/UUID
+        """
+        if not self._api.is_supported_microversion(min_version='1.3'):
+            raise NotImplementedError(
+                "Server does not support secret store migration. "
+                "Minimum key-manager microversion required: 1.3")
+        if not secret_store:
+            raise ValueError('secret_store is required.')
+        store_id = str(base.validate_ref_and_return_uuid(
+            secret_store, 'Secret store'))
+        base.validate_ref_and_return_uuid(secret_ref, 'Secret')
+        uuid_ref = base.calculate_uuid_ref(secret_ref, self._entity)
+        href = uuid_ref.rstrip('/') + '/secret-store/' + store_id
+        LOG.debug('Migrating secret %s to store %s', secret_ref, store_id)
+        self._api.put(href, microversion='1.3')
 
     def create(self, name=None, payload=None,
                payload_content_type=None, payload_content_encoding=None,
